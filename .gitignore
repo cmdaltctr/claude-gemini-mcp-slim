@@ -19,94 +19,40 @@ Desktop.ini
 *.ipr
 *.iws
 
-# Logs and debug files
-#####################
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-dev-debug.log
 
-# Dependency directories
-#######################
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.so
+.venv/
+venv/
+env/
+ENV/
+
+# Logs
+*.log
+
+# Node.js (for Gemini CLI)
 node_modules/
 
-# Pinegrow temp folders
-#######################
-_pg* 
-
-# optional
-pinegrow.json
-
-# Build outputs
-##############
-.nuxt/
-
-dist/
-.output/
-
 # Environment variables
-######################
 .env
 .env.local
 .env.*.local
 !.env.example
 
-# Configuration and secrets
-##########################
-config.json
-/config/
-secrets.txt
-/secrets/
-
-# Documentation
-##############
-/docs/jsdoc/
-
-# Testing
-########
-test/results/
-*.tmp
-
-# Cloudflare
-###########
-.wrangler/
-
-# AI/Version Control
-###################
-.yoyo/
-
-# Task runners and automation
-###########################
+# Claude Code specific
+.claude/
 tasks.json
-tasks/ 
-.taskmaster
+tasks/
+.taskmaster/
 
 # Project specific
-#################
-# Cline
-.clinerules/
-# Roo
-.roorules/
-.roo/
-.roomodes
-# Windsurf
 .windsurf/
 
 # Misc
-#####
 *.bak
-*.sw?
-
-# Logs
-logs
-# Editor directories and files
-.idea
-.vscode
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-
-# Coverage reports
-/coverage/
+*.tmp
