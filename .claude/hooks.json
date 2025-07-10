@@ -1,0 +1,39 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/scripts/slim_gemini_hook.py pre-edit \"$CLAUDE_FILE_PATHS\"",
+            "timeout": 60
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "condition": "$CLAUDE_TOOL_INPUT =~ 'git commit'",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/scripts/slim_gemini_hook.py pre-commit \"$(git diff --cached --name-only)\"",
+            "timeout": 90
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": {},
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/scripts/slim_gemini_hook.py session-summary \".\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
