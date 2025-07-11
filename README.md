@@ -87,6 +87,11 @@ Add to your Claude Desktop MCP configuration:
   }
 }
 ```
+---
+
+**Follow the [setup guide](SETUP/SETUP.md) to get started in 5 minutes!**
+
+---
 
 ### 3. Test the Integration
 
@@ -363,6 +368,4 @@ Copyright (c) 2025 Dr Muhammad Aizat Hawari
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
 
----
 
-**Ready to supercharge your Claude Code experience with Gemini AI? Follow the setup guide in SETUP folder, look for `SETUP.md` to get started in 5 minutes!**

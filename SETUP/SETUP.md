@@ -148,7 +148,7 @@ Claude: I'll analyze this with Gemini. *uses gemini_analyze_code*
 User: Analyze this entire src/ directory for security issues
 Claude: I'll use Gemini's codebase analysis. *uses gemini_codebase_analysis*
 ```
-![alt text](<CleanShot 2025-07-11 at 21.04.41@2x.jpg>)
+![Codebase security analysis example](codebase-security-analysis.jpg)
 
 ## Troubleshooting
 
