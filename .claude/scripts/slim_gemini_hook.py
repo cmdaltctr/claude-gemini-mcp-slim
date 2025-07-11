@@ -9,6 +9,19 @@ import sys
 import subprocess
 from pathlib import Path
 
+# Model configuration with environment variable support
+GEMINI_MODELS = {
+    "flash": os.getenv("GEMINI_FLASH_MODEL", "gemini-2.5-flash"),
+    "pro": os.getenv("GEMINI_PRO_MODEL", "gemini-2.5-pro")
+}
+
+# Model assignment for hook tasks
+HOOK_MODEL_ASSIGNMENTS = {
+    "pre-edit": "flash",        # Quick context analysis
+    "pre-commit": "pro",        # Thorough review
+    "session-summary": "flash"  # Lightweight overview
+}
+
 ##################################################################
 #################### CONFIGURATION ##############################
 ##################################################################
@@ -68,7 +81,7 @@ def should_analyze_file(file_path: str) -> tuple[bool, str]:
 ##################################################################
 
 def execute_gemini_analysis(analysis_type: str, file_paths: str):
-    """Execute Gemini CLI analysis with token-efficient prompts"""
+    """Execute Gemini CLI analysis with model selection and token-efficient prompts"""
 
     # Validate and filter file paths
     valid_files = []
@@ -83,6 +96,11 @@ def execute_gemini_analysis(analysis_type: str, file_paths: str):
         print("📝 No valid files to analyze", file=sys.stderr)
         return
 
+    # Select appropriate model
+    model_type = HOOK_MODEL_ASSIGNMENTS.get(analysis_type, "flash")
+    model_name = GEMINI_MODELS[model_type]
+    print(f"🤖 Using {model_name} for {analysis_type}", file=sys.stderr)
+
     # Create analysis prompt based on type
     if analysis_type == "pre-edit":
         prompt = create_pre_edit_prompt(valid_files)
@@ -92,13 +110,41 @@ def execute_gemini_analysis(analysis_type: str, file_paths: str):
         print(f"❌ Unknown analysis type: {analysis_type}", file=sys.stderr)
         return
 
-    # Execute Gemini CLI
+    # Execute Gemini CLI with model selection
     try:
-        result = subprocess.run(
-            ["gemini", "-p", prompt],
-            capture_output=True,
+        # Use streaming subprocess for real-time output
+        process = subprocess.Popen(
+            ["gemini", "-m", model_name, "-p", prompt],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            timeout=60
+            bufsize=1
+        )
+        
+        # Stream output and show progress
+        output_lines = []
+        print(f"🔍 {analysis_type} analysis in progress...", file=sys.stderr)
+        
+        while True:
+            line = process.stdout.readline()
+            if line:
+                output_lines.append(line)
+                # Show progress to stderr
+                print(f"📝 {line.strip()[:80]}{'...' if len(line.strip()) > 80 else ''}", file=sys.stderr)
+            elif process.poll() is not None:
+                break
+        
+        # Get remaining output
+        remaining_stdout, stderr = process.communicate()
+        if remaining_stdout:
+            output_lines.append(remaining_stdout)
+        
+        # Create result object to match original interface
+        result = subprocess.CompletedProcess(
+            args=["gemini", "-p", prompt],
+            returncode=process.returncode,
+            stdout=''.join(output_lines),
+            stderr=stderr
         )
 
         if result.returncode == 0:
@@ -107,8 +153,7 @@ def execute_gemini_analysis(analysis_type: str, file_paths: str):
         else:
             print(f"⚠️ Analysis failed: {result.stderr}", file=sys.stderr)
 
-    except subprocess.TimeoutExpired:
-        print("⏰ Analysis timed out", file=sys.stderr)
+    # No timeout handling needed with streaming
     except FileNotFoundError:
         print("❌ Gemini CLI not found. Run 'npm install -g @google/gemini-cli'", file=sys.stderr)
     except Exception as e:
@@ -118,15 +163,45 @@ def execute_session_summary(directory_path: str):
     """Execute lightweight session summary analysis"""
 
     print("📋 Generating session summary...", file=sys.stderr)
+    
+    # Select model for session summary
+    model_type = HOOK_MODEL_ASSIGNMENTS.get("session-summary", "flash")
+    model_name = GEMINI_MODELS[model_type]
+    print(f"🤖 Using {model_name} for session summary", file=sys.stderr)
 
     prompt = create_session_summary_prompt(directory_path)
 
     try:
-        result = subprocess.run(
-            ["gemini", "-p", prompt],
-            capture_output=True,
+        # Use streaming subprocess for session summary
+        process = subprocess.Popen(
+            ["gemini", "-m", model_name, "-p", prompt],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            timeout=30  # Short timeout for quick summary
+            bufsize=1
+        )
+        
+        # Stream output
+        output_lines = []
+        
+        while True:
+            line = process.stdout.readline()
+            if line:
+                output_lines.append(line)
+            elif process.poll() is not None:
+                break
+        
+        # Get remaining output
+        remaining_stdout, stderr = process.communicate()
+        if remaining_stdout:
+            output_lines.append(remaining_stdout)
+        
+        # Create result object
+        result = subprocess.CompletedProcess(
+            args=["gemini", "-p", prompt],
+            returncode=process.returncode,
+            stdout=''.join(output_lines),
+            stderr=stderr
         )
 
         if result.returncode == 0:
@@ -139,8 +214,7 @@ def execute_session_summary(directory_path: str):
         else:
             print("⚠️ Session summary failed", file=sys.stderr)
 
-    except subprocess.TimeoutExpired:
-        print("⏰ Session summary timed out", file=sys.stderr)
+    # No timeout handling needed
     except Exception as e:
         print(f"❌ Session summary error: {e}", file=sys.stderr)
 
@@ -150,46 +224,41 @@ def execute_session_summary(directory_path: str):
 
 def create_pre_edit_prompt(file_paths: list) -> str:
     """Create token-efficient pre-edit analysis prompt"""
-    files_ref = " ".join([f"@{fp}" for fp in file_paths])
+    files_list = ", ".join(file_paths)
 
-    return f"""{files_ref}
+    return f"""Perform comprehensive pre-edit analysis of these files: {files_list}
 
-        Quick pre-edit analysis (under {SLIM_CONFIG["response_word_limit"]} words):
+Provide detailed analysis including:
+1. Critical bugs or security vulnerabilities
+2. Performance bottlenecks and optimization opportunities
+3. Architecture concerns and design patterns
+4. Code quality and maintainability issues
+5. Error handling and edge cases
+6. Best practices compliance
+7. Specific improvement recommendations
 
-1. Critical bugs or security issues
-2. Performance bottlenecks
-3. Architecture concerns
-4. Key improvement opportunities
-
-        Focus on actionable insights that will help make better edits on first attempt."""
+Focus on actionable insights that will help make better edits on first attempt."""
 
 def create_pre_commit_prompt(file_paths: list) -> str:
     """Create focused pre-commit review prompt"""
-    files_ref = " ".join([f"@{fp}" for fp in file_paths])
+    files_list = ", ".join(file_paths)
 
-    return f"""{files_ref}
+    return f"""Comprehensive pre-commit review of these files: {files_list}
 
-        Pre-commit review (under {SLIM_CONFIG["response_word_limit"]} words):
-
+Perform thorough analysis including:
 1. Critical bugs that would break functionality
-2. Security vulnerabilities
-3. Breaking changes or API issues
-4. Code quality concerns
+2. Security vulnerabilities and potential exploits
+3. Breaking changes or API compatibility issues
+4. Code quality and maintainability concerns
+5. Performance regressions or inefficiencies
+6. Test coverage and validation gaps
+7. Documentation and code clarity issues
 
-        Focus on issues that should block this commit."""
+Focus on issues that should block this commit. Be thorough and detailed."""
 
 def create_session_summary_prompt(directory_path: str) -> str:
     """Create lightweight session summary prompt"""
-    return f"""@{directory_path}
-
-Brief session summary (under 200 words):
-
-1. Key files modified during this session
-2. Main changes or improvements made
-3. Quick health check - any obvious issues
-4. Suggested next steps or follow-ups
-
-        Focus on actionable insights and session recap only."""
+    return "What can you see in this current directory? List the main files and give a brief project overview in under 200 words in plain text format."
 
 ##################################################################
 #################### MAIN EXECUTION #############################

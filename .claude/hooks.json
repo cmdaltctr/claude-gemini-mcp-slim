@@ -7,7 +7,7 @@
           {
             "type": "command",
             "command": "python3 .claude/scripts/slim_gemini_hook.py pre-edit \"$CLAUDE_FILE_PATHS\"",
-            "timeout": 60
+            "timeout": 300
           }
         ]
       },
@@ -18,7 +18,7 @@
           {
             "type": "command",
             "command": "python3 .claude/scripts/slim_gemini_hook.py pre-commit \"$(git diff --cached --name-only)\"",
-            "timeout": 90
+            "timeout": 300
           }
         ]
       }
@@ -30,7 +30,7 @@
           {
             "type": "command",
             "command": "python3 .claude/scripts/slim_gemini_hook.py session-summary \".\"",
-            "timeout": 30
+            "timeout": 120
           }
         ]
       }
