@@ -352,7 +352,11 @@ This project is designed to be lightweight and focused. The core functionality i
 
 ## License
 
-Open source - feel free to modify and adapt for your needs.
+MIT License
+
+Copyright (c) 2025 Dr Muhammad Aizat Hawari
+
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
 
 ---
 
