@@ -235,13 +235,15 @@ Then update your MCP configuration:
 {
   "mcpServers": {
     "gemini mcp": {
-      "command": "/path/to/gemini-mcp-env/bin/python3",
+      "command": "/path/to/gemini-mcp-env/venv/bin/python3", # Use /venv/ if you created a virtual environment 
       "args": ["/path/to/gemini_mcp_server.py"],
       "env": {}
     }
   }
 }
 ```
+
+**Note**: For the line `"command": "/path/to/gemini-mcp-env/venv/bin/python3",`, Use /venv/ if you created a virtual environment, otherwise just use `/bin.python3`.
 
 ### Environment Variables
 
