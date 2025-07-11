@@ -246,9 +246,21 @@ Then update your MCP configuration:
 
 **Note**: For the line `"command": "/path/to/gemini-mcp-env/venv/bin/python3",`, Use /venv/ if you created a virtual environment, otherwise just use `/bin.python3`.
 
-### Environment Variables
+### Advanced Configuration Parameters
 
-You can set environment variables in the MCP config if needed:
+You can customize behavior by adding environment variables to your MCP config:
+
+#### File Analysis Limits
+
+**Default Values:**
+- Maximum file size: 80KB (81,920 bytes)
+- Maximum lines: 800 lines
+- Response limit: 800 words (200 for session summaries)
+
+**When to adjust:**
+- **Larger files**: Increase limits for projects with big source files
+- **Performance**: Decrease limits on slower systems or to save tokens
+- **Detailed analysis**: Increase response limits for more comprehensive reviews
 
 ```json
 {
@@ -257,13 +269,121 @@ You can set environment variables in the MCP config if needed:
       "command": "python3",
       "args": ["/path/to/gemini_mcp_server.py"],
       "env": {
-        "GEMINI_MODEL": "gemini-pro",
-        "CUSTOM_VAR": "value"
+        "MAX_FILE_SIZE": "120000",      // 120KB for larger files
+        "MAX_FILE_LINES": "1000",       // 1000 lines for bigger files
+        "MAX_RESPONSE_WORDS": "1000"    // More detailed analysis
       }
     }
   }
 }
 ```
+
+#### Timeout Settings
+
+**Default Values:**
+- Session summary: 30 seconds
+- Code analysis: 60 seconds
+- Codebase analysis: 120 seconds
+
+**When to adjust:**
+- **Slow network**: Increase timeouts for unstable connections
+- **Large projects**: Increase for comprehensive codebase analysis
+- **Quick feedback**: Decrease for faster responses
+
+```json
+{
+  "env": {
+    "ANALYSIS_TIMEOUT": "90",         // 90 seconds for code analysis
+    "CODEBASE_TIMEOUT": "180",        // 3 minutes for full codebase
+    "SESSION_TIMEOUT": "45"           // 45 seconds for summaries
+  }
+}
+```
+
+#### Model Selection & Performance
+
+**Default Models:**
+- Quick queries: `gemini-2.5-flash` (fast, cost-effective)
+- Code analysis: `gemini-2.5-pro` (deep analysis)
+- Codebase analysis: `gemini-2.5-pro` (large context)
+
+**When to customize:**
+- **Cost optimization**: Use Flash for all operations
+- **Maximum quality**: Use Pro for all operations
+- **Beta testing**: Try experimental models
+
+```json
+{
+  "env": {
+    "GEMINI_FLASH_MODEL": "gemini-2.5-flash-exp",  // Experimental Flash
+    "GEMINI_PRO_MODEL": "gemini-2.5-pro-exp",      // Experimental Pro
+    "FORCE_MODEL": "flash",                         // Force all operations to use Flash
+    "GOOGLE_API_KEY": "your_api_key_here"           // Required for API access
+  }
+}
+```
+
+#### Hook Configuration (If Using Automation)
+
+**Default Behavior:**
+- Pre-edit analysis: Files under 800 lines, 80KB
+- Pre-commit review: All staged changes
+- Session summary: 200-word brief recap
+
+**Customization options:**
+
+```json
+{
+  "env": {
+    "HOOK_FILE_LIMIT": "1000",        // Analyze files up to 1000 lines
+    "HOOK_SIZE_LIMIT": "100000",      // Analyze files up to 100KB
+    "HOOK_SUMMARY_WORDS": "300",      // 300-word session summaries
+    "HOOK_ANALYSIS_WORDS": "1000",    // 1000-word pre-edit analysis
+    "DISABLE_PRE_EDIT": "false",      // Set to "true" to disable pre-edit analysis
+    "DISABLE_PRE_COMMIT": "false"     // Set to "true" to disable commit reviews
+  }
+}
+```
+
+#### Complete Configuration Example
+
+```json
+{
+  "mcpServers": {
+    "gemini mcp": {
+      "command": "/path/to/venv/bin/python3",
+      "args": ["/path/to/gemini_mcp_server.py"],
+      "env": {
+        "GOOGLE_API_KEY": "your_actual_api_key_here",
+        "GEMINI_FLASH_MODEL": "gemini-2.5-flash",
+        "GEMINI_PRO_MODEL": "gemini-2.5-pro",
+        "MAX_FILE_SIZE": "100000",
+        "MAX_FILE_LINES": "1000",
+        "ANALYSIS_TIMEOUT": "90",
+        "CODEBASE_TIMEOUT": "180",
+        "MAX_RESPONSE_WORDS": "1000"
+      }
+    }
+  }
+}
+```
+
+#### Configuration Tips
+
+**For Large Projects:**
+- Increase file size/line limits
+- Extend timeout settings
+- Use Pro model for better context handling
+
+**For Quick Development:**
+- Use Flash model for all operations
+- Reduce response word limits
+- Shorter timeouts for faster feedback
+
+**For Cost Optimization:**
+- Use Flash model exclusively: `"FORCE_MODEL": "flash"`
+- Reduce file size limits to analyze smaller files
+- Shorter response limits to use fewer tokens
 
 ## Optional: Advanced Hook Automation
 
