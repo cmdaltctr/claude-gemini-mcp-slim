@@ -232,12 +232,17 @@ GEMINI_PRO_MODEL=gemini-2.5-pro       # Override default models
 
 ```
 claude-gemini-mcp-slim/
+├── .claude/                  # Hook configuration (optional automation)
+│   ├── hooks.json           # Hook definitions for Claude Code
+│   └── scripts/
+│       └── slim_gemini_hook.py  # Hook execution script
 ├── gemini_mcp_server.py      # Main MCP server (Claude Code integration)
 ├── gemini_helper.py          # Standalone CLI utility
 ├── requirements.txt          # Python dependencies
 ├── venv/                     # Virtual environment
-├── backup/                   # Development backup files
-├── SETUP.md                  # Quick setup guide
+├── SETUP/
+│   ├── SETUP.md             # Quick setup guide
+│   └── codebase-security-analysis.jpg
 ├── CLAUDE.md                 # Comprehensive documentation
 └── README.md                 # This overview
 ```

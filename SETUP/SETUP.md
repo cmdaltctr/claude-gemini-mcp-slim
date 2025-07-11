@@ -239,6 +239,41 @@ You can set environment variables in the MCP config if needed:
 }
 ```
 
+## Optional: Advanced Hook Automation
+
+For automated pre-edit analysis and commit review, you can set up Claude Code hooks:
+
+### Step 6: Setup Hook Configuration (Optional)
+
+If you want automated analysis before edits and commits:
+
+1. **Create the hooks directory:**
+   ```bash
+   mkdir -p .claude/scripts
+   ```
+
+2. **Download the hook files:**
+   - Download `hooks.json` to `.claude/hooks.json`
+   - Download `slim_gemini_hook.py` to `.claude/scripts/slim_gemini_hook.py`
+
+3. **Make the hook script executable:**
+   ```bash
+   chmod +x .claude/scripts/slim_gemini_hook.py
+   ```
+
+**Expected structure with hooks:**
+```
+your-project/
+├── .claude/
+│   ├── hooks.json               ← Hook configuration
+│   └── scripts/
+│       └── slim_gemini_hook.py  ← Hook execution script
+├── gemini_mcp_server.py         ← The MCP server file
+└── your-claude-config.json      ← Your Claude MCP configuration
+```
+
+**Note:** Hooks provide automated pre-edit analysis and commit review but are optional. The core MCP tools work without them.
+
 ## What's Next?
 
 Once everything is working:
