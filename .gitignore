@@ -46,6 +46,9 @@ node_modules/
 
 # Claude Code specific
 .claude/
+claude.md
+
+# Taskmaster
 tasks.json
 tasks/
 .taskmaster/
