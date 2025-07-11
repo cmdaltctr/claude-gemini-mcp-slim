@@ -23,10 +23,19 @@ Before you start, make sure you have:
 pip install mcp python-dotenv
 ```
 
-### Step 2: Download the MCP Server
+### Step 2: Create a Dedicated MCP Server Folder
 
-1. Download `gemini_mcp_server.py` from this repository
-2. Place it in a directory you can remember (e.g., `/path/to/gemini-mcp/`)
+1. Create a dedicated folder for the Gemini MCP server (e.g., `~/gemini-mcp-server/`)
+2. Download all required files from this repository to that folder:
+   - `gemini_mcp_server.py` - Main MCP server file
+   - `gemini_helper.py` - Helper functions
+   - `requirements.txt` - Dependencies list
+3. Create a `scripts` folder inside .claude in your MCP server folder
+   - Download `slim_gemini_hook.py` to the scripts folder
+   - Make it executable: `chmod +x ~/gemini-mcp-server/scripts/slim_gemini_hook.py`
+4. Add `hooks.json` to .claude folder - Hook definitions for Claude Code integration
+
+**Note:** Keep this folder separate from your projects. It will contain the virtual environment (`venv/`) and cache files (`__pycache__/`) after installation.
 
 ### Step 3: Configure Claude Desktop
 
@@ -183,11 +192,25 @@ pip list | grep mcp
 
 After setup, your structure should look like:
 
+### After Setup, Your Structure Should Look Like:
+
 ```
-your-project/
-├── gemini_mcp_server.py     ← The MCP server file
-└── your-claude-config.json  ← Your Claude MCP configuration
+~/gemini-mcp-server/              ← Dedicated folder for the MCP server (separate from your projects)
+├── gemini_mcp_server.py          ← Main MCP server file
+├── gemini_helper.py              ← Helper functions for Gemini integration
+├── requirements.txt              ← Python dependencies list
+├── hooks.json                    ← Hook definitions for Claude Code
+├── .claude/
+│   ├── hooks.json                ← Hook definitions for Claude Code
+│   └── scripts/                  ← Scripts directory
+│       └── slim_gemini_hook.py   ← Hook execution script
+│ 
+├── venv/                         ← Python virtual environment (created during installation)
+└── __pycache__/                  ← Python cache files (created during execution)
+
 ```
+
+**Important:** The MCP server folder should be kept separate from your development projects. You'll reference this folder in your Claude configuration.
 
 ## Advanced Configuration
 
