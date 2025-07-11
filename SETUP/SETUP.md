@@ -60,6 +60,7 @@ Add this configuration to your Claude Desktop MCP settings:
 ### Step 4: Configure Claude Desktop & Claude Code
 
 **Important:** Replace `/path/to/venv/bin/python3` with the actual path to your Python virtual environment.
+
 **Important:** Replace `your_key_here` with your actual Google API key.
 
 a) Add this configuration to your Claude Desktop MCP settings:
