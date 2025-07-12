@@ -61,46 +61,53 @@ Claude Code ←→ MCP Server ←→ Gemini CLI/API ←→ Google Gemini Models
 
 ## Quick Start
 
-### 1. Install Prerequisites
+### 🚀 **Professional Shared MCP Setup**
+
+This MCP uses a **shared system architecture** that serves multiple AI clients (Claude Desktop, Claude Code, Windsurf, etc.) from one installation:
 
 ```bash
-# Install Gemini CLI
+# 1. Create shared MCP environment
+mkdir -p ~/mcp-servers && cd ~/mcp-servers
+python3 -m venv shared-mcp-env
+source shared-mcp-env/bin/activate
+pip install mcp google-generativeai
+
+# 2. Install Gemini CLI
 npm install -g @google/gemini-cli
 gemini  # Authenticate with Google
 
-# Install Python dependencies
-pip install mcp python-dotenv google-generativeai
+# 3. Set up Gemini MCP server
+mkdir -p gemini-mcp/.claude/scripts
+# (Download files from this repo to gemini-mcp/)
 ```
 
-### 2. Configure Claude Code
+### 📱 **Configure AI Clients**
 
-Add to your Claude Desktop MCP configuration:
+Add to your AI client configurations:
 
 ```json
 {
   "mcpServers": {
-    "gemini mcp": {
-      "command": "/path/to/venv/bin/python3",
-      "args": ["/path/to/gemini_mcp_server.py"],
-      "env": {}
+    "gemini-mcp": {
+      "command": "/Users/YOUR_USERNAME/mcp-servers/shared-mcp-env/bin/python",
+      "args": ["/Users/YOUR_USERNAME/mcp-servers/gemini-mcp/gemini_mcp_server.py"],
+      "env": { "GOOGLE_API_KEY": "your_key_here" }
     }
   }
 }
 ```
----
-
-**Follow the [setup guide](SETUP/SETUP.md) to get started in 5 minutes!**
 
 ---
 
-### 3. Test the Integration
+**📖 [Complete Setup Guide](SETUP/SETUP.md) - Get running in 5 minutes!**
 
-```bash
-# Test Gemini CLI
-gemini -p "Hello, test connection"
+---
 
-# Restart Claude Desktop and look for "gemini mcp" tools
-```
+**✅ Benefits of Shared Architecture:**
+- One installation serves all AI clients and projects
+- Clean project folders (no MCP dependencies)
+- Easy maintenance and updates
+- Professional deployment pattern
 
 ## Usage Examples
 
@@ -235,21 +242,40 @@ GEMINI_PRO_MODEL=gemini-2.5-pro       # Override default models
 
 ## Project Structure
 
+### Repository Structure
 ```
 claude-gemini-mcp-slim/
-├── .claude/                  # Hook configuration (optional automation)
+├── .claude/                  # Reference hook configuration
 │   ├── hooks.json           # Hook definitions for Claude Code
 │   └── scripts/
 │       └── slim_gemini_hook.py  # Hook execution script
-├── gemini_mcp_server.py      # Main MCP server (Claude Code integration)
+├── gemini_mcp_server.py      # Main MCP server
 ├── gemini_helper.py          # Standalone CLI utility
-├── requirements.txt          # Python dependencies
-├── venv/                     # Virtual environment
+├── requirements.txt          # Python dependencies (for reference)
 ├── SETUP/
-│   ├── SETUP.md             # Quick setup guide
+│   ├── SETUP.md             # Complete setup guide
 │   └── codebase-security-analysis.jpg
 ├── CLAUDE.md                 # Comprehensive documentation
 └── README.md                 # This overview
+```
+
+### Deployed Structure (After Setup)
+```
+~/mcp-servers/                              ← Shared MCP servers
+├── shared-mcp-env/                         ← Virtual environment for all MCPs
+└── gemini-mcp/                             ← Complete Gemini MCP package
+    ├── gemini_mcp_server.py                ← Main MCP server
+    └── .claude/                            ← Hook configuration
+        ├── hooks.json                      ← Hook definitions
+        └── scripts/
+            └── slim_gemini_hook.py         ← Hook execution script
+
+your-projects/
+├── project-a/
+│   ├── .claude → ~/mcp-servers/gemini-mcp/.claude  ← Optional symlink for hooks
+│   └── src/                               ← Your project files
+└── project-b/
+    └── components/                         ← Clean project (no MCP files needed)
 ```
 
 ## Troubleshooting

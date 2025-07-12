@@ -1,13 +1,13 @@
 # Gemini MCP Server Setup Guide
 
-A simple MCP server that integrates Google's Gemini CLI with Claude Desktop and Claude Code, giving you access to Gemini's 1M token context window.
+**Professional shared MCP server** that integrates Google's Gemini CLI with multiple AI clients (Claude Desktop, Claude Code, Windsurf, etc.), giving you access to Gemini's 1M token context window across all your projects.
 
 ## Prerequisites
 
 Before you start, make sure you have:
 
 1. **Python 3.8+** installed
-2. **Node.js 16+** installed
+2. **Node.js 16+** installed  
 3. **Gemini CLI** installed and authenticated:
    ```bash
    npm install -g @google/gemini-cli
@@ -16,54 +16,51 @@ Before you start, make sure you have:
 
 ## Quick Setup (5 minutes)
 
-### Step 1: Install Python Dependencies
+### Step 1: Create Shared MCP Environment
+
+Create a dedicated system-wide location for all your MCP servers:
 
 ```bash
-# Install the required Python packages
-pip install mcp python-dotenv
+# Create shared MCP directory
+mkdir -p ~/mcp-servers
+cd ~/mcp-servers
+
+# Create virtual environment for all MCP servers
+python3 -m venv shared-mcp-env
+source shared-mcp-env/bin/activate
+
+# Install MCP dependencies
+pip install mcp google-generativeai python-dotenv
 ```
 
-### Step 2: Create a Dedicated MCP Server Folder
+### Step 2: Set Up Gemini MCP Server
 
-1. Create a dedicated folder for the Gemini MCP server (e.g., `~/gemini-mcp-server/`)
-2. Download all required files from this repository to that folder:
-   - `gemini_mcp_server.py` - Main MCP server file
-   - `gemini_helper.py` - Helper functions
-   - `requirements.txt` - Dependencies list
-3. Create a `scripts` folder inside .claude in your MCP server folder
-   - Download `slim_gemini_hook.py` to the scripts folder
-   - Make it executable: `chmod +x ~/gemini-mcp-server/scripts/slim_gemini_hook.py`
-4. Add `hooks.json` to .claude folder - Hook definitions for Claude Code integration
+Create the complete Gemini MCP package:
 
-**Note:** Keep this folder separate from your projects. It will contain the virtual environment (`venv/`) and cache files (`__pycache__/`) after installation.
+```bash
+# Create Gemini MCP folder structure
+mkdir -p gemini-mcp/.claude/scripts
 
-### Step 3: Configure Claude Desktop
+# Download files from this repository to gemini-mcp/:
+cp /path/to/downloaded/gemini_mcp_server.py gemini-mcp/
+cp /path/to/downloaded/.claude/hooks.json gemini-mcp/.claude/
+cp /path/to/downloaded/.claude/scripts/slim_gemini_hook.py gemini-mcp/.claude/scripts/
 
-Add this configuration to your Claude Desktop MCP settings:
-
-**Location:** Claude Desktop → Settings → Developer → MCP Servers
-
-```json
-{
-  "mcpServers": {
-    "gemini mcp": {
-      "command": "python3",
-      "args": ["/full/path/to/gemini_mcp_server.py"],
-      "env": {}
-    }
-  }
-}
+# Make hook script executable
+chmod +x gemini-mcp/.claude/scripts/slim_gemini_hook.py
 ```
 
-**Important:** Replace `/full/path/to/gemini_mcp_server.py` with the actual path to your downloaded file.
+**Why this architecture?**
+- ✅ **One installation** serves all AI clients and projects
+- ✅ **No project pollution** - keeps your projects clean
+- ✅ **Easy maintenance** - update once, benefits everywhere
+- ✅ **Professional deployment** - industry standard practice
 
-### Step 4: Configure Claude Desktop & Claude Code
+### Step 3: Configure AI Clients
 
-**Important:** Replace `/path/to/venv/bin/python3` with the actual path to your Python virtual environment.
+Configure your AI clients to use the shared Gemini MCP server:
 
-**Important:** Replace `your_key_here` with your actual Google API key.
-
-a) Add this configuration to your Claude Desktop MCP settings:
+#### For Claude Desktop
 
 **Location:** `~/.config/claude-desktop/claude_desktop_config.json` (macOS/Linux) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows)
 
@@ -71,10 +68,10 @@ a) Add this configuration to your Claude Desktop MCP settings:
 {
   "mcpServers": {
     "gemini-mcp": {
-      "command": "/path/to/venv/bin/python3",
-      "args": ["/path/to/gemini_mcp_server.py"],
+      "command": "/Users/YOUR_USERNAME/mcp-servers/shared-mcp-env/bin/python",
+      "args": ["/Users/YOUR_USERNAME/mcp-servers/gemini-mcp/gemini_mcp_server.py"],
       "env": {
-        "GOOGLE_API_KEY": "your_key_here",
+        "GOOGLE_API_KEY": "your_api_key_here",
         "GEMINI_FLASH_MODEL": "gemini-2.5-flash",
         "GEMINI_PRO_MODEL": "gemini-2.5-pro"
       }
@@ -83,20 +80,18 @@ a) Add this configuration to your Claude Desktop MCP settings:
 }
 ```
 
-b) Add this configuration to your Claude Desktop MCP settings:
+#### For Claude Code (and Other MCP Clients)
 
-**Location:** `/Users/%USERNAME%/.claude.json` (macOS/Linux) or `C:\Users\%USERNAME%\.claude.json (Windows)`
-
-**Important:** Decide where to place the MCP, either in Project/Local/User scopes.
+**Location:** Project-specific or global MCP configuration
 
 ```json
 {
   "mcpServers": {
     "gemini-mcp": {
-      "command": "/path/to/venv/bin/python3",
-      "args": ["/path/to/gemini_mcp_server.py"],
+      "command": "/Users/YOUR_USERNAME/mcp-servers/shared-mcp-env/bin/python",
+      "args": ["/Users/YOUR_USERNAME/mcp-servers/gemini-mcp/gemini_mcp_server.py"],
       "env": {
-        "GOOGLE_API_KEY": "your_key_here",
+        "GOOGLE_API_KEY": "your_api_key_here",
         "GEMINI_FLASH_MODEL": "gemini-2.5-flash",
         "GEMINI_PRO_MODEL": "gemini-2.5-pro"
       }
@@ -105,9 +100,78 @@ b) Add this configuration to your Claude Desktop MCP settings:
 }
 ```
 
+**Important:** Replace `YOUR_USERNAME` with your actual username and `your_api_key_here` with your Google API key.
+
+### Step 4: Enable Hooks for Projects (Optional - Claude Code Ecosystem Only)
+
+Hooks require a `.claude/hooks.json` file in your project directory. You have three options:
+
+#### **Option A: Symlink to Shared Hooks (Recommended)**
+
+**Best for:** Teams, multiple projects, easy maintenance
+
+```bash
+cd /path/to/your-project
+ln -s ~/mcp-servers/gemini-mcp/.claude .claude
+```
+
+**Benefits:**
+- ✅ **Easy updates** - modify shared hooks once, all projects benefit
+- ✅ **Consistency** - all projects use identical hook logic
+- ✅ **Quick setup** - one command per project
+- ✅ **Version control friendly** - symlinks can be committed
+
+#### **Option B: Copy Hook Files Directly**
+
+**Best for:** Project-specific customization, offline work
+
+```bash
+cd /path/to/your-project
+mkdir -p .claude/scripts
+cp ~/mcp-servers/gemini-mcp/.claude/hooks.json .claude/
+cp ~/mcp-servers/gemini-mcp/.claude/scripts/slim_gemini_hook.py .claude/scripts/
+```
+
+**Benefits:**
+- ✅ **Independent customization** - modify hooks per project
+- ✅ **No dependencies** - works without shared MCP location
+- ✅ **Full control** - each project owns its hook configuration
+
+#### **Option C: No Hooks**
+
+**Best for:** Simple workflows, non-Claude Code clients
+
+```bash
+# Do nothing - no .claude folder needed
+# MCP tools still work perfectly
+```
+
+**Benefits:**
+- ✅ **Clean projects** - no extra configuration files
+- ✅ **Universal compatibility** - works with all MCP clients
+- ✅ **Zero maintenance** - no hook files to manage
+
+**What hooks enable (Claude Code ecosystem only):**
+- 🔄 **Pre-edit analysis** - AI reviews code before making changes
+- 🔍 **Pre-commit reviews** - AI checks changes before git commits
+- 📋 **Session summaries** - AI provides session recaps
+
+**Important:** Hook functionality **only works in Claude Code ecosystem** (Claude Code standalone or VS Code with Claude Code extension). All other clients (Cursor, Windsurf, Claude Desktop, VS Code with other extensions) ignore the `.claude` folder but still get all core MCP tools.
+
+#### **Which Option Should You Choose?**
+
+| Scenario | Recommended Option | Why |
+|----------|-------------------|-----|
+| **Multiple projects, team work** | Option A (Symlink) | Easy updates, consistency across projects |
+| **Single project, custom needs** | Option B (Direct copy) | Full control, project-specific tweaks |
+| **Using Cursor/Windsurf/Claude Desktop** | Option C (No hooks) | Hooks won't work anyway, keep it clean |
+| **New to Claude Code** | Option C (No hooks) | Start simple, add hooks later if needed |
+| **Experimenting/testing** | Option A (Symlink) | Easy to remove/modify |
+| **Production deployment** | Option B (Direct copy) | No external dependencies |
+
 ### Step 5: Test the Setup
 
-1. **Restart Claude Desktop and Claude Code**
+1. **Restart all AI clients** (Claude Desktop, Claude Code, Windsurf)
 2. **Test Gemini CLI directly:**
 
    ```bash
@@ -116,8 +180,8 @@ b) Add this configuration to your Claude Desktop MCP settings:
 
    You should get a response from Gemini.
 
-3. **Test in Claude Desktop/Code:**
-   - Look for "gemini mcp" in available tools
+3. **Test in AI clients:**
+   - Look for "gemini-mcp" in available tools
    - Try asking: "Use gemini_quick_query to ask what is 2+2"
 
 ## Available Tools
@@ -193,58 +257,66 @@ pip list | grep mcp
 
 After setup, your structure should look like:
 
-### After Setup, Your Structure Should Look Like:
+### Shared MCP Structure:
 
 ```
-~/gemini-mcp-server/              ← Dedicated folder for the MCP server (separate from your projects)
-├── gemini_mcp_server.py          ← Main MCP server file
-├── gemini_helper.py              ← Helper functions for Gemini integration
-├── requirements.txt              ← Python dependencies list
-├── hooks.json                    ← Hook definitions for Claude Code
-├── .claude/
-│   ├── hooks.json                ← Hook definitions for Claude Code
-│   └── scripts/                  ← Scripts directory
-│       └── slim_gemini_hook.py   ← Hook execution script
-│ 
-├── venv/                         ← Python virtual environment (created during installation)
-└── __pycache__/                  ← Python cache files (created during execution)
-
+~/mcp-servers/                              ← Central location for all MCP servers
+├── shared-mcp-env/                         ← Shared virtual environment
+│   ├── bin/python                         ← Python interpreter for all MCPs
+│   └── lib/python3.x/site-packages/       ← Shared dependencies (mcp, google-generativeai, etc.)
+└── gemini-mcp/                             ← Complete Gemini MCP package
+    ├── gemini_mcp_server.py                ← Main MCP server
+    └── .claude/                            ← Hook configuration
+        ├── hooks.json                      ← Hook definitions
+        ├── scripts/
+        │   └── slim_gemini_hook.py         ← Hook execution script
+        └── settings.local.json             ← Additional settings
 ```
 
-**Important:** The MCP server folder should be kept separate from your development projects. You'll reference this folder in your Claude configuration.
+### Project Structure (with hooks enabled):
+
+```
+your-project/
+├── .claude → ~/mcp-servers/gemini-mcp/.claude  ← Symlink to shared hooks
+├── src/                                    ← Your project files
+├── README.md
+└── (no venv or MCP files needed!)           ← Clean project structure
+```
+
+**Benefits:**
+- ✅ **System-wide availability** - All AI clients can access Gemini MCP
+- ✅ **Clean projects** - No MCP dependencies polluting your project folders
+- ✅ **Easy maintenance** - Update hooks/server once, benefits all projects
+- ✅ **Selective hooks** - Only projects with symlinks get hook functionality
 
 ## Advanced Configuration
 
-### Using a Virtual Environment (Recommended)
+### Multiple MCP Servers
 
-If you prefer to use a virtual environment:
+You can add more MCP servers to the shared environment:
 
 ```bash
-# Create and activate virtual environment
-python3 -m venv gemini-mcp-env
-source gemini-mcp-env/bin/activate  # On Windows: gemini-mcp-env\Scripts\activate
+cd ~/mcp-servers
+source shared-mcp-env/bin/activate
 
-# Install dependencies
-pip install mcp python-dotenv
+# Install additional MCP servers
+pip install other-mcp-server
 
-# Update your MCP config to use the virtual environment Python
+# Create folders for each MCP
+mkdir -p other-mcp-server/
 ```
 
-Then update your MCP configuration:
+### Updating the Gemini MCP
 
-```json
-{
-  "mcpServers": {
-    "gemini mcp": {
-      "command": "/path/to/gemini-mcp-env/venv/bin/python3", # Use /venv/ if you created a virtual environment 
-      "args": ["/path/to/gemini_mcp_server.py"],
-      "env": {}
-    }
-  }
-}
+To update the Gemini MCP server:
+
+```bash
+cd ~/mcp-servers/gemini-mcp
+# Replace files with updated versions
+cp /path/to/new/gemini_mcp_server.py .
+cp /path/to/new/.claude/hooks.json .claude/
+# All projects automatically get the updates!
 ```
-
-**Note**: For the line `"command": "/path/to/gemini-mcp-env/venv/bin/python3",`, Use /venv/ if you created a virtual environment, otherwise just use `/bin.python3`.
 
 ### Advanced Configuration Parameters
 
@@ -265,9 +337,9 @@ You can customize behavior by adding environment variables to your MCP config:
 ```json
 {
   "mcpServers": {
-    "gemini mcp": {
-      "command": "python3",
-      "args": ["/path/to/gemini_mcp_server.py"],
+    "gemini-mcp": {
+      "command": "/Users/YOUR_USERNAME/mcp-servers/shared-mcp-env/bin/python",
+      "args": ["/Users/YOUR_USERNAME/mcp-servers/gemini-mcp/gemini_mcp_server.py"],
       "env": {
         "MAX_FILE_SIZE": "120000",      // 120KB for larger files
         "MAX_FILE_LINES": "1000",       // 1000 lines for bigger files
@@ -350,9 +422,9 @@ You can customize behavior by adding environment variables to your MCP config:
 ```json
 {
   "mcpServers": {
-    "gemini mcp": {
-      "command": "/path/to/venv/bin/python3",
-      "args": ["/path/to/gemini_mcp_server.py"],
+    "gemini-mcp": {
+      "command": "/Users/YOUR_USERNAME/mcp-servers/shared-mcp-env/bin/python",
+      "args": ["/Users/YOUR_USERNAME/mcp-servers/gemini-mcp/gemini_mcp_server.py"],
       "env": {
         "GOOGLE_API_KEY": "your_actual_api_key_here",
         "GEMINI_FLASH_MODEL": "gemini-2.5-flash",
@@ -385,40 +457,56 @@ You can customize behavior by adding environment variables to your MCP config:
 - Reduce file size limits to analyze smaller files
 - Shorter response limits to use fewer tokens
 
-## Optional: Advanced Hook Automation
+## Multi-Client Support
 
-For automated pre-edit analysis and commit review, you can set up Claude Code hooks:
+The shared MCP architecture supports multiple AI clients simultaneously:
 
-### Step 6: Setup Hook Configuration (Optional)
+### Supported Clients
+- ✅ **Claude Desktop** - Core MCP tools only
+- ✅ **Claude Code** - Core MCP tools + hooks (if configured)
+- ✅ **VS Code with Claude Code extension** - Core MCP tools + hooks (if configured)
+- ✅ **Cursor IDE** - Core MCP tools only
+- ✅ **Windsurf** - Core MCP tools only
+- ✅ **VS Code with other MCP extensions** - Core MCP tools only
+- ✅ **Any MCP-compatible client** - Core MCP tools only
 
-If you want automated analysis before edits and commits:
+### Client-Specific Features
 
-1. **Create the hooks directory:**
-   ```bash
-   mkdir -p .claude/scripts
-   ```
+| Feature | Claude Desktop | Claude Code | VS Code + Claude | Cursor IDE | Windsurf | Other Clients |
+|---------|----------------|-------------|------------------|------------|-----------|---------------|
+| Core MCP Tools | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Pre-edit Analysis | ❌ | ✅* | ✅* | ❌ | ❌ | ❌ |
+| Pre-commit Review | ❌ | ✅* | ✅* | ❌ | ❌ | ❌ |
+| Session Summary | ❌ | ✅* | ✅* | ❌ | ❌ | ❌ |
 
-2. **Download the hook files:**
-   - Download `hooks.json` to `.claude/hooks.json`
-   - Download `slim_gemini_hook.py` to `.claude/scripts/slim_gemini_hook.py`
+*Only in projects with `.claude/hooks.json` configuration
 
-3. **Make the hook script executable:**
-   ```bash
-   chmod +x .claude/scripts/slim_gemini_hook.py
-   ```
+**Important:** Hook functionality (.claude/hooks.json) is **exclusive to Claude Code ecosystem** (Claude Code standalone + VS Code with Claude Code extension). No other AI client currently supports this automation system.
 
-**Expected structure with hooks:**
+### Adding New Projects
+
+For any new project, choose your preferred hook approach:
+
+**Quick Shared Hooks (Option A):**
+```bash
+cd /path/to/new-project
+ln -s ~/mcp-servers/gemini-mcp/.claude .claude
 ```
-your-project/
-├── .claude/
-│   ├── hooks.json               ← Hook configuration
-│   └── scripts/
-│       └── slim_gemini_hook.py  ← Hook execution script
-├── gemini_mcp_server.py         ← The MCP server file
-└── your-claude-config.json      ← Your Claude MCP configuration
+
+**Independent Hooks (Option B):**
+```bash
+cd /path/to/new-project
+mkdir -p .claude/scripts
+cp ~/mcp-servers/gemini-mcp/.claude/hooks.json .claude/
+cp ~/mcp-servers/gemini-mcp/.claude/scripts/slim_gemini_hook.py .claude/scripts/
 ```
 
-**Note:** Hooks provide automated pre-edit analysis and commit review but are optional. The core MCP tools work without them.
+**No Hooks (Option C):**
+```bash
+# Do nothing - all MCP tools work without hooks
+```
+
+**Remember:** All projects get core MCP tools regardless of hook choice. Hooks are optional automation **only for Claude Code ecosystem users** (Claude Code standalone or VS Code with Claude Code extension).
 
 ## What's Next?
 
