@@ -112,7 +112,11 @@ Add to your AI client configurations:
 
 ---
 
+## Please Read
+
 **📖 [Complete Setup Guide](SETUP/SETUP.md) - Get running in 5 minutes!**
+
+**⚡ [Slash Commands Guide](.claude/README-SLASH-COMMANDS.md) - 20+ shortcuts for instant access!**
 
 ---
 
