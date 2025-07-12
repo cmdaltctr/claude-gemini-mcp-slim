@@ -1,0 +1,421 @@
+{
+  "commands": {
+    "gemini": {
+      "description": "Ask Gemini any development question",
+      "usage": "/gemini [your question]",
+      "examples": [
+        "/gemini How do I implement JWT authentication in Node.js?",
+        "/gemini What's the difference between React hooks and class components?"
+      ],
+      "action": {
+        "type": "mcp_tool",
+        "tool": "gemini_quick_query",
+        "parameters": {
+          "query": "{args}"
+        }
+      }
+    },
+    "g": {
+      "description": "Quick alias for /gemini",
+      "usage": "/g [your question]",
+      "examples": [
+        "/g Best practices for error handling in Python?",
+        "/g How to optimize SQL queries?"
+      ],
+      "action": {
+        "type": "mcp_tool",
+        "tool": "gemini_quick_query",
+        "parameters": {
+          "query": "{args}"
+        }
+      }
+    },
+    "analyze": {
+      "description": "Analyze code or files with comprehensive insights",
+      "usage": "/analyze [file_path] [analysis_type:optional]",
+      "examples": [
+        "/analyze src/auth.py security",
+        "/analyze components/UserForm.vue",
+        "/analyze ./utils/database.js performance"
+      ],
+      "action": {
+        "type": "mcp_tool",
+        "tool": "gemini_analyze_code",
+        "parameters": {
+          "code_content": "{file_content}",
+          "analysis_type": "{arg2:comprehensive}"
+        }
+      }
+    },
+    "a": {
+      "description": "Quick alias for /analyze",
+      "usage": "/a [file_path] [analysis_type:optional]",
+      "examples": [
+        "/a auth.py",
+        "/a UserForm.vue security"
+      ],
+      "action": {
+        "type": "mcp_tool", 
+        "tool": "gemini_analyze_code",
+        "parameters": {
+          "code_content": "{file_content}",
+          "analysis_type": "{arg2:comprehensive}"
+        }
+      }
+    },
+    "codebase": {
+      "description": "Analyze entire directories using Gemini's 1M token context",
+      "usage": "/codebase [directory_path] [scope:optional]",
+      "examples": [
+        "/codebase ./src",
+        "/codebase ./components security",
+        "/codebase . all"
+      ],
+      "action": {
+        "type": "mcp_tool",
+        "tool": "gemini_codebase_analysis", 
+        "parameters": {
+          "directory_path": "{arg1}",
+          "analysis_scope": "{arg2:all}"
+        }
+      }
+    },
+    "c": {
+      "description": "Quick alias for /codebase",
+      "usage": "/c [directory_path] [scope:optional]",
+      "examples": [
+        "/c ./src",
+        "/c . security"
+      ],
+      "action": {
+        "type": "mcp_tool",
+        "tool": "gemini_codebase_analysis",
+        "parameters": {
+          "directory_path": "{arg1}",
+          "analysis_scope": "{arg2:all}"
+        }
+      }
+    },
+    "security": {
+      "description": "Security-focused analysis of code or directories",
+      "usage": "/security [target_path]",
+      "examples": [
+        "/security src/auth.py",
+        "/security ./api",
+        "/security components/LoginForm.vue"
+      ],
+      "action": {
+        "type": "smart_analyze",
+        "security_focus": true,
+        "parameters": {
+          "target": "{arg1}",
+          "analysis_type": "security"
+        }
+      }
+    },
+    "s": {
+      "description": "Quick alias for /security",
+      "usage": "/s [target_path]",
+      "examples": [
+        "/s auth.py",
+        "/s ./api"
+      ],
+      "action": {
+        "type": "smart_analyze",
+        "security_focus": true,
+        "parameters": {
+          "target": "{arg1}",
+          "analysis_type": "security"
+        }
+      }
+    },
+    "performance": {
+      "description": "Performance-focused analysis of code or directories",
+      "usage": "/performance [target_path]",
+      "examples": [
+        "/performance src/database.py",
+        "/performance ./components",
+        "/performance utils/api.js"
+      ],
+      "action": {
+        "type": "smart_analyze",
+        "performance_focus": true,
+        "parameters": {
+          "target": "{arg1}",
+          "analysis_type": "performance"
+        }
+      }
+    },
+    "p": {
+      "description": "Quick alias for /performance", 
+      "usage": "/p [target_path]",
+      "examples": [
+        "/p database.py",
+        "/p ./utils"
+      ],
+      "action": {
+        "type": "smart_analyze",
+        "performance_focus": true,
+        "parameters": {
+          "target": "{arg1}",
+          "analysis_type": "performance"
+        }
+      }
+    },
+    "architecture": {
+      "description": "Architecture-focused analysis of code or directories",
+      "usage": "/architecture [target_path]",
+      "examples": [
+        "/architecture ./src",
+        "/architecture components/App.vue",
+        "/architecture ."
+      ],
+      "action": {
+        "type": "smart_analyze",
+        "architecture_focus": true,
+        "parameters": {
+          "target": "{arg1}",
+          "analysis_type": "architecture"
+        }
+      }
+    },
+    "arch": {
+      "description": "Quick alias for /architecture",
+      "usage": "/arch [target_path]",
+      "examples": [
+        "/arch ./src",
+        "/arch ."
+      ],
+      "action": {
+        "type": "smart_analyze",
+        "architecture_focus": true,
+        "parameters": {
+          "target": "{arg1}",
+          "analysis_type": "architecture"
+        }
+      }
+    },
+    "explain": {
+      "description": "Explain code concepts, functions, or error messages",
+      "usage": "/explain [code_or_concept]",
+      "examples": [
+        "/explain async/await in JavaScript",
+        "/explain const handleSubmit = async (data) => {...}",
+        "/explain TypeError: Cannot read property 'map' of undefined"
+      ],
+      "action": {
+        "type": "mcp_tool",
+        "tool": "gemini_quick_query",
+        "parameters": {
+          "query": "Explain this code or concept in detail: {args}"
+        }
+      }
+    },
+    "e": {
+      "description": "Quick alias for /explain",
+      "usage": "/e [code_or_concept]",
+      "examples": [
+        "/e React useEffect",
+        "/e Promise.all vs Promise.allSettled"
+      ],
+      "action": {
+        "type": "mcp_tool",
+        "tool": "gemini_quick_query",
+        "parameters": {
+          "query": "Explain this code or concept in detail: {args}"
+        }
+      }
+    },
+    "debug": {
+      "description": "Debug assistance for code issues and errors",
+      "usage": "/debug [code_or_error]",
+      "examples": [
+        "/debug ReferenceError: fetch is not defined",
+        "/debug Why is my React component not re-rendering?",
+        "/debug function calculateTotal() { return items.reduce(...) }"
+      ],
+      "action": {
+        "type": "mcp_tool",
+        "tool": "gemini_quick_query",
+        "parameters": {
+          "query": "Help me debug this issue: {args}. Provide specific solutions and common causes."
+        }
+      }
+    },
+    "d": {
+      "description": "Quick alias for /debug",
+      "usage": "/d [code_or_error]",
+      "examples": [
+        "/d Cannot resolve module 'react'",
+        "/d Memory leak in useEffect"
+      ],
+      "action": {
+        "type": "mcp_tool",
+        "tool": "gemini_quick_query",
+        "parameters": {
+          "query": "Help me debug this issue: {args}. Provide specific solutions and common causes."
+        }
+      }
+    },
+    "review": {
+      "description": "Code review with suggestions for improvement",
+      "usage": "/review [file_path]",
+      "examples": [
+        "/review src/components/Header.vue",
+        "/review utils/validation.js",
+        "/review api/auth.py"
+      ],
+      "action": {
+        "type": "mcp_tool",
+        "tool": "gemini_analyze_code",
+        "parameters": {
+          "code_content": "{file_content}",
+          "analysis_type": "comprehensive"
+        },
+        "prompt_prefix": "Please review this code and provide specific suggestions for improvement, best practices, and potential issues:"
+      }
+    },
+    "r": {
+      "description": "Quick alias for /review",
+      "usage": "/r [file_path]",
+      "examples": [
+        "/r Header.vue",
+        "/r validation.js"
+      ],
+      "action": {
+        "type": "mcp_tool",
+        "tool": "gemini_analyze_code",
+        "parameters": {
+          "code_content": "{file_content}",
+          "analysis_type": "comprehensive"
+        },
+        "prompt_prefix": "Please review this code and provide specific suggestions for improvement, best practices, and potential issues:"
+      }
+    },
+    "research": {
+      "description": "Research libraries, frameworks, and best practices",
+      "usage": "/research [topic]",
+      "examples": [
+        "/research best state management for Vue 3",
+        "/research Python async web frameworks comparison",
+        "/research React testing strategies 2025"
+      ],
+      "action": {
+        "type": "mcp_tool",
+        "tool": "gemini_quick_query",
+        "parameters": {
+          "query": "Research and provide comprehensive information about: {args}. Include current best practices, popular libraries, and code examples."
+        }
+      }
+    },
+    "optimize": {
+      "description": "Get optimization suggestions for code or architecture",
+      "usage": "/optimize [target_path]", 
+      "examples": [
+        "/optimize src/api/queries.js",
+        "/optimize ./components",
+        "/optimize database/models.py"
+      ],
+      "action": {
+        "type": "smart_analyze",
+        "optimization_focus": true,
+        "parameters": {
+          "target": "{arg1}",
+          "analysis_type": "performance"
+        },
+        "prompt_prefix": "Analyze this code for optimization opportunities. Focus on performance improvements, memory usage, and efficiency:"
+      }
+    },
+    "test": {
+      "description": "Generate test suggestions and strategies",
+      "usage": "/test [file_path]",
+      "examples": [
+        "/test src/utils/validation.js",
+        "/test components/UserForm.vue",
+        "/test api/auth.py"
+      ],
+      "action": {
+        "type": "mcp_tool",
+        "tool": "gemini_analyze_code",
+        "parameters": {
+          "code_content": "{file_content}",
+          "analysis_type": "comprehensive"
+        },
+        "prompt_prefix": "Analyze this code and suggest comprehensive testing strategies, test cases, and testing frameworks:"
+      }
+    },
+    "fix": {
+      "description": "Get specific solutions for code issues",
+      "usage": "/fix [description_or_code]",
+      "examples": [
+        "/fix CORS error in Express.js API",
+        "/fix React component infinite re-render loop",
+        "/fix SQL injection vulnerability in login function"
+      ],
+      "action": {
+        "type": "mcp_tool",
+        "tool": "gemini_quick_query",
+        "parameters": {
+          "query": "Provide specific, actionable solutions to fix this issue: {args}. Include code examples and step-by-step instructions."
+        }
+      }
+    },
+    "help": {
+      "description": "Show all available Gemini MCP slash commands",
+      "usage": "/help [command_name:optional]",
+      "examples": [
+        "/help",
+        "/help analyze",
+        "/help security"
+      ],
+      "action": {
+        "type": "show_help",
+        "target": "{arg1:all}"
+      }
+    },
+    "status": {
+      "description": "Check Gemini MCP connection and model status",
+      "usage": "/status",
+      "examples": [
+        "/status"
+      ],
+      "action": {
+        "type": "check_status"
+      }
+    },
+    "models": {
+      "description": "Show available Gemini models and current configuration",
+      "usage": "/models",
+      "examples": [
+        "/models"
+      ],
+      "action": {
+        "type": "show_models"
+      }
+    }
+  },
+  "categories": {
+    "Core Tools": ["gemini", "g", "analyze", "a", "codebase", "c"],
+    "Analysis Focus": ["security", "s", "performance", "p", "architecture", "arch"],
+    "Developer Assistance": ["explain", "e", "debug", "d", "review", "r", "research"],
+    "Code Improvement": ["optimize", "test", "fix"],
+    "Utilities": ["help", "status", "models"]
+  },
+  "configuration": {
+    "mcp_server": "gemini-mcp",
+    "default_analysis_type": "comprehensive",
+    "default_codebase_scope": "all",
+    "max_file_size": "80KB",
+    "supported_file_types": [".py", ".js", ".ts", ".vue", ".html", ".css", ".scss", ".jsx", ".tsx", ".java", ".cpp", ".c", ".rs", ".json", ".yaml", ".toml", ".md"]
+  },
+  "smart_analyze_logic": {
+    "file_detection": "If target is a file, use gemini_analyze_code",
+    "directory_detection": "If target is a directory, use gemini_codebase_analysis", 
+    "analysis_type_mapping": {
+      "security": "security",
+      "performance": "performance", 
+      "architecture": "architecture",
+      "optimization": "performance"
+    }
+  }
+}
