@@ -1,6 +1,11 @@
 # Claude Gemini MCP Integration
 
-**Version 1.1.0**
+![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
+![Security](https://img.shields.io/badge/security-hardened-green.svg)
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Python](https://img.shields.io/badge/python-3.8+-brightgreen.svg)
+![Status](https://img.shields.io/badge/status-production%20ready-green.svg)
+![Slash Commands](https://img.shields.io/badge/slash%20commands-20+-orange.svg)
 
 **A lightweight integration that brings Google's Gemini AI capabilities to Claude Code through MCP (Model Context Protocol)**
 
