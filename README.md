@@ -61,7 +61,7 @@ Claude Code ←→ MCP Server ←→ Gemini CLI/API ←→ Google Gemini Models
 
 ## Quick Start
 
-### ** Shared MCP Setup**
+### Shared MCP Setup
 
 This MCP uses a **shared system architecture** that serves multiple AI clients (Claude Desktop, Claude Code, Windsurf, etc.) from one installation:
 
