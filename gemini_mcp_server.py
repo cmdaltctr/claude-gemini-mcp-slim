@@ -368,7 +368,12 @@ Provide comprehensive analysis including:
 7. Best practices compliance
 8. Specific recommendations for improvements
 
-Be thorough and provide actionable insights. Respond in plain text format without markdown. Break content into clear paragraphs when needed. Format your response like a helpful AI assistant would - clear, well-structured, and easy to read with proper line breaks between ideas."""
+CRITICAL FORMATTING: Output ONLY plain text. Do NOT use:
+- No ### headers or ** bold text or * italics  
+- No --- separators or bullet points
+- No markdown formatting whatsoever
+- No special characters for emphasis
+Write exactly like a plain text document. Use simple numbered points and paragraph breaks only."""
             
             result = await execute_gemini_cli_streaming(prompt, "gemini_analyze_code")
             
@@ -416,7 +421,16 @@ Provide comprehensive analysis including:
 7. Testing coverage and quality assurance
 8. Documentation and code clarity
 
-Be thorough and detailed in your analysis. Focus on actionable insights and recommendations. Respond in plain text format without markdown. Break content into clear paragraphs when needed. Format your response like a helpful AI assistant would - clear, well-structured, and easy to read with proper line breaks between ideas."""
+MANDATORY PLAIN TEXT FORMAT - NO EXCEPTIONS:
+Output must be 100% plain text. Do NOT use:
+### (pound signs) ** (asterisks) --- (dashes) * (stars) 
+Do NOT create headers or bold text
+Do NOT use any special symbols for formatting
+Write like a simple text file with only:
+- Regular paragraphs
+- Numbered points (1. 2. 3.)
+- Line breaks between sections
+Terminal cannot display markdown - use only plain characters"""
             logger.info(f"Constructed prompt for Gemini CLI (length: {len(prompt)} chars)")
             
             result = await execute_gemini_cli_streaming(prompt, "gemini_codebase_analysis")
