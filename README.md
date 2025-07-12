@@ -1,6 +1,6 @@
 # Claude Gemini MCP Integration
 
-**Version 1.0.0**
+**Version 1.1.0**
 
 **A lightweight integration that brings Google's Gemini AI capabilities to Claude Code through MCP (Model Context Protocol)**
 
@@ -15,6 +15,12 @@ This project creates a bridge between Claude Code and Google's Gemini AI models,
 - **Quick Query** - Ask Gemini any development question instantly
 - **Code Analysis** - Deep analysis of specific code sections with security, performance, and architecture insights
 - **Codebase Analysis** - Full project analysis using Gemini's massive context window
+
+### **Easy-to-Use Slash Commands**
+
+- **20+ Slash Commands** - Simple shortcuts like `/g`, `/analyze`, `/security` for instant access
+- **Smart Routing** - Commands automatically choose the right tool based on your target
+- **Copy-Paste Ready** - Complete `.claude/` directory with all configurations included
 
 ### **Smart Model Selection**
 
@@ -249,18 +255,21 @@ GEMINI_PRO_MODEL=gemini-2.5-pro       # Override default models
 
 ```
 claude-gemini-mcp-slim/
-├── .claude/                  # Reference hook configuration
-│   ├── hooks.json           # Hook definitions for Claude Code
+├── .claude/                           # Complete slash commands system
+│   ├── hooks.json                     # Hook definitions for Claude Code
+│   ├── slash-commands.json            # 20+ slash command configurations
+│   ├── README-SLASH-COMMANDS.md       # Slash commands documentation
 │   └── scripts/
-│       └── slim_gemini_hook.py  # Hook execution script
-├── gemini_mcp_server.py      # Main MCP server
-├── gemini_helper.py          # Standalone CLI utility
-├── requirements.txt          # Python dependencies (for reference)
+│       ├── slim_gemini_hook.py        # Hook execution script
+│       └── slash_commands.py          # Slash commands implementation
+├── gemini_mcp_server.py               # Main MCP server
+├── gemini_helper.py                   # Standalone CLI utility
+├── requirements.txt                   # Python dependencies (for reference)
 ├── SETUP/
-│   ├── SETUP.md             # Complete setup guide
+│   ├── SETUP.md                      # Complete setup guide
 │   └── codebase-security-analysis.jpg
-├── CLAUDE.md                 # Comprehensive documentation
-└── README.md                 # This overview
+├── CLAUDE.md                          # Comprehensive documentation
+└── README.md                          # This overview
 ```
 
 ### Deployed Structure (After Setup)
@@ -270,10 +279,13 @@ claude-gemini-mcp-slim/
 ├── shared-mcp-env/                         ← Virtual environment for all MCPs
 └── gemini-mcp/                             ← Complete Gemini MCP package
     ├── gemini_mcp_server.py                ← Main MCP server
-    └── .claude/                            ← Hook configuration
+    └── .claude/                            ← Complete slash commands system
         ├── hooks.json                      ← Hook definitions
+        ├── slash-commands.json             ← 20+ slash command configurations
+        ├── README-SLASH-COMMANDS.md        ← Slash commands documentation
         └── scripts/
-            └── slim_gemini_hook.py         ← Hook execution script
+            ├── slim_gemini_hook.py         ← Hook execution script
+            └── slash_commands.py           ← Slash commands implementation
 
 your-projects/
 ├── project-a/
@@ -309,8 +321,9 @@ ls -la .claude
 - Pre-edit analysis before file modifications
 - Pre-commit security and quality reviews
 - Session summaries when Claude Code sessions end
+- **20+ slash commands** like `/g`, `/analyze`, `/security` for instant access
 
-**Without the symlink:** MCP tools work manually, but automated hooks won't trigger in your project.
+**Without the symlink:** MCP tools work manually, but automated hooks and slash commands won't be available in your project.
 
 ## Troubleshooting
 
@@ -406,7 +419,71 @@ This project is designed to be lightweight and focused. The core functionality i
 - Performance optimizations
 - Documentation improvements
 
+## Slash Commands
+
+### **Quick Access to All Tools**
+
+No need to remember complex MCP tool names! Use simple slash commands:
+
+```bash
+# Core tools
+/gemini "How do I implement OAuth2?"    # or /g
+/analyze auth.py security               # or /a
+/codebase ./src performance             # or /c
+
+# Focus commands  
+/security ./api                         # or /s
+/performance database.js                # or /p
+/architecture ./components              # or /arch
+
+# Developer assistance
+/explain "React useEffect"              # or /e
+/debug "ReferenceError: fetch undefined" # or /d
+/review UserForm.vue                    # or /r
+/research "Vue 3 best practices"
+/optimize queries.py
+/test validation.js
+/fix "CORS error in Express"
+```
+
+### **Easy Setup**
+
+Copy the entire `.claude/` directory to any project:
+
+```bash
+# Method 1: Direct copy
+cp -r /path/to/claude-gemini-mcp-slim/.claude /your/project/
+
+# Method 2: Symlink (recommended for shared MCP)
+cd /your/project
+ln -s ~/mcp-servers/gemini-mcp/.claude .claude
+```
+
+**📖 [Complete Slash Commands Guide](.claude/README-SLASH-COMMANDS.md)**
+
 ## Changelog
+
+### Version 1.1.0 (2025-01-12)
+
+**New Features:**
+- **20+ Slash Commands** - Easy shortcuts like `/g`, `/analyze`, `/security`
+- **Smart Command Routing** - Automatically chooses the right MCP tool
+- **Copy-Paste Ready** - Complete `.claude/` directory with all configurations
+- **Enhanced Documentation** - Comprehensive slash commands guide
+- **Improved Gitignore** - Protects user settings while sharing configurations
+
+**Slash Commands Added:**
+- Core: `/gemini`, `/g`, `/analyze`, `/a`, `/codebase`, `/c`
+- Focus: `/security`, `/s`, `/performance`, `/p`, `/architecture`, `/arch`
+- Assistance: `/explain`, `/e`, `/debug`, `/d`, `/review`, `/r`, `/research`
+- Improvement: `/optimize`, `/test`, `/fix`
+- Utilities: `/help`, `/status`, `/models`
+
+**Technical Improvements:**
+- Smart analysis logic that detects file vs directory targets
+- Parameter mapping system for seamless MCP integration
+- Comprehensive help system with examples and usage guides
+- Error handling with helpful messages and usage hints
 
 ### Version 1.0.0 (2025-01-12)
 

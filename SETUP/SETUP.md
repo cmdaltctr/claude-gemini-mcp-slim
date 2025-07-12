@@ -44,10 +44,14 @@ mkdir -p gemini-mcp/.claude/scripts
 # Download files from this repository to gemini-mcp/:
 cp /path/to/downloaded/gemini_mcp_server.py gemini-mcp/
 cp /path/to/downloaded/.claude/hooks.json gemini-mcp/.claude/
+cp /path/to/downloaded/.claude/slash-commands.json gemini-mcp/.claude/
+cp /path/to/downloaded/.claude/README-SLASH-COMMANDS.md gemini-mcp/.claude/
 cp /path/to/downloaded/.claude/scripts/slim_gemini_hook.py gemini-mcp/.claude/scripts/
+cp /path/to/downloaded/.claude/scripts/slash_commands.py gemini-mcp/.claude/scripts/
 
-# Make hook script executable
+# Make scripts executable
 chmod +x gemini-mcp/.claude/scripts/slim_gemini_hook.py
+chmod +x gemini-mcp/.claude/scripts/slash_commands.py
 ```
 
 **Why this architecture?**
@@ -120,6 +124,7 @@ ln -s ~/mcp-servers/gemini-mcp/.claude .claude
 - ✅ **Consistency** - all projects use identical hook logic
 - ✅ **Quick setup** - one command per project
 - ✅ **Version control friendly** - symlinks can be committed
+- ✅ **20+ slash commands** - Instant access to shortcuts like `/g`, `/analyze`, `/security`
 
 #### **Option B: Copy Hook Files Directly**
 
@@ -129,7 +134,10 @@ ln -s ~/mcp-servers/gemini-mcp/.claude .claude
 cd /path/to/your-project
 mkdir -p .claude/scripts
 cp ~/mcp-servers/gemini-mcp/.claude/hooks.json .claude/
+cp ~/mcp-servers/gemini-mcp/.claude/slash-commands.json .claude/
+cp ~/mcp-servers/gemini-mcp/.claude/README-SLASH-COMMANDS.md .claude/
 cp ~/mcp-servers/gemini-mcp/.claude/scripts/slim_gemini_hook.py .claude/scripts/
+cp ~/mcp-servers/gemini-mcp/.claude/scripts/slash_commands.py .claude/scripts/
 ```
 
 **Benefits:**
@@ -155,6 +163,7 @@ cp ~/mcp-servers/gemini-mcp/.claude/scripts/slim_gemini_hook.py .claude/scripts/
 - 🔄 **Pre-edit analysis** - AI reviews code before making changes
 - 🔍 **Pre-commit reviews** - AI checks changes before git commits
 - 📋 **Session summaries** - AI provides session recaps
+- ⚡ **20+ slash commands** - Quick shortcuts like `/g`, `/analyze`, `/security`
 
 **Important:** Hook functionality **only works in Claude Code ecosystem** (Claude Code standalone or VS Code with Claude Code extension). All other clients (Cursor, Windsurf, Claude Desktop, VS Code with other extensions) ignore the `.claude` folder but still get all core MCP tools.
 
@@ -281,11 +290,13 @@ After setup, your structure should look like:
 │   └── lib/python3.x/site-packages/       ← Shared dependencies (mcp, google-generativeai, etc.)
 └── gemini-mcp/                             ← Complete Gemini MCP package
     ├── gemini_mcp_server.py                ← Main MCP server
-    └── .claude/                            ← Hook configuration
+    └── .claude/                            ← Complete slash commands system
         ├── hooks.json                      ← Hook definitions
-        ├── scripts/
-        │   └── slim_gemini_hook.py         ← Hook execution script
-        └── settings.local.json             ← Additional settings
+        ├── slash-commands.json             ← 20+ slash command configurations
+        ├── README-SLASH-COMMANDS.md        ← Slash commands documentation
+        └── scripts/
+            ├── slim_gemini_hook.py         ← Hook execution script
+            └── slash_commands.py           ← Slash commands implementation
 ```
 
 ### Project Structure (with hooks enabled):
@@ -513,7 +524,10 @@ ln -s ~/mcp-servers/gemini-mcp/.claude .claude
 cd /path/to/new-project
 mkdir -p .claude/scripts
 cp ~/mcp-servers/gemini-mcp/.claude/hooks.json .claude/
+cp ~/mcp-servers/gemini-mcp/.claude/slash-commands.json .claude/
+cp ~/mcp-servers/gemini-mcp/.claude/README-SLASH-COMMANDS.md .claude/
 cp ~/mcp-servers/gemini-mcp/.claude/scripts/slim_gemini_hook.py .claude/scripts/
+cp ~/mcp-servers/gemini-mcp/.claude/scripts/slash_commands.py .claude/scripts/
 ```
 
 **No Hooks (Option C):**
