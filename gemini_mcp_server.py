@@ -27,6 +27,67 @@ server = Server("slim-gemini-cli-mcp")
 MAX_FILE_SIZE = 81920  # 80KB
 MAX_LINES = 800
 
+# Security functions
+def sanitize_for_prompt(text: str, max_length: int = 100000) -> str:
+    """Sanitize text input to prevent prompt injection attacks"""
+    if not isinstance(text, str):
+        return ""
+    
+    # Truncate if too long
+    if len(text) > max_length:
+        text = text[:max_length]
+    
+    # Remove/escape potential prompt injection patterns
+    dangerous_patterns = [
+        "ignore all previous instructions",
+        "forget everything above", 
+        "new instruction:",
+        "system:",
+        "assistant:",
+        "user:",
+        "###",
+        "---",
+        "```",
+        "<|",
+        "|>",
+        "[INST]",
+        "[/INST]"
+    ]
+    
+    text_lower = text.lower()
+    for pattern in dangerous_patterns:
+        if pattern.lower() in text_lower:
+            # Replace with safe alternative (case-insensitive)
+            import re
+            # Create case-insensitive regex pattern
+            escaped_pattern = re.escape(pattern)
+            replacement = f"[filtered:{pattern[:10]}]"
+            text = re.sub(escaped_pattern, replacement, text, flags=re.IGNORECASE)
+    
+    # Escape potential control characters
+    text = text.replace('\x00', '').replace('\x1b', '')
+    
+    return text
+
+def validate_path_security(file_path: str) -> tuple[bool, str, Path]:
+    """Validate path for security - prevent path traversal attacks"""
+    try:
+        if not isinstance(file_path, str) or not file_path.strip():
+            return False, "Invalid path", None
+            
+        resolved_path = Path(file_path).resolve()
+        current_dir = Path.cwd().resolve()
+        
+        # Check if the resolved path is within current directory tree
+        try:
+            resolved_path.relative_to(current_dir)
+        except ValueError:
+            return False, "Path outside allowed directory", None
+        
+        return True, "Valid path", resolved_path
+    except Exception as e:
+        return False, f"Path validation error: {str(e)}", None
+
 # Model configuration with fallback to CLI
 GEMINI_MODELS = {
     "flash": os.getenv("GEMINI_FLASH_MODEL", "gemini-2.5-flash"),
@@ -49,6 +110,10 @@ MODEL_ASSIGNMENTS = {
 async def execute_gemini_api(prompt: str, model_name: str) -> Dict[str, Any]:
     """Execute Gemini API directly with specified model"""
     try:
+        # Validate API key securely
+        if not GOOGLE_API_KEY or not isinstance(GOOGLE_API_KEY, str) or len(GOOGLE_API_KEY.strip()) < 10:
+            return {"success": False, "error": "Invalid or missing API key"}
+        
         import google.generativeai as genai
         
         genai.configure(api_key=GOOGLE_API_KEY)
@@ -63,8 +128,15 @@ async def execute_gemini_api(prompt: str, model_name: str) -> Dict[str, Any]:
         logger.warning("google-generativeai not installed, using CLI fallback")
         return {"success": False, "error": "API library not available"}
     except Exception as e:
-        logger.error(f"API call failed: {str(e)}")
-        return {"success": False, "error": str(e)}
+        # Sanitize error message to prevent sensitive information leakage
+        error_message = str(e)
+        import re
+        error_message = re.sub(r'AIzaSy[A-Za-z0-9_-]{33}', '[API_KEY_REDACTED]', error_message)
+        error_message = re.sub(r'sk-[A-Za-z0-9_-]{32,}', '[API_KEY_REDACTED]', error_message)
+        error_message = re.sub(r'Bearer [A-Za-z0-9_.-]{10,}', '[TOKEN_REDACTED]', error_message)
+        
+        logger.error(f"API call failed: {error_message}")
+        return {"success": False, "error": error_message}
 
 @server.list_tools()
 async def list_tools() -> List[Tool]:
@@ -136,9 +208,26 @@ async def execute_gemini_cli_streaming(prompt: str, task_type: str = "gemini_qui
     logger.info(f"Prompt length: {len(prompt)} characters")
     logger.info(f"Task type: {task_type}")
     
+    # Input validation
+    if not isinstance(prompt, str) or len(prompt.strip()) == 0:
+        return {"success": False, "error": "Invalid prompt: must be non-empty string"}
+    
+    if len(prompt) > 1000000:  # 1MB limit
+        return {"success": False, "error": "Prompt too large (max 1MB)"}
+    
+    if task_type not in MODEL_ASSIGNMENTS:
+        return {"success": False, "error": "Invalid task type"}
+    
     # Select appropriate model
     model_type = MODEL_ASSIGNMENTS.get(task_type, "flash")
     model_name = GEMINI_MODELS[model_type]
+    
+    # Validate model name
+    if not isinstance(model_name, str) or not model_name.strip():
+        return {"success": False, "error": "Invalid model name"}
+    if not all(c.isalnum() or c in '.-' for c in model_name):
+        return {"success": False, "error": "Invalid model name characters"}
+    
     logger.info(f"Selected model: {model_name} ({model_type})")
     
     try:
@@ -150,16 +239,15 @@ async def execute_gemini_cli_streaming(prompt: str, task_type: str = "gemini_qui
                 return result
             logger.warning("API call failed, falling back to CLI")
         
-        # Fallback to CLI
-        escaped_prompt = shlex.quote(prompt)
-        cmd = f"gemini -m {model_name} -p {escaped_prompt}"
+        # Fallback to CLI - SECURE VERSION (no shell=True)
+        cmd_args = ["gemini", "-m", model_name, "-p", prompt]
         logger.info(f"Executing command: gemini -m {model_name} -p [prompt length: {len(prompt)}]")
         
-        process = await asyncio.create_subprocess_shell(
-            cmd,
+        process = await asyncio.create_subprocess_exec(
+            *cmd_args,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
-            env=os.environ.copy()
+            env={"PATH": os.environ.get("PATH", "")}  # Minimal environment
         )
         logger.info(f"Process created with PID: {process.pid}")
         
@@ -222,10 +310,21 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
     logger.debug(f"Full arguments: {arguments}")
     try:
         if name == "gemini_quick_query":
-            query = arguments["query"]
+            query = arguments.get("query", "")
             context = arguments.get("context", "")
             
-            prompt = f"Context: {context}\n\nQuestion: {query}\n\nProvide a concise answer in plain text format. Do not use markdown formatting. Break content into clear paragraphs when needed. Format your response like a helpful AI assistant would - clear, well-structured, and easy to read with proper line breaks between ideas." if context else f"Question: {query}\n\nProvide a concise answer in plain text format. Do not use markdown formatting. Break content into clear paragraphs when needed. Format your response like a helpful AI assistant would - clear, well-structured, and easy to read with proper line breaks between ideas."
+            # Input validation and sanitization
+            if not isinstance(query, str) or not query.strip():
+                return [TextContent(type="text", text="Error: Query must be a non-empty string")]
+            
+            if not isinstance(context, str):
+                return [TextContent(type="text", text="Error: Context must be a string")]
+            
+            # Sanitize inputs to prevent prompt injection
+            sanitized_query = sanitize_for_prompt(query, max_length=10000)
+            sanitized_context = sanitize_for_prompt(context, max_length=50000)
+            
+            prompt = f"Context: {sanitized_context}\n\nQuestion: {sanitized_query}\n\nProvide a concise answer in plain text format. Do not use markdown formatting. Break content into clear paragraphs when needed. Format your response like a helpful AI assistant would - clear, well-structured, and easy to read with proper line breaks between ideas." if sanitized_context else f"Question: {sanitized_query}\n\nProvide a concise answer in plain text format. Do not use markdown formatting. Break content into clear paragraphs when needed. Format your response like a helpful AI assistant would - clear, well-structured, and easy to read with proper line breaks between ideas."
             
             result = await execute_gemini_cli_streaming(prompt, "gemini_quick_query")
             
@@ -235,8 +334,15 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
                 return [TextContent(type="text", text=f"Query failed: {result['error']}")]
         
         elif name == "gemini_analyze_code":
-            code_content = arguments["code_content"]
+            code_content = arguments.get("code_content", "")
             analysis_type = arguments.get("analysis_type", "comprehensive")
+            
+            # Input validation
+            if not isinstance(code_content, str) or not code_content.strip():
+                return [TextContent(type="text", text="Error: Code content must be a non-empty string")]
+            
+            if not isinstance(analysis_type, str) or analysis_type not in ["comprehensive", "security", "performance", "architecture"]:
+                return [TextContent(type="text", text="Error: Invalid analysis type")]
             
             if len(code_content) > MAX_FILE_SIZE:
                 return [TextContent(type="text", text=f"⚠️ Code too large ({len(code_content)} bytes). Max: {MAX_FILE_SIZE} bytes")]
@@ -245,9 +351,12 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
             if line_count > MAX_LINES:
                 return [TextContent(type="text", text=f"⚠️ Too many lines ({line_count}). Max: {MAX_LINES} lines")]
             
+            # Sanitize inputs to prevent prompt injection
+            sanitized_code = sanitize_for_prompt(code_content, max_length=MAX_FILE_SIZE)
+            
             prompt = f"""Perform a {analysis_type} analysis of this code:
 
-{code_content}
+{sanitized_code}
 
 Provide comprehensive analysis including:
 1. Code structure and organization
@@ -269,14 +378,33 @@ Be thorough and provide actionable insights. Respond in plain text format withou
                 return [TextContent(type="text", text=f"Analysis failed: {result['error']}")]
         
         elif name == "gemini_codebase_analysis":
-            directory_path = arguments["directory_path"]
+            directory_path = arguments.get("directory_path", "")
             analysis_scope = arguments.get("analysis_scope", "all")
+            
+            # Input validation
+            if not isinstance(directory_path, str) or not directory_path.strip():
+                return [TextContent(type="text", text="Error: Directory path must be a non-empty string")]
+            
+            if not isinstance(analysis_scope, str) or analysis_scope not in ["structure", "security", "performance", "patterns", "all"]:
+                return [TextContent(type="text", text="Error: Invalid analysis scope")]
+            
             logger.info(f"Initiating codebase analysis for directory: {directory_path} with scope: {analysis_scope}")
             
-            if not Path(directory_path).exists():
+            # Path security validation
+            is_valid, error_msg, resolved_path = validate_path_security(directory_path)
+            if not is_valid:
+                return [TextContent(type="text", text=f"❌ {error_msg}")]
+            
+            if not resolved_path.exists():
                 return [TextContent(type="text", text=f"❌ Directory not found: {directory_path}")]
             
-            prompt = f"""Analyze this codebase in directory '{directory_path}' (scope: {analysis_scope}):
+            if not resolved_path.is_dir():
+                return [TextContent(type="text", text=f"❌ Path is not a directory: {directory_path}")]
+            
+            # Use sanitized directory name for prompt (just the name, not full path)
+            safe_dir_name = sanitize_for_prompt(resolved_path.name, max_length=100)
+            
+            prompt = f"""Analyze this codebase in directory '{safe_dir_name}' (scope: {analysis_scope}):
 
 Provide comprehensive analysis including:
 1. Overall architecture and design patterns
