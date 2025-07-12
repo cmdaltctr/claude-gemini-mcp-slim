@@ -555,3 +555,11 @@ MIT License
 Copyright (c) 2025 Dr Muhammad Aizat Hawari
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+
+## Credits
+
+Special thanks to the following tools and platforms that assisted during the research and development of this MCP:
+
+- **[Claude](https://claude.ai/)** - AI assistant for code development and documentation
+- **[Perplexity](https://www.perplexity.ai/)** - AI-powered research and information gathering
+- **[Warp Terminal](https://www.warp.dev/)** - Modern terminal for enhanced development workflow
