@@ -184,6 +184,21 @@ cp ~/mcp-servers/gemini-mcp/.claude/scripts/slim_gemini_hook.py .claude/scripts/
    - Look for "gemini-mcp" in available tools
    - Try asking: "Use gemini_quick_query to ask what is 2+2"
 
+## Standalone Helper CLI
+
+### `gemini_helper.py`
+- **Purpose:** A standalone CLI tool for direct Gemini interaction
+- **Commands:**
+  - **query**: Ask quick development questions
+    - **Usage**: `python gemini_helper.py query "What's the difference between async and defer in JavaScript?"`
+  - **analyze**: Analyze code files for security or performance
+    - **Usage**: `python gemini_helper.py analyze my_file.py security`
+  - **codebase**: Analyze entire codebases for architectural insights
+    - **Usage**: `python gemini_helper.py codebase ./src performance`
+- **When to use:**
+  - Without a full MCP setup
+  - When needing quick insights directly from the command line
+
 ## Available Tools
 
 Once set up, you'll have access to these tools in both Claude Desktop and Claude Code:
