@@ -277,11 +277,40 @@ claude-gemini-mcp-slim/
 
 your-projects/
 ├── project-a/
-│   ├── .claude → ~/mcp-servers/gemini-mcp/.claude  ← Optional symlink for hooks
+│   ├── .claude → ~/mcp-servers/gemini-mcp/.claude  ← Symlink for automated hooks
 │   └── src/                               ← Your project files
 └── project-b/
     └── components/                         ← Clean project (no MCP files needed)
 ```
+
+### Hook Setup for Projects
+
+**Important:** Unless hooks are already in your project's CLAUDE.md folder, you need to create a symlink to access the hooks from the shared MCP server location.
+
+**Current Setup:**
+- MCP server deployed to: `~/mcp-servers/gemini-mcp/`
+- Hooks available at: `~/mcp-servers/gemini-mcp/.claude/`  
+- Your projects: Separate locations (e.g., `/Users/username/projects/my-project/`)
+
+**To enable hooks in any project:**
+
+```bash
+# Navigate to your project directory
+cd /path/to/your/project
+
+# Create symlink to shared MCP hooks
+ln -s ~/mcp-servers/gemini-mcp/.claude .claude
+
+# Verify symlink was created
+ls -la .claude
+```
+
+**What this symlink enables:**
+- Pre-edit analysis before file modifications
+- Pre-commit security and quality reviews
+- Session summaries when Claude Code sessions end
+
+**Without the symlink:** MCP tools work manually, but automated hooks won't trigger in your project.
 
 ## Troubleshooting
 
