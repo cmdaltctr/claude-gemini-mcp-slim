@@ -8,19 +8,19 @@ This project creates a bridge between Claude Code and Google's Gemini AI models,
 
 ## Key Features
 
-### 🚀 **Three Powerful Tools**
+### **Three Powerful Tools**
 
 - **Quick Query** - Ask Gemini any development question instantly
 - **Code Analysis** - Deep analysis of specific code sections with security, performance, and architecture insights
 - **Codebase Analysis** - Full project analysis using Gemini's massive context window
 
-### 🔧 **Smart Model Selection**
+### **Smart Model Selection**
 
 - **Gemini Flash** - Fast responses for quick questions and simple tasks
 - **Gemini Pro** - Deep analysis for complex code review and architecture decisions
 - **Automatic fallback** - Direct API calls with CLI backup
 
-### ⚡ **Real-time Streaming**
+### **Real-time Streaming**
 
 - Live output streaming during analysis
 - Progress indicators for long-running tasks
@@ -61,7 +61,7 @@ Claude Code ←→ MCP Server ←→ Gemini CLI/API ←→ Google Gemini Models
 
 ## Quick Start
 
-### 🚀 **Professional Shared MCP Setup**
+### ** Shared MCP Setup**
 
 This MCP uses a **shared system architecture** that serves multiple AI clients (Claude Desktop, Claude Code, Windsurf, etc.) from one installation:
 
@@ -81,7 +81,7 @@ mkdir -p gemini-mcp/.claude/scripts
 # (Download files from this repo to gemini-mcp/)
 ```
 
-### 📱 **Configure AI Clients**
+### **Configure AI Clients**
 
 Add to your AI client configurations:
 
@@ -104,6 +104,7 @@ Add to your AI client configurations:
 ---
 
 **✅ Benefits of Shared Architecture:**
+
 - One installation serves all AI clients and projects
 - Clean project folders (no MCP dependencies)
 - Easy maintenance and updates
@@ -243,6 +244,7 @@ GEMINI_PRO_MODEL=gemini-2.5-pro       # Override default models
 ## Project Structure
 
 ### Repository Structure
+
 ```
 claude-gemini-mcp-slim/
 ├── .claude/                  # Reference hook configuration
@@ -260,6 +262,7 @@ claude-gemini-mcp-slim/
 ```
 
 ### Deployed Structure (After Setup)
+
 ```
 ~/mcp-servers/                              ← Shared MCP servers
 ├── shared-mcp-env/                         ← Virtual environment for all MCPs
@@ -303,7 +306,7 @@ your-projects/
 **API vs CLI Behavior**
 
 - API calls are faster but require `GOOGLE_API_KEY`
-- CLI fallback always available if Gemini CLI is installed
+- CLI fallback always available if Gemini CLI is installed (test for research & education ONLY)
 - Model selection works the same for both approaches
 
 ## Advanced Usage
@@ -333,7 +336,7 @@ export GOOGLE_API_KEY="your_api_key_here"
 
 The codebase has multiple critical security vulnerabilities requiring immediate attention before using it in production:
 
-Critical Issues (🚨 HIGH PRIORITY)
+Critical Issues (‼️ HIGH PRIORITY)
 
 1. Arbitrary File Read Vulnerability (MCP Server)
 
@@ -393,5 +396,3 @@ MIT License
 Copyright (c) 2025 Dr Muhammad Aizat Hawari
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
-
-
