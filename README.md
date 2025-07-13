@@ -419,15 +419,6 @@ This version includes comprehensive security fixes addressing all critical vulne
 
 **Ready for Production Use** - All critical security issues resolved.
 
-## Contributing
-
-This project is designed to be lightweight and focused. The core functionality is complete, but contributions are welcome for:
-
-- Additional analysis types
-- Better error handling
-- Performance optimizations
-- Documentation improvements
-
 ## Slash Commands
 
 ### **Quick Access to All Tools**
@@ -548,6 +539,35 @@ ln -s ~/mcp-servers/gemini-mcp/.claude .claude
 
 **Note:** Versions prior to 1.0.0 contained critical security vulnerabilities and should not be used in production environments.
 
+## Contributing
+
+This project is designed to be lightweight and focused. The core functionality is complete, but contributions are welcome for:
+
+- Additional analysis types
+- Better error handling
+- Performance optimizations
+- Documentation improvements
+
+### How to Contribute
+
+1. **Fork the repository**
+2. **Create a feature branch**: `git checkout -b feature/your-feature-name`
+3. **Make your changes**: Implement your feature or bug fix
+4. **Test with MCP integration**: Ensure your changes work with this repo's MCP server
+5. **Submit a pull request**: Push to your fork and submit a PR to the main repository
+
+### Development Guidelines
+
+- **Clean Python Code**: Use type hints, docstrings, and follow the existing code structure
+- **Security-First Approach**: Implement proper input sanitization and API key protection
+- **Modular Design**: Keep functions focused and reusable with clear error handling
+- **MCP Protocol Compliance**: Follow the MCP server specifications for all tools
+- **Comprehensive Documentation**: Document all tools with clear descriptions and schemas
+- **Fallback Mechanisms**: Implement API with CLI fallbacks for resilience
+- **Testing**: Verify changes work with both direct API and CLI integrations
+
+
+
 ## License
 
 MIT License
@@ -555,6 +575,8 @@ MIT License
 Copyright (c) 2025 Dr Muhammad Aizat Hawari
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+
+---
 
 ## Credits
 
