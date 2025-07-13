@@ -563,6 +563,7 @@ This project is designed to be lightweight and focused. The core functionality i
 - **Modular Design**: Keep functions focused and reusable with clear error handling
 - **MCP Protocol Compliance**: Follow the MCP server specifications for all tools
 - **Comprehensive Documentation**: Document all tools with clear descriptions and schemas
+- **Concise Code Comments**: Add brief comments to explain code blocks' purpose and functionality
 - **Fallback Mechanisms**: Implement API with CLI fallbacks for resilience
 - **Testing**: Verify changes work with both direct API and CLI integrations
 
