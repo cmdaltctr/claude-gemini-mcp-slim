@@ -1,6 +1,6 @@
 # Claude Gemini MCP Integration
 
-![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
 ![Security](https://img.shields.io/badge/security-hardened-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.8+-brightgreen.svg)
@@ -281,14 +281,26 @@ Once everything is working:
 
 ## Changelog
 
-### Version 1.1.0 (2025-01-12)
+### Version 1.2.0 (2025-07-14)
 
 **New Features:**
-- **20+ Slash Commands** - Easy shortcuts like `/g`, `/analyze`, `/security`
-- **Smart Command Routing** - Automatically chooses the right MCP tool
-- **Copy-Paste Ready** - Complete `.claude/` directory with all configurations
-- **Enhanced Documentation** - Comprehensive slash commands guide
-- **Improved Gitignore** - Protects user settings while sharing configurations
+- **Enhanced Documentation Structure** - Improved README with table of contents and architecture overview
+- **Streamlined User Experience** - Better organization of setup and usage instructions
+- **Improved Issue Reporting** - Added detailed guidance for submitting issues with labels
+
+**Documentation Improvements:**
+- Added comprehensive architecture diagrams and explanations
+- Restructured documentation for better navigation and user experience
+- Enhanced "Need Help?" section with better issue submission guidance
+- Added link to GitHub labels for better issue categorization
+
+### Version 1.1.0 (2025-07-14)
+
+**New Features:**
+- **Streamlined Slash Commands** - Simplified implementation with individual command files
+- **Improved Command Structure** - Removed legacy `slash_commands.py` and `slash-commands.json` in favor of modular approach
+- **Enhanced Command Organization** - Individual markdown files for each command in `.claude/commands/`
+- **Better Documentation** - Comprehensive slash commands guide with examples
 
 **Slash Commands Added:**
 - Core: `/gemini`, `/g`, `/analyze`, `/a`, `/codebase`, `/c`
@@ -298,12 +310,12 @@ Once everything is working:
 - Utilities: `/help`, `/status`, `/models`
 
 **Technical Improvements:**
-- Smart analysis logic that detects file vs directory targets
-- Parameter mapping system for seamless MCP integration
-- Comprehensive help system with examples and usage guides
-- Error handling with helpful messages and usage hints
+- Modular command architecture for easier maintenance and updates
+- Direct markdown-based command definitions
+- Simplified implementation with reduced dependencies
+- Improved error handling with helpful messages and usage hints
 
-### Version 1.0.0 (2025-01-12)
+### Version 1.0.0 (2025-07-12)
 
 **Major Release - Security Hardened Version**
 
