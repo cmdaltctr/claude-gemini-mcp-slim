@@ -9,39 +9,49 @@
 
 **A lightweight integration that brings Google's Gemini AI capabilities to Claude Code through MCP (Model Context Protocol)**
 
-## What This Does
+This project connects Claude Code (your coding assistant) with Google's Gemini AI models. Think of it as adding a second AI expert to your development team - one that can read and understand massive amounts of code at once (1M+ tokens, which is like reading hundreds of code files simultaneously).
 
-This project creates a bridge between Claude Code and Google's Gemini AI models, giving you access to Gemini's powerful 1M+ token context window and latest AI capabilities directly within your Claude Code development environment.
+With this integration, you can ask Gemini questions about your code, get security reviews, performance suggestions, and architectural advice - all without leaving your coding environment. It automatically chooses the right AI model for each task: fast responses for quick questions, deeper analysis for complex problems.
+
+## Table of Contents
+
+- [Key Features](#key-features)
+- [How It Works](#how-it-works)
+- [Architecture Overview](#architecture-overview)
+  - [Key Benefits](#key-benefits)
+  - [File Structure](#file-structure)
+  - [Project Structure](#project-structure-with-hooks-enabled)
+  - [Multi-Client Support](#multi-client-support)
+- [Quick Start](#quick-start)
+- [Usage Examples](#usage-examples)
+  - [Quick Development Questions](#quick-development-questions)
+  - [Code Analysis](#code-analysis)
+  - [Full Project Analysis](#full-project-analysis)
+  - [Automated Hooks System](#automated-hooks-system)
+- [Benefits](#benefits)
+  - [For Developers](#for-developers)
+  - [For Code Quality](#for-code-quality)
+  - [For Productivity](#for-productivity)
+- [Usage Examples with Slash Commands](#usage-examples-with-slash-commands)
+- [What's Next?](#whats-next)
+- [Need Help?](#need-help)
+- [Further Documentation](#further-documentation)
+- [Changelog](#changelog)
+- [Contributing](#contributing)
+- [License](#license)
+- [Credits](#credits)
 
 ## Key Features
 
-### **Three Powerful Tools**
-
 - **Quick Query** - Ask Gemini any development question instantly
-- **Code Analysis** - Deep analysis of specific code sections with security, performance, and architecture insights
+- **Code Analysis** - Deep analysis with security, performance, and architecture insights
 - **Codebase Analysis** - Full project analysis using Gemini's massive context window
-
-### **Easy-to-Use Slash Commands**
-
-- **20+ Slash Commands** - Simple shortcuts like `/g`, `/analyze`, `/security` for instant access
-- **Smart Routing** - Commands automatically choose the right tool based on your target
-- **Copy-Paste Ready** - Complete `.claude/` directory with all configurations included
-
-### **Smart Model Selection**
-
-- **Gemini Flash** - Fast responses for quick questions and simple tasks
-- **Gemini Pro** - Deep analysis for complex code review and architecture decisions
-- **Automatic fallback** - Direct API calls with CLI backup
-
-### **Real-time Streaming**
-
-- Live output streaming during analysis
-- Progress indicators for long-running tasks
-- No waiting for complete responses
+- **Automated Hooks** - Pre-edit analysis, pre-commit review, and session summaries
+- **20+ Slash Commands** - Simple shortcuts like `/g`, `/analyze`, `/security`
+- **Smart Model Selection** - Flash for speed, Pro for depth, automatic fallback
+- **Real-time Streaming** - Live output with progress indicators
 
 ## How It Works
-
-### Architecture Overview
 
 ```
 Claude Code ←→ MCP Server ←→ Gemini CLI/API ←→ Google Gemini Models
@@ -50,82 +60,102 @@ Claude Code ←→ MCP Server ←→ Gemini CLI/API ←→ Google Gemini Models
             (Flash for speed, Pro for depth)
 ```
 
-### Core Components
+## Architecture Overview
 
-**1. MCP Server (`gemini_mcp_server.py`)**
+The Gemini MCP server uses a shared architecture where one installation serves multiple AI clients and projects:
 
-- Main integration point with Claude Code
-- Handles tool registration and execution
-- Manages streaming responses and error handling
-- Smart model selection based on task complexity
+```
+    Claude Desktop  │  Claude Code  │  Cursor IDE  │  VS Code + Extensions
+                    │              │             │
+                    └──────────────┼─────────────┘
+                                   │
+                      ┌─────────────────────────┐
+                      │     MCP Protocol        │
+                      │   (Tool Requests)       │
+                      └─────────────────────────┘
+                                   │
+                          ┌─────────────────┐
+                          │  Gemini MCP     │
+                          │    Server       │
+                          │ (Python/Shell)  │
+                          └─────────────────┘
+                                   │
+                    ┌───────────────┼───────────────┐
+                    │               │               │
+          ┌─────────────────┐  ┌─────────────────┐  │
+          │  Gemini API     │  │  Gemini CLI     │  │
+          │  (Direct HTTP)  │  │  (Shell Command)│  │
+          └─────────────────┘  └─────────────────┘  │
+                    │               │               │
+                    └───────────────┼───────────────┘
+                                   │
+                      ┌─────────────────────────┐
+                      │   Google Gemini AI      │
+                      │   (1M+ Token Context)   │
+                      └─────────────────────────┘
+```
 
-**2. Helper Utility (`gemini_helper.py`)**
+### Key Benefits
 
-- Standalone CLI tool for direct Gemini interaction
-- API-first approach with CLI fallback
-- Real-time streaming output
-- Progress tracking for long analyses
+- **One installation** serves all AI clients and projects
+- **No project pollution** - keeps your projects clean
+- **Easy maintenance** - update once, benefits everywhere
+- **Smart fallbacks** - API-first approach with CLI backup
 
-**3. Configuration**
+### File Structure
 
-- Environment-based model selection
-- API key management
-- File size and analysis limits
+```
+~/mcp-servers/                              ← Central location for all MCP servers
+├── shared-mcp-env/                         ← Shared virtual environment
+│   ├── bin/python                         ← Python interpreter for all MCPs
+│   └── lib/python3.x/site-packages/       ← Shared dependencies (mcp, google-generativeai, etc.)
+└── gemini-mcp/                             ← Complete Gemini MCP package
+    ├── gemini_mcp_server.py                ← Main MCP server
+    └── .claude/                            ← Complete slash commands system
+        ├── hooks.json                      ← Hook definitions
+        ├── commands/                       ← Native slash commands (10+ commands)
+        │   ├── gemini.md                   ← /gemini command
+        │   ├── analyze.md                  ← /analyze command
+        │   └── ...                         ← Other command definitions
+        └── scripts/
+            └── slim_gemini_hook.py         ← Hook execution script
+```
+
+### Project Structure (with hooks enabled)
+
+```
+your-project/
+├── .claude → ~/mcp-servers/gemini-mcp/.claude  ← Symlink to shared hooks
+├── src/                                    ← Your project files
+├── README.md
+└── (no venv or MCP files needed!)           ← Clean project structure
+```
+
+### Multi-Client Support
+
+The shared MCP architecture supports multiple AI clients simultaneously:
+
+**Supported Clients:**
+- Claude Desktop - Core MCP tools only
+- Claude Code - Core MCP tools + hooks (if configured)
+- VS Code with Claude Code extension - Core MCP tools + hooks (if configured)
+- Cursor IDE - Core MCP tools only
+- Windsurf - Core MCP tools only
+- VS Code with other MCP extensions - Core MCP tools only
+- Any MCP-compatible client - Core MCP tools only
+
+**Important:** Hook functionality (.claude/hooks.json) is exclusive to Claude Code ecosystem (Claude Code standalone + VS Code with Claude Code extension). No other AI client currently supports this automation system.
 
 ## Quick Start
 
-### Shared MCP Setup
+**New to this project?** Here's what you need to do:
 
-This MCP uses a **shared system architecture** that serves multiple AI clients (Claude Desktop, Claude Code, Windsurf, etc.) from one installation:
+1. **Get your Google API key** from [Google AI Studio](https://makersuite.google.com/)
+2. **Follow the complete setup guide** in [SETUP/SETUP.md](SETUP/SETUP.md)
+3. **Test the integration** with a simple query
+4. **Explore the 20+ slash commands** in [.claude/README-SLASH-COMMANDS.md](.claude/README-SLASH-COMMANDS.md)
 
-```bash
-# 1. Create shared MCP environment
-mkdir -p ~/mcp-servers && cd ~/mcp-servers
-python3 -m venv shared-mcp-env
-source shared-mcp-env/bin/activate
-pip install mcp google-generativeai
-
-# 2. Install Gemini CLI
-npm install -g @google/gemini-cli
-gemini  # Authenticate with Google
-
-# 3. Set up Gemini MCP server
-mkdir -p gemini-mcp/.claude/scripts
-# (Download files from this repo to gemini-mcp/)
-```
-
-### **Configure AI Clients**
-
-Add to your AI client configurations:
-
-```json
-{
-  "mcpServers": {
-    "gemini-mcp": {
-      "command": "/Users/YOUR_USERNAME/mcp-servers/shared-mcp-env/bin/python",
-      "args": ["/Users/YOUR_USERNAME/mcp-servers/gemini-mcp/gemini_mcp_server.py"],
-      "env": { "GOOGLE_API_KEY": "your_key_here" }
-    }
-  }
-}
-```
-
----
-
-## Please Read
-
-**📖 [Complete Setup Guide](SETUP/SETUP.md) - Get running in 5 minutes!**
-
-**⚡ [Slash Commands Guide](.claude/README-SLASH-COMMANDS.md) - 20+ shortcuts for instant access!**
-
----
-
-**✅ Benefits of Shared Architecture:**
-
-- One installation serves all AI clients and projects
-- Clean project folders (no MCP dependencies)
-- Easy maintenance and updates
-- Professional deployment pattern
+**Installation time:** ~5 minutes | **Prerequisites:** Python 3.8+, Node.js 16+
 
 ## Usage Examples
 
@@ -156,83 +186,25 @@ Use gemini_codebase_analysis for:
 - Performance bottleneck identification
 ```
 
-## Code Architecture
+### Automated Hooks System
 
-### MCP Server Design
-
-**Tool Registration**
-
-```python
-@server.list_tools()
-async def list_tools() -> List[Tool]:
-    # Defines three main tools with input schemas
-    # Each tool has specific parameters and validation
 ```
+The hooks system provides intelligent automation that runs at key development moments:
 
-**Smart Execution Engine**
+Pre-edit Analysis:
+- Automatically analyzes files before Claude Code edits them
+- Provides context about security, performance, and architecture concerns
+- Helps prevent issues by informing Claude Code before changes are made
 
-```python
-async def execute_gemini_cli_streaming(prompt: str, task_type: str):
-    # 1. Model Selection (Flash vs Pro based on task)
-    # 2. API Attempt (if GOOGLE_API_KEY available)
-    # 3. CLI Fallback (with real-time streaming)
-    # 4. Progress Tracking and Error Handling
-```
+Pre-commit Review:
+- Analyzes staged changes before git commits
+- Reviews code for critical bugs, security vulnerabilities, and quality issues
+- Provides final quality check before code enters version control
 
-**Tool Implementation**
-
-```python
-@server.call_tool()
-async def call_tool(name: str, arguments: Dict[str, Any]):
-    # Routes to appropriate analysis function
-    # Handles file size limits and validation
-    # Formats prompts for optimal Gemini responses
-```
-
-### Helper Utility Design
-
-**Execution Strategies**
-
-- `execute_gemini_api()` - Direct API calls (preferred)
-- `execute_gemini_cli()` - CLI execution with streaming
-- `execute_gemini_smart()` - Combined approach with fallback
-
-**Real-time Features**
-
-- Line-by-line output streaming
-- Progress indicators every 15 seconds
-- Timeout handling and process management
-
-## Configuration
-
-### Model Selection
-
-```python
-GEMINI_MODELS = {
-    "flash": "gemini-2.5-flash",  # Fast responses
-    "pro": "gemini-2.5-pro"       # Deep analysis
-}
-
-MODEL_ASSIGNMENTS = {
-    "gemini_quick_query": "flash",      # Speed priority
-    "gemini_analyze_code": "pro",       # Depth priority
-    "gemini_codebase_analysis": "pro"   # Context priority
-}
-```
-
-### File Limits
-
-- **Maximum file size**: 80KB (81,920 bytes)
-- **Maximum lines**: 800 lines
-- **Response format**: Plain text (no markdown)
-- **Timeout handling**: Progress indicators for long tasks
-
-### Environment Variables
-
-```bash
-GOOGLE_API_KEY=your_api_key_here       # For direct API access
-GEMINI_FLASH_MODEL=gemini-2.5-flash   # Override default models
-GEMINI_PRO_MODEL=gemini-2.5-pro       # Override default models
+Session Summary:
+- Generates brief recap when Claude Code session ends
+- Highlights key changes made and potential next steps
+- Maintains development context between sessions
 ```
 
 ## Benefits
@@ -258,208 +230,54 @@ GEMINI_PRO_MODEL=gemini-2.5-pro       # Override default models
 - **Better decisions** through comprehensive code review
 - **Learning acceleration** via instant expert guidance
 
-## Project Structure
+## Usage Examples with Slash Commands
 
-### Repository Structure
-
-```
-claude-gemini-mcp-slim/
-├── .claude/                           # Complete slash commands system
-│   ├── hooks.json                     # Hook definitions for Claude Code
-│   ├── slash-commands.json            # 20+ slash command configurations
-│   ├── README-SLASH-COMMANDS.md       # Slash commands documentation
-│   └── scripts/
-│       ├── slim_gemini_hook.py        # Hook execution script
-│       └── slash_commands.py          # Slash commands implementation
-├── gemini_mcp_server.py               # Main MCP server
-├── gemini_helper.py                   # Standalone CLI utility
-├── requirements.txt                   # Python dependencies (for reference)
-├── SETUP/
-│   ├── SETUP.md                      # Complete setup guide
-│   └── codebase-security-analysis.jpg
-├── CLAUDE.md                          # Comprehensive documentation
-└── README.md                          # This overview
-```
-
-### Deployed Structure (After Setup)
+The slash commands provide a much simpler way to access Gemini's powerful analysis without remembering the full MCP tool syntax:
 
 ```
-~/mcp-servers/                              ← Shared MCP servers
-├── shared-mcp-env/                         ← Virtual environment for all MCPs
-└── gemini-mcp/                             ← Complete Gemini MCP package
-    ├── gemini_mcp_server.py                ← Main MCP server
-    └── .claude/                            ← Complete slash commands system
-        ├── hooks.json                      ← Hook definitions
-        ├── slash-commands.json             ← 20+ slash command configurations
-        ├── README-SLASH-COMMANDS.md        ← Slash commands documentation
-        └── scripts/
-            ├── slim_gemini_hook.py         ← Hook execution script
-            └── slash_commands.py           ← Slash commands implementation
+# Instead of typing:
+/mcp__gemini-mcp__gemini_quick_query "How do I implement JWT authentication in Node.js?"
 
-your-projects/
-├── project-a/
-│   ├── .claude → ~/mcp-servers/gemini-mcp/.claude  ← Symlink for automated hooks
-│   └── src/                               ← Your project files
-└── project-b/
-    └── components/                         ← Clean project (no MCP files needed)
+# You can simply use:
+/gemini How do I implement JWT authentication in Node.js?
+# or even shorter:
+/g How do I implement JWT authentication in Node.js?
 ```
 
-### Hook Setup for Projects
+```
+# Instead of typing:
+/mcp__gemini-mcp__gemini_codebase_analysis "./src" security
 
-**Important:** Unless hooks are already in your project's CLAUDE.md folder, you need to create a symlink to access the hooks from the shared MCP server location.
-
-**Current Setup:**
-- MCP server deployed to: `~/mcp-servers/gemini-mcp/`
-- Hooks available at: `~/mcp-servers/gemini-mcp/.claude/`  
-- Your projects: Separate locations (e.g., `/Users/username/projects/my-project/`)
-
-**To enable hooks in any project:**
-
-```bash
-# Navigate to your project directory
-cd /path/to/your/project
-
-# Create symlink to shared MCP hooks
-ln -s ~/mcp-servers/gemini-mcp/.claude .claude
-
-# Verify symlink was created
-ls -la .claude
+# You can simply use:
+/codebase ./src security
+# or even shorter:
+/c ./src security
 ```
 
-**What this symlink enables:**
-- Pre-edit analysis before file modifications
-- Pre-commit security and quality reviews
-- Session summaries when Claude Code sessions end
-- **20+ slash commands** like `/g`, `/analyze`, `/security` for instant access
+See [.claude/README-SLASH-COMMANDS.md](.claude/README-SLASH-COMMANDS.md) for all available shortcuts.
 
-**Without the symlink:** MCP tools work manually, but automated hooks and slash commands won't be available in your project.
+## What's Next?
 
-## Troubleshooting
+Once everything is working:
 
-### Common Issues
+1. **Try the tools** - Start with simple queries: `/mcp__gemini-mcp__gemini_quick_query "How do I optimize React performance?"`
+2. **Analyze some code** - Analyze specific functions: `/mcp__gemini-mcp__gemini_analyze_code "your function code here" security`
+3. **Review your project** - Get architectural insights: `/mcp__gemini-mcp__gemini_codebase_analysis "./src" architecture`
+4. **Explore slash commands** - Check `.claude/README-SLASH-COMMANDS.md` for 20+ shortcuts
 
-**MCP Server Won't Start**
+## Need Help?
 
-- Check Python path in Claude Desktop configuration
-- Verify virtual environment has `mcp` package installed
-- Ensure file permissions allow execution
+- **Submit an Issue:** If you encounter any problems, please submit an issue on our [GitHub repository](https://github.com/cmdaltctr/claude-gemini-mcp-slim/issues) with details about your environment, steps to reproduce, and any error messages you received.
+- **Use Labels:** When submitting issues, please use appropriate labels/tags such as `bug`, `feature-request`, `documentation`, and so on ([available labels](https://github.com/cmdaltctr/claude-gemini-mcp-slim/labels)) to help us categorize and address your concerns more efficiently.
+- **Test files:** Check the `tests/` folder for examples and testing scripts
+- **Slash commands:** See `.claude/README-SLASH-COMMANDS.md` for comprehensive command reference
+- **Console Logs:** Check your Claude Desktop/Code console for detailed error messages that can help diagnose issues
 
-**Gemini Authentication Errors**
+## Further Documentation
 
-- Run `gemini` command to re-authenticate
-- Check Google account has API access enabled
-- Verify network connectivity
-
-**No Tools Available in Claude Code**
-
-- Restart Claude Desktop after configuration changes
-- Check MCP server logs in Claude Desktop console
-- Verify configuration JSON syntax
-
-**API vs CLI Behavior**
-
-- API calls are faster but require `GOOGLE_API_KEY`
-- CLI fallback always available if Gemini CLI is installed (test for research & education ONLY)
-- Model selection works the same for both approaches
-
-## Advanced Usage
-
-### Direct CLI Usage
-
-```bash
-# Quick questions
-python gemini_helper.py query "How do I optimize this SQL query?"
-
-# Code analysis
-python gemini_helper.py analyze my_file.py security
-
-# Full project analysis
-python gemini_helper.py codebase ./src performance
-```
-
-### Custom Model Configuration
-
-```bash
-export GEMINI_FLASH_MODEL="gemini-2.5-flash-exp"
-export GEMINI_PRO_MODEL="gemini-2.5-pro-exp"
-export GOOGLE_API_KEY="your_api_key_here"
-```
-
-## Security
-
-### ✅ Security Hardened Version
-
-This version includes comprehensive security fixes addressing all critical vulnerabilities identified in earlier versions. All security issues have been resolved with production-ready defensive measures.
-
-**🔒 [Complete Security Documentation](SECURITY.md)**
-
-### Security Features Implemented
-
-**Critical Vulnerabilities Fixed:**
-- ✅ **Command Injection (CWE-78):** Eliminated `shell=True` usage, implemented secure subprocess execution
-- ✅ **Path Traversal (CWE-22):** Added path validation and directory boundary enforcement  
-- ✅ **Prompt Injection (CWE-94):** Implemented input sanitization and dangerous pattern filtering
-- ✅ **Secrets Exposure (CWE-200):** Added API key redaction and secure error handling
-- ✅ **Input Validation (CWE-20):** Comprehensive type checking and bounds validation
-
-**Security Architecture:**
-- **Defense in Depth:** Multi-layer security controls at input, processing, and output stages
-- **Secure by Default:** Fail-safe error handling and minimal privilege execution
-- **Zero Trust Input:** All user input sanitized and validated before processing
-- **Audit Trail:** Comprehensive logging with sensitive data redaction
-
-### Security Status
-
-| Component | Security Status | Last Review |
-|-----------|----------------|-------------|
-| MCP Server | ✅ Hardened | 2025-01-12 |
-| Helper CLI | ✅ Hardened | 2025-01-12 |
-| Hook Scripts | ✅ Hardened | 2025-01-12 |
-| Documentation | ✅ Complete | 2025-01-12 |
-
-**Ready for Production Use** - All critical security issues resolved.
-
-## Slash Commands
-
-### **Quick Access to All Tools**
-
-No need to remember complex MCP tool names! Use simple slash commands:
-
-```bash
-# Core tools
-/gemini "How do I implement OAuth2?"    # or /g
-/analyze auth.py security               # or /a
-/codebase ./src performance             # or /c
-
-# Focus commands  
-/security ./api                         # or /s
-/performance database.js                # or /p
-/architecture ./components              # or /arch
-
-# Developer assistance
-/explain "React useEffect"              # or /e
-/debug "ReferenceError: fetch undefined" # or /d
-/review UserForm.vue                    # or /r
-/research "Vue 3 best practices"
-/optimize queries.py
-/test validation.js
-/fix "CORS error in Express"
-```
-
-### **Easy Setup**
-
-Copy the entire `.claude/` directory to any project:
-
-```bash
-# Method 1: Direct copy
-cp -r /path/to/claude-gemini-mcp-slim/.claude /your/project/
-
-# Method 2: Symlink (recommended for shared MCP)
-cd /your/project
-ln -s ~/mcp-servers/gemini-mcp/.claude .claude
-```
-
-**📖 [Complete Slash Commands Guide](.claude/README-SLASH-COMMANDS.md)**
+- [SETUP/SETUP.md](SETUP/SETUP.md) - Complete installation and configuration guide
+- [.claude/README-SLASH-COMMANDS.md](.claude/README-SLASH-COMMANDS.md) - Slash commands reference
+- [SECURITY.md](SECURITY.md) - Security documentation and hardening details
 
 ## Changelog
 

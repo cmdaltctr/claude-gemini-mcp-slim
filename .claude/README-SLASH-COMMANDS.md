@@ -1,171 +1,253 @@
-# Gemini MCP Slash Commands
+# Slash Commands Reference
 
-**Easy-to-use shortcuts for all Gemini MCP tools**
+This document provides comprehensive documentation for all available slash commands in the Claude Gemini MCP integration. These commands provide quick access to Gemini's AI capabilities directly within Claude Code.
 
-## Quick Copy Setup
+## Overview
 
-Copy the entire `.claude/` directory from this repo to your project:
+Slash commands are shortcuts that allow you to interact with Gemini AI without manually calling MCP tools. They automatically route your requests to the appropriate Gemini functionality and handle parameter mapping for seamless integration.
 
-```bash
-# Method 1: Copy to your project
-cp -r /path/to/claude-gemini-mcp-slim/.claude /path/to/your/project/
+## Command Categories
 
-# Method 2: Create symlink (recommended for shared MCP setup)
-cd /path/to/your/project
-ln -s ~/mcp-servers/gemini-mcp/.claude .claude
+### Core Commands
+
+#### `/gemini [question]`
+**Purpose:** Ask Gemini any development question  
+**Alias:** `/g`  
+**Uses:** `gemini_quick_query`
+
+Query Gemini for instant answers to coding questions, explanations, and general development guidance.
+
+**Examples:**
+```
+/gemini How do I implement JWT authentication in Node.js?
+/gemini What's the difference between React hooks and class components?
+/gemini Best practices for error handling in Python async functions?
 ```
 
-## Available Commands
+**When to use:**
+- Quick coding questions
+- Language syntax clarification
+- Best practices inquiries
+- General development guidance
 
-### 🚀 Core Tools
-| Command | Description | Usage |
-|---------|-------------|-------|
-| `/gemini [query]` | Ask any development question | `/gemini How to optimize React performance?` |
-| `/g [query]` | Quick alias for gemini | `/g Best practices for Vue 3?` |
-| `/analyze [file]` | Analyze code with insights | `/analyze src/auth.py security` |
-| `/a [file]` | Quick alias for analyze | `/a UserForm.vue` |
-| `/codebase [dir]` | Analyze entire directories | `/codebase ./src security` |
-| `/c [dir]` | Quick alias for codebase | `/c . all` |
+#### `/analyze [file_path] [analysis_type]`
+**Purpose:** Analyze code files with comprehensive insights  
+**Alias:** `/a`  
+**Uses:** `gemini_analyze_code`
 
-### 🔍 Analysis Focus
-| Command | Description | Usage |
-|---------|-------------|-------|
-| `/security [target]` | Security-focused analysis | `/security ./api` |
-| `/s [target]` | Quick security alias | `/s auth.py` |
-| `/performance [target]` | Performance analysis | `/performance ./components` |
-| `/p [target]` | Quick performance alias | `/p database.js` |
-| `/architecture [target]` | Architecture review | `/architecture ./src` |
-| `/arch [target]` | Quick architecture alias | `/arch .` |
+Perform deep analysis of specific code files, functions, or modules with focus on security, performance, and architecture.
 
-### 🛠️ Developer Assistance
-| Command | Description | Usage |
-|---------|-------------|-------|
-| `/explain [concept]` | Explain code or concepts | `/explain async/await in JavaScript` |
-| `/e [concept]` | Quick explain alias | `/e React useEffect` |
-| `/debug [issue]` | Debug assistance | `/debug ReferenceError: fetch is not defined` |
-| `/d [issue]` | Quick debug alias | `/d Memory leak in useEffect` |
-| `/review [file]` | Code review | `/review src/utils.js` |
-| `/r [file]` | Quick review alias | `/r Header.vue` |
-| `/research [topic]` | Research best practices | `/research Vue 3 state management` |
+**Parameters:**
+- `file_path` (required): Path to the file to analyze
+- `analysis_type` (optional): Focus area - `security`, `performance`, `architecture`, or `comprehensive`
 
-### ⚡ Code Improvement
-| Command | Description | Usage |
-|---------|-------------|-------|
-| `/optimize [target]` | Get optimization suggestions | `/optimize ./queries.js` |
-| `/test [file]` | Generate test strategies | `/test validation.js` |
-| `/fix [issue]` | Get specific solutions | `/fix CORS error in Express API` |
-
-### 🔧 Utilities
-| Command | Description | Usage |
-|---------|-------------|-------|
-| `/help [cmd]` | Show command help | `/help analyze` |
-| `/status` | Check MCP connection | `/status` |
-| `/models` | Show available models | `/models` |
-
-## Smart Analysis
-
-Commands automatically choose the right tool:
-
-- **File targets** → Uses `gemini_analyze_code`
-- **Directory targets** → Uses `gemini_codebase_analysis`  
-- **Analysis types** → Maps to appropriate focus (security, performance, architecture)
-
-## Examples
-
-```bash
-# Quick questions
-/g How do I implement JWT in Node.js?
-/e Promise.all vs Promise.allSettled
-
-# Code analysis
-/a src/auth.py security
-/s ./api
-/p components/UserList.vue
-
-# Project analysis  
-/c ./src security
-/arch .
-
-# Debug help
-/d TypeError: Cannot read property 'map'
-/fix CORS error in my API
-/test utils/validation.js
-
-# Research
-/research React testing strategies 2025
-/optimize database/queries.py
+**Examples:**
+```
+/analyze src/auth.py security
+/analyze components/UserForm.vue
+/analyze ./utils/database.js performance
+/analyze models/user.js comprehensive
 ```
 
-## Configuration
+**When to use:**
+- Before making significant changes to a file
+- Code review and quality assessment
+- Security vulnerability scanning
+- Performance optimization planning
 
-The commands are configured in `slash-commands.json`:
+#### `/codebase [directory_path] [scope]`
+**Purpose:** Analyze entire directories using Gemini's large context window  
+**Alias:** `/c`  
+**Uses:** `gemini_codebase_analysis`
 
-- **MCP Server**: `gemini-mcp`
-- **Models**: Flash for quick queries, Pro for deep analysis
-- **File Limits**: 80KB max, 800 lines max
-- **Supported Types**: `.py`, `.js`, `.ts`, `.vue`, `.html`, `.css`, etc.
+Leverage Gemini's 1M+ token context to analyze complete codebases, multiple files, and project architecture.
 
-## How It Works
+**Parameters:**
+- `directory_path` (required): Path to directory to analyze
+- `scope` (optional): Analysis scope - `security`, `performance`, `architecture`, `structure`, or `all`
 
-1. **Command Detection**: Recognizes slash commands in Claude Code
-2. **Smart Routing**: Chooses appropriate MCP tool based on target type
-3. **Parameter Mapping**: Automatically maps arguments to MCP tool parameters
-4. **Error Handling**: Provides helpful error messages and usage hints
-
-## Installation
-
-### For Individual Projects
-```bash
-# Copy entire .claude directory
-cp -r /path/to/claude-gemini-mcp-slim/.claude /your/project/
+**Examples:**
+```
+/codebase ./src
+/codebase ./components security
+/codebase . all
+/codebase ./api architecture
 ```
 
-### For Shared MCP Setup (Recommended)
-```bash
-# Symlink to shared MCP hooks
-cd /your/project
-ln -s ~/mcp-servers/gemini-mcp/.claude .claude
+**When to use:**
+- Project architecture review
+- Large-scale refactoring planning
+- Security audit of entire modules
+- Understanding unfamiliar codebases
+
+### Developer Assistance Commands
+
+#### `/explain [code_or_concept]`
+**Purpose:** Get detailed explanations of code concepts or functions  
+**Alias:** `/e`  
+**Uses:** `gemini_quick_query`
+
+Receive comprehensive explanations of programming concepts, code snippets, error messages, or technical terms.
+
+**Examples:**
+```
+/explain async/await in JavaScript
+/explain const handleSubmit = async (data) => {...}
+/explain TypeError: Cannot read property 'map' of undefined
+/explain dependency injection pattern
 ```
 
-## Benefits
+**When to use:**
+- Learning new concepts
+- Understanding complex code patterns
+- Deciphering error messages
+- Code documentation and comments
 
-### For Developers
-- **Instant access** - No need to remember MCP tool names
-- **Smart defaults** - Commands choose the right analysis type
-- **Quick aliases** - Single-letter shortcuts for common tasks
-- **Consistent syntax** - All commands follow same pattern
+#### `/debug [code_or_error]`
+**Purpose:** Get debugging assistance for code issues  
+**Alias:** `/d`  
+**Uses:** `gemini_quick_query`
 
-### For Teams
-- **Easy onboarding** - Copy-paste setup for any project
-- **Standardized workflow** - Same commands across all projects
-- **Self-documenting** - Built-in help system
+Receive specific debugging help, error analysis, and solution suggestions for code problems.
 
-### For Productivity
-- **Faster analysis** - Skip the "which tool should I use?" decision
-- **Better discoverability** - Help system shows all options
-- **Reduced friction** - Type `/s file.py` instead of complex MCP calls
-
-## Advanced Usage
-
-### Custom Analysis Types
-```bash
-/analyze auth.py security     # Security-focused
-/analyze queries.js performance  # Performance-focused  
-/analyze App.vue architecture    # Architecture-focused
+**Examples:**
+```
+/debug ReferenceError: fetch is not defined
+/debug Why is my React component not re-rendering?
+/debug Memory leak in my Python application
+/debug SQL query returning incorrect results
 ```
 
-### Batch Operations
-```bash
-/c ./src security     # Scan entire src for security issues
-/p ./components      # Performance review of all components
-/arch .              # Architecture review of full project
+**When to use:**
+- Troubleshooting runtime errors
+- Investigating unexpected behavior
+- Performance issues
+- Logic errors and bugs
+
+## Command Structure
+
+### Syntax Pattern
+All commands follow a consistent pattern:
+```
+/[command] [required_parameter] [optional_parameter]
 ```
 
-### Research and Learning
-```bash
-/research Python async patterns 2025
-/explain design patterns in React
-/debug why my Vue component won't update
+### Parameter Types
+- **File paths:** Relative or absolute paths to files
+- **Directory paths:** Paths to directories for codebase analysis
+- **Analysis types:** Specific focus areas for targeted analysis
+- **Free text:** Questions, code snippets, or descriptions
+
+### Smart Parameter Handling
+Commands automatically handle different input types:
+- **File references:** Automatically reads file content when file paths are provided
+- **Code snippets:** Processes inline code blocks and functions
+- **Error messages:** Formats error text for optimal analysis
+- **Mixed content:** Handles combinations of text and code
+
+## Usage Patterns
+
+### Quick Development Workflow
+```
+/g How do I handle form validation in Vue 3?
+/a ./components/ContactForm.vue
+/explain this.$emit('submit', formData)
 ```
 
-This slash commands system transforms the Gemini MCP from powerful but complex tools into intuitive, developer-friendly shortcuts that anyone can use immediately.
+### Code Review Workflow
+```
+/a src/authentication.py security
+/c ./api security
+/debug Authentication failing for certain users
+```
+
+### Learning Workflow
+```
+/explain React useEffect hook
+/g What are the differences between useState and useReducer?
+/debug useEffect running infinitely
+```
+
+### Architecture Planning
+```
+/c ./src architecture
+/g How should I structure a microservices project?
+/analyze ./config/database.js performance
+```
+
+## Advanced Features
+
+### Analysis Type Optimization
+Different analysis types trigger optimized prompts:
+- **Security:** Focuses on vulnerabilities, injection attacks, authentication flaws
+- **Performance:** Emphasizes bottlenecks, optimization opportunities, resource usage
+- **Architecture:** Reviews design patterns, modularity, maintainability
+- **Comprehensive:** Balanced analysis covering all aspects
+
+### Smart Model Selection
+Commands automatically choose the optimal Gemini model:
+- **Quick queries:** Use Gemini Flash for fast responses
+- **Code analysis:** Use Gemini Pro for detailed insights
+- **Codebase analysis:** Use Gemini Pro for complex context handling
+
+### Error Handling
+Commands provide helpful error messages and suggestions:
+- Invalid file paths show directory contents
+- Missing parameters display usage examples
+- Tool failures provide alternative approaches
+
+## Integration Benefits
+
+### Developer Experience
+- **Immediate access:** No need to remember MCP tool names
+- **Consistent syntax:** All commands follow similar patterns
+- **Smart defaults:** Parameters automatically optimized for common use cases
+- **Fast execution:** Streamlined requests reduce latency
+
+### Code Quality
+- **Proactive analysis:** Easy to analyze code before making changes
+- **Comprehensive coverage:** Full project analysis with single commands
+- **Expert insights:** Gemini's advanced AI provides professional-grade analysis
+- **Learning integration:** Commands double as learning tools
+
+### Workflow Integration
+- **Claude Code native:** Works seamlessly within Claude Code environment
+- **Project-agnostic:** Commands work in any codebase without configuration
+- **Scalable usage:** From single files to entire projects
+- **Documentation support:** Self-documenting through examples and help text
+
+## Best Practices
+
+### Effective Command Usage
+1. **Start specific:** Use `/analyze` for targeted file analysis before broader `/codebase` review
+2. **Use aliases:** Leverage short aliases (`/g`, `/a`, `/c`) for faster typing
+3. **Specify focus:** Include analysis types (`security`, `performance`) for targeted insights
+4. **Combine approaches:** Use multiple commands for comprehensive understanding
+
+### Optimal Analysis Strategy
+1. **File-level analysis first:** Understand individual components with `/analyze`
+2. **Module-level review:** Analyze related files in directories with `/codebase`
+3. **Project-level assessment:** Review entire architecture with `/codebase . all`
+4. **Iterative refinement:** Use insights to guide deeper analysis
+
+### Learning Integration
+1. **Question-driven exploration:** Use `/g` to understand concepts before implementation
+2. **Code-driven learning:** Use `/explain` on unfamiliar code patterns
+3. **Problem-driven debugging:** Use `/debug` to learn from errors and issues
+4. **Review-driven improvement:** Use `/analyze` to learn better coding practices
+
+## Technical Implementation
+
+### Command Processing
+1. **Input parsing:** Commands extract parameters and validate syntax
+2. **Tool routing:** Parameters determine appropriate MCP tool selection
+3. **Parameter mapping:** Arguments are formatted for MCP tool requirements
+4. **Response handling:** Results are formatted for optimal readability
+
+### Integration Architecture
+- **Native Claude Code support:** Commands are processed by Claude Code's slash command system
+- **MCP tool abstraction:** Commands hide MCP complexity behind simple interfaces
+- **File system integration:** Automatic file reading and path resolution
+- **Error recovery:** Graceful handling of tool failures and invalid inputs
+
+This slash command system transforms complex MCP tool interactions into intuitive, developer-friendly shortcuts that enhance productivity and code quality within the Claude Code environment.
