@@ -1,6 +1,6 @@
 # Gemini MCP Server Setup Guide
 
-**Shared MCP server** that integrates Google's Gemini CLI with multiple AI clients (Claude Desktop, Claude Code, Windsurf, etc.), giving you access to Gemini's 1M token context window across all your projects.
+This project creates a bridge between Claude Code and Google's Gemini AI models, giving you access to Gemini's powerful 1M+ token context window and latest AI capabilities directly within your Claude Code development environment.
 
 ## Prerequisites
 
