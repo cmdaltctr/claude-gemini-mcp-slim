@@ -7,8 +7,9 @@ This project creates a bridge between Claude Code and Google's Gemini AI models,
 Before you start, make sure you have:
 
 1. **Python 3.8+** installed
-2. **Node.js 16+** installed  
-3. **Gemini CLI** installed and authenticated:
+2. **Node.js 16+** installed
+3. **Google API Key** from Google AI Studio
+4. **Gemini CLI** installed and authenticated:
    ```bash
    npm install -g @google/gemini-cli
    gemini  # Run this to authenticate with Google
