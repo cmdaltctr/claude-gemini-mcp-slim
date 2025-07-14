@@ -146,6 +146,11 @@ def execute_gemini_cli(prompt: str, model_name: str = None, show_progress: bool 
             print("-" * 50, file=sys.stderr)
         
         # Use Popen for real-time streaming - SECURE VERSION (no shell=True)
+        # Include GOOGLE_CLOUD_PROJECT if it's set
+        env = {"PATH": os.environ.get("PATH", "")}
+        if "GOOGLE_CLOUD_PROJECT" in os.environ:
+            env["GOOGLE_CLOUD_PROJECT"] = os.environ["GOOGLE_CLOUD_PROJECT"]
+        
         process = subprocess.Popen(
             cmd_args,
             shell=False,
@@ -154,7 +159,7 @@ def execute_gemini_cli(prompt: str, model_name: str = None, show_progress: bool 
             text=True,
             bufsize=1,  # Line buffered
             universal_newlines=True,
-            env={"PATH": os.environ.get("PATH", "")},  # Minimal environment
+            env=env,  # Include necessary environment variables
             cwd=None  # Use current working directory
         )
         
