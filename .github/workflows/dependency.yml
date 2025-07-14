@@ -17,7 +17,7 @@ on:
           - 'major'
 
 env:
-  PYTHON_VERSION: '3.8'
+  PYTHON_VERSION: '3.11'
 
 jobs:
   dependency-audit:
@@ -102,7 +102,7 @@ jobs:
         echo "outdated_count=$outdated_count" >> $GITHUB_OUTPUT
         
     - name: Upload audit artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: dependency-audit-${{ github.run_id }}
         path: |
@@ -305,7 +305,7 @@ jobs:
           automated
         
     - name: Upload security update artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: security-updates-${{ github.run_id }}
@@ -469,7 +469,7 @@ jobs:
           ${{ env.UPDATE_TYPE }}
           
     - name: Upload routine update artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: routine-updates-${{ env.UPDATE_TYPE }}-${{ github.run_id }}

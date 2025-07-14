@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 env:
-  PYTHON_VERSION: '3.8'
+  PYTHON_VERSION: '3.11'
 
 jobs:
   dependency-check:
@@ -40,7 +40,7 @@ jobs:
         pip-audit
         
     - name: Upload vulnerability report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: vulnerability-scan-${{ github.sha }}
@@ -108,7 +108,7 @@ jobs:
         GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
         
     - name: Upload Gitleaks report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: failure()
       with:
         name: gitleaks-report-${{ github.sha }}
@@ -127,16 +127,15 @@ jobs:
       uses: actions/checkout@v4
       
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
+      uses: github/codeql-action/init@v3
       with:
         languages: python
-        config-file: ./.github/codeql/codeql-config.yml
         
     - name: Autobuild
-      uses: github/codeql-action/autobuild@v2
+      uses: github/codeql-action/autobuild@v3
       
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
+      uses: github/codeql-action/analyze@v3
       with:
         category: "/language:python"
 
@@ -165,13 +164,13 @@ jobs:
         bandit -r . -x tests/ -ll
         
     - name: Upload bandit SARIF results
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v3
       if: always()
       with:
         sarif_file: bandit-results.sarif
         
     - name: Upload bandit report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: bandit-security-scan-${{ github.sha }}
@@ -293,7 +292,7 @@ jobs:
         "
         
     - name: Upload license report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: license-report-${{ github.sha }}
         path: |
@@ -417,7 +416,7 @@ jobs:
         EOF
         
     - name: Upload security report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: security-report-${{ github.sha }}
