@@ -31,6 +31,7 @@ __pycache__/
 venv/
 env/
 ENV/
+.test-env/
 
 # Logs
 *.log
@@ -64,6 +65,45 @@ tasks/
 
 # Project specific
 .windsurf/
+
+# Testing and CI/CD
+#################
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.cover
+.tox/
+.cache
+nosetests.xml
+coverage.xml
+*.lcov
+
+# Security scan reports
+bandit-report.json
+bandit-results.sarif
+pip-audit-report.json
+sbom.json
+gitleaks-report.json
+security-report.md
+
+# License reports
+licenses.json
+licenses.csv
+
+# Dependency management
+requirements-backup.txt
+requirements-updated.txt
+update-report.md
+security-update-report.md
+outdated-packages.json
+current-audit.json
+post-update-audit.json
+
+# Performance benchmarks
+benchmark-results.json
+.benchmarks/
 
 # Misc
 *.bak

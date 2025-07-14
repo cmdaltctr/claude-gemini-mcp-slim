@@ -1,0 +1,196 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "claude-gemini-mcp-slim"
+version = "1.2.0"
+description = "Streamlined Gemini CLI MCP integration for Claude Code"
+authors = [
+    {name = "Claude Gemini MCP Team"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.8"
+keywords = ["mcp", "gemini", "claude", "ai", "development"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "mcp>=1.0.0",
+    "google-generativeai>=0.8.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0", 
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.11.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.5.0",
+    "bandit[toml]>=1.7.0",
+    "pip-audit>=2.6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/your-org/claude-gemini-mcp-slim"
+Repository = "https://github.com/your-org/claude-gemini-mcp-slim.git"
+Documentation = "https://github.com/your-org/claude-gemini-mcp-slim#readme"
+"Bug Tracker" = "https://github.com/your-org/claude-gemini-mcp-slim/issues"
+
+# ============================================================================
+# Tool Configuration
+# ============================================================================
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = [
+    "-ra",
+    "-q", 
+    "--strict-markers",
+    "--strict-config",
+    "--cov=.",
+    "--cov-report=html",
+    "--cov-report=term-missing",
+    "--cov-fail-under=85",
+]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "e2e: marks tests as end-to-end tests",
+    "unit: marks tests as unit tests",
+    "security: marks tests as security-focused tests",
+    "performance: marks tests as performance tests",
+]
+filterwarnings = [
+    "error",
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning",
+]
+
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "tests/*",
+    "venv/*",
+    "env/*",
+    ".venv/*",
+    "setup.py",
+    "*/migrations/*",
+    "*/__pycache__/*",
+]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+show_missing = true
+precision = 2
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.black]
+line-length = 88
+target-version = ['py38', 'py39', 'py310', 'py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["gemini_mcp_server", "gemini_helper"]
+known_third_party = ["pytest", "mcp", "google"]
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503", "E501"]
+exclude = [
+    ".git",
+    "__pycache__", 
+    ".venv",
+    "venv",
+    ".tox",
+    "dist",
+    "build",
+    "*.egg-info",
+]
+per-file-ignores = [
+    "__init__.py:F401",
+    "tests/*:S101,S602,S603,S607",  # Allow assert, subprocess in tests
+]
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
+[tool.bandit]
+exclude_dirs = ["tests", ".venv", "venv", "env"]
+skips = ["B101", "B601"]  # Skip assert_used, paramiko_calls
+confidence_level = "medium"
+severity_level = "medium"
+
+[tool.bandit.assert_used]
+skips = ["*/test_*.py", "*/tests/*"]
+
+[tool.pip-audit]
+desc = "Audit Python packages for known vulnerabilities"
+require-hashes = false
+output = "json"
