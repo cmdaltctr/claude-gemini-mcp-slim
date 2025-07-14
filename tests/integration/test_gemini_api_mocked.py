@@ -4,11 +4,12 @@ Integration tests for Gemini API with comprehensive mocking
 Tests API fallback behavior, error handling, and response processing
 """
 
-import pytest
 import asyncio
 import os
-from unittest.mock import AsyncMock, patch, MagicMock
 import sys
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 # Import our server components
 sys.path.insert(
@@ -16,9 +17,9 @@ sys.path.insert(
 )
 
 from gemini_mcp_server import (
+    GOOGLE_API_KEY,
     execute_gemini_api,
     execute_gemini_cli_streaming,
-    GOOGLE_API_KEY,
 )
 
 

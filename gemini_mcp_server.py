@@ -4,17 +4,17 @@ Slim Gemini CLI MCP Server
 """
 
 import asyncio
-import subprocess
 import logging
-import shlex
 import os
+import shlex
+import subprocess
 import sys
-from typing import Dict, Any, Optional, List
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from mcp.server import Server
-from mcp.types import Tool, TextContent
 from mcp.server.stdio import stdio_server
+from mcp.types import TextContent, Tool
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -28,7 +28,7 @@ MAX_FILE_SIZE = 81920  # 80KB
 MAX_LINES = 800
 
 
-# Security functions
+# Security functions - prevent prompt injection and path traversal attacks
 def sanitize_for_prompt(text: str, max_length: int = 100000) -> str:
     """Sanitize text input to prevent prompt injection attacks"""
     if not isinstance(text, str):
@@ -63,7 +63,7 @@ def sanitize_for_prompt(text: str, max_length: int = 100000) -> str:
 
             # Create case-insensitive regex pattern
             escaped_pattern = re.escape(pattern)
-            replacement = f"[filtered:{pattern[:10]}]"
+            replacement = f"[filtered-content]"
             text = re.sub(escaped_pattern, replacement, text, flags=re.IGNORECASE)
 
     # Escape potential control characters
@@ -77,6 +77,23 @@ def validate_path_security(file_path: str) -> tuple[bool, str, Path]:
     try:
         if not isinstance(file_path, str) or not file_path.strip():
             return False, "Invalid path", None
+
+        # Handle special cases and expand user paths
+        if file_path.startswith("~"):
+            # Block home directory access for security
+            return False, "Path outside allowed directory", None
+
+        # Block absolute paths that are clearly system paths
+        if file_path.startswith(
+            ("/etc/", "/proc/", "/sys/", "/dev/", "/var/", "/usr/", "/bin/", "/sbin/")
+        ):
+            return False, "Path outside allowed directory", None
+
+        # Block Windows system paths
+        if file_path.lower().startswith(
+            ("c:\\windows", "c:/windows", "\\windows", "/windows")
+        ):
+            return False, "Path outside allowed directory", None
 
         resolved_path = Path(file_path).resolve()
         current_dir = Path.cwd().resolve()

@@ -55,11 +55,16 @@ Documentation = "https://github.com/your-org/claude-gemini-mcp-slim#readme"
 
 [tool.pytest.ini_options]
 minversion = "7.0"
+# Basic configuration - parallel execution controlled by test scripts
 addopts = [
     "-ra",
     "-q", 
     "--strict-markers",
     "--strict-config",
+    "--timeout=30",           # 30 second timeout per test
+    "--timeout-method=thread", # Use thread-based timeout
+    "--maxfail=5",            # Stop after 5 failures
+    "--tb=short",             # Short traceback format
     "--cov=.",
     "--cov-report=html",
     "--cov-report=term-missing",

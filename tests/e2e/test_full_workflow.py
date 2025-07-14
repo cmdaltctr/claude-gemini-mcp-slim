@@ -4,12 +4,13 @@ End-to-end tests for the complete MCP server workflow
 These tests can optionally use real API calls when TEST_WITH_REAL_API=true
 """
 
-import pytest
 import asyncio
 import os
 import sys
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Import our server components
 sys.path.insert(
@@ -17,7 +18,6 @@ sys.path.insert(
 )
 
 from gemini_mcp_server import call_tool, list_tools
-
 
 # Configuration for real API testing
 USE_REAL_API = os.getenv("TEST_WITH_REAL_API", "false").lower() == "true"

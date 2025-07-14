@@ -4,10 +4,10 @@ Gemini CLI Helper - Direct integration with API fallback
 Usage: python gemini_helper.py [command] [args]
 """
 
-import sys
-import subprocess
-import shlex
 import os
+import shlex
+import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -68,7 +68,7 @@ def sanitize_for_prompt(text: str, max_length: int = 100000) -> str:
 
             # Create case-insensitive regex pattern
             escaped_pattern = re.escape(pattern)
-            replacement = f"[filtered:{pattern[:10]}]"
+            replacement = f"[filtered-content]"
             text = re.sub(escaped_pattern, replacement, text, flags=re.IGNORECASE)
 
     # Escape potential control characters
@@ -80,7 +80,7 @@ def sanitize_for_prompt(text: str, max_length: int = 100000) -> str:
 def execute_gemini_api(
     prompt: str, model_name: str, show_progress: bool = True
 ) -> dict:
-    """Execute Gemini API directly with specified model"""
+    """Execute Gemini API directly with specified model - try this first before CLI fallback"""
     try:
         # Validate API key securely
         if (

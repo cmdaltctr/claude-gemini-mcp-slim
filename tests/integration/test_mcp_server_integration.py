@@ -4,21 +4,22 @@ Integration tests for MCP server functionality
 Tests the full MCP protocol communication and tool registration
 """
 
-import pytest
 import asyncio
 import json
-from unittest.mock import AsyncMock, patch, MagicMock
-from mcp.types import Tool, TextContent
+import os
 
 # Import our server components
 import sys
-import os
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+from mcp.types import TextContent, Tool
 
 sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
-from gemini_mcp_server import server, call_tool, list_tools
+from gemini_mcp_server import call_tool, list_tools, server
 
 
 class TestMCPServerIntegration:

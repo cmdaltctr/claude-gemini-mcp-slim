@@ -4,11 +4,12 @@ Security Tests for Hardened Gemini MCP Server
 Tests the security functions and ensures vulnerabilities are fixed.
 """
 
-import pytest
-import tempfile
 import os
-from pathlib import Path
 import sys
+import tempfile
+from pathlib import Path
+
+import pytest
 
 # Add the current directory to Python path to import our modules
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -61,7 +62,11 @@ class TestSecurityFunctions:
     def test_validate_path_security_safe_paths(self):
         """Test that safe paths within current directory are allowed"""
         # Create a temporary file in current directory
-        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".py") as f:
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", delete=False, suffix=".py", dir="."
+        ) as f:
             f.write("# Test file")
             temp_file = f.name
 
@@ -72,7 +77,8 @@ class TestSecurityFunctions:
             assert is_valid, f"Safe relative path should be valid: {error_msg}"
 
             # Test absolute path within current directory
-            is_valid, error_msg, resolved_path = validate_path_security(temp_file)
+            abs_path = os.path.abspath(temp_file)
+            is_valid, error_msg, resolved_path = validate_path_security(abs_path)
             assert is_valid, f"Safe absolute path should be valid: {error_msg}"
 
         finally:
@@ -136,8 +142,8 @@ class TestSecurityIntegration:
 
     def test_security_functions_present(self):
         """Verify that all required security functions are present"""
-        from gemini_mcp_server import sanitize_for_prompt, validate_path_security
         from gemini_helper import sanitize_for_prompt as helper_sanitize
+        from gemini_mcp_server import sanitize_for_prompt, validate_path_security
 
         # Test that functions are callable
         assert callable(sanitize_for_prompt)

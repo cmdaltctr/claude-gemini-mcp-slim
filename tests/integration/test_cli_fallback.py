@@ -4,11 +4,12 @@ Integration tests for CLI fallback logic and command execution
 Tests the security of subprocess execution and error handling
 """
 
-import pytest
 import asyncio
 import os
-from unittest.mock import AsyncMock, patch, MagicMock
 import sys
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 # Import our server components
 sys.path.insert(
@@ -53,7 +54,7 @@ class TestCLIFallbackSecurity:
 
                     # Verify that create_subprocess_exec was called with individual args
                     # This ensures no shell interpretation of the malicious content
-                    call_args = mock_exec.call_args[0][0]
+                    call_args = mock_exec.call_args[0]
                     assert call_args == (
                         "gemini",
                         "-m",
