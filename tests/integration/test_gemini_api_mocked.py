@@ -266,7 +266,7 @@ class TestModelSelection:
                     await execute_gemini_cli_streaming("Test prompt", task_type)
 
                     # Verify correct model was selected
-                    call_args = mock_exec.call_args[0][0]
+                    call_args = mock_exec.call_args[0]
                     assert call_args[2] == expected_model  # -m flag argument
 
     @pytest.mark.asyncio

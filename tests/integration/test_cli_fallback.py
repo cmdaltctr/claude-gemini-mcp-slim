@@ -123,14 +123,27 @@ class TestCLIProcessManagement:
     async def test_process_timeout_handling(self):
         """Test that long-running processes are handled correctly"""
 
-        # Mock a process that hangs
+        # Mock a process that times out a few times then completes
         mock_process = MagicMock()
-        mock_process.returncode = None  # Still running
         mock_process.pid = 12345
-
-        # Simulate timeout during readline
-        mock_process.stdout.readline = AsyncMock(side_effect=asyncio.TimeoutError)
+        
+        # Create a sequence: timeout a few times, then process completes
+        timeout_count = 0
+        async def mock_readline():
+            nonlocal timeout_count
+            if timeout_count < 3:
+                timeout_count += 1
+                raise asyncio.TimeoutError()
+            else:
+                # Process completes after timeouts
+                mock_process.returncode = 0
+                return b""  # EOF
+        
+        mock_process.stdout.readline = mock_readline
         mock_process.communicate = AsyncMock(return_value=(b"partial output", b""))
+        
+        # Initially still running, then completed
+        mock_process.returncode = None
 
         with patch("asyncio.create_subprocess_exec", return_value=mock_process):
             with patch("gemini_mcp_server.GOOGLE_API_KEY", None):
@@ -142,6 +155,7 @@ class TestCLIProcessManagement:
 
                 # Should complete even with timeouts
                 assert result is not None
+                assert result["success"] is True
 
     @pytest.mark.asyncio
     async def test_process_memory_constraints(self):

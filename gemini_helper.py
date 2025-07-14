@@ -178,7 +178,7 @@ def execute_gemini_cli(
         env = {"PATH": os.environ.get("PATH", "")}
         if "GOOGLE_CLOUD_PROJECT" in os.environ:
             env["GOOGLE_CLOUD_PROJECT"] = os.environ["GOOGLE_CLOUD_PROJECT"]
-        
+
         process = subprocess.Popen(
             cmd_args,
             shell=False,

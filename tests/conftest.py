@@ -35,9 +35,9 @@ def reset_environment():
     """
     # Store original environment
     original_env = dict(os.environ)
-    
+
     yield
-    
+
     # Restore original environment
     os.environ.clear()
     os.environ.update(original_env)
@@ -52,9 +52,9 @@ def temp_workspace():
     with tempfile.TemporaryDirectory() as temp_dir:
         original_cwd = os.getcwd()
         os.chdir(temp_dir)
-        
+
         yield Path(temp_dir)
-        
+
         os.chdir(original_cwd)
 
 
@@ -72,7 +72,7 @@ def mock_process():
     process.wait = AsyncMock(return_value=0)
     process.terminate = MagicMock()
     process.kill = MagicMock()
-    
+
     return process
 
 
@@ -86,15 +86,11 @@ def mock_gemini_api():
     mock_model = MagicMock()
     mock_response = MagicMock()
     mock_response.text = "Mock API response"
-    
+
     mock_model.generate_content_async = AsyncMock(return_value=mock_response)
     mock_genai.GenerativeModel.return_value = mock_model
-    
-    return {
-        "genai": mock_genai,
-        "model": mock_model,
-        "response": mock_response
-    }
+
+    return {"genai": mock_genai, "model": mock_model, "response": mock_response}
 
 
 @pytest.fixture
@@ -138,7 +134,7 @@ def large_code_sample():
         lines.append(f'    """Function number {i}."""')
         lines.append(f'    return "Result from function {i}"')
         lines.append("")
-    
+
     return "\n".join(lines)
 
 
@@ -147,9 +143,10 @@ def mock_text_content():
     """
     Create mock TextContent for MCP responses.
     """
+
     def _create_content(text: str) -> TextContent:
         return TextContent(type="text", text=text)
-    
+
     return _create_content
 
 
@@ -175,19 +172,20 @@ def mock_cli_execution():
     """
     Create a factory for mock CLI execution results.
     """
+
     def _create_result(
         success: bool = True,
         output: str = "Mock CLI output",
         error: str = "",
-        returncode: int = 0
+        returncode: int = 0,
     ) -> Dict[str, Any]:
         return {
             "success": success,
             "output": output,
             "error": error,
-            "returncode": returncode
+            "returncode": returncode,
         }
-    
+
     return _create_result
 
 
@@ -196,10 +194,11 @@ def slow_operation_mock():
     """
     Create a mock that simulates slow operations for timeout testing.
     """
+
     async def _slow_operation(delay: float = 0.1):
         await asyncio.sleep(delay)
         return "Slow operation completed"
-    
+
     return _slow_operation
 
 
@@ -209,20 +208,20 @@ def resource_cleanup():
     Track resources that need cleanup after tests.
     """
     resources = []
-    
+
     def register_resource(resource):
         resources.append(resource)
-    
+
     yield register_resource
-    
+
     # Cleanup registered resources
     for resource in resources:
         try:
-            if hasattr(resource, 'close'):
+            if hasattr(resource, "close"):
                 resource.close()
-            elif hasattr(resource, 'terminate'):
+            elif hasattr(resource, "terminate"):
                 resource.terminate()
-            elif hasattr(resource, 'cleanup'):
+            elif hasattr(resource, "cleanup"):
                 resource.cleanup()
         except Exception:
             # Ignore cleanup errors in tests
@@ -234,12 +233,13 @@ def parallel_safe_mock():
     """
     Create process-safe mocks for parallel test execution.
     """
+
     def _create_mock(**kwargs):
         mock = MagicMock(**kwargs)
         # Make the mock process-safe
         mock.__reduce__ = lambda: (MagicMock, ())
         return mock
-    
+
     return _create_mock
 
 
@@ -252,12 +252,8 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')"
     )
-    config.addinivalue_line(
-        "markers", "integration: marks tests as integration tests"
-    )
-    config.addinivalue_line(
-        "markers", "timeout: marks tests that should timeout"
-    )
+    config.addinivalue_line("markers", "integration: marks tests as integration tests")
+    config.addinivalue_line("markers", "timeout: marks tests that should timeout")
 
 
 def pytest_collection_modifyitems(config, items):
@@ -268,7 +264,7 @@ def pytest_collection_modifyitems(config, items):
         # Mark integration tests
         if "integration" in str(item.fspath):
             item.add_marker(pytest.mark.integration)
-        
+
         # Mark slow tests
         if "slow" in item.name.lower() or "large" in item.name.lower():
             item.add_marker(pytest.mark.slow)
@@ -279,7 +275,7 @@ def pytest_runtest_setup(item):
     Setup each test with proper isolation.
     """
     # Clear any existing patches
-    if hasattr(item, '_patches'):
+    if hasattr(item, "_patches"):
         for patch_obj in item._patches:
             patch_obj.stop()
         item._patches = []
@@ -292,7 +288,7 @@ def pytest_runtest_teardown(item):
     Teardown each test with proper cleanup.
     """
     # Stop any remaining patches
-    if hasattr(item, '_patches'):
+    if hasattr(item, "_patches"):
         for patch_obj in item._patches:
             try:
                 patch_obj.stop()

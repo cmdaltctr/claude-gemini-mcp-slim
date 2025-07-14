@@ -159,7 +159,7 @@ async def execute_gemini_api(prompt: str, model_name: str) -> Dict[str, Any]:
         import re
 
         error_message = re.sub(
-            r"AIzaSy[A-Za-z0-9_-]{33}", "[API_KEY_REDACTED]", error_message
+            r"AIzaSy[A-Za-z0-9_-]{25,}", "[API_KEY_REDACTED]", error_message
         )
         error_message = re.sub(
             r"sk-[A-Za-z0-9_-]{32,}", "[API_KEY_REDACTED]", error_message
@@ -253,12 +253,16 @@ async def execute_gemini_cli_streaming(
 ) -> Dict[str, Any]:
     """Execute Gemini CLI with model selection and API fallback"""
     logger.info("Starting Gemini CLI execution with streaming")
+    
+    # Input validation
+    if not isinstance(prompt, str):
+        return {"success": False, "error": "Invalid prompt: must be non-empty string"}
+    
+    if len(prompt.strip()) == 0:
+        return {"success": False, "error": "Invalid prompt: must be non-empty string"}
+    
     logger.info(f"Prompt length: {len(prompt)} characters")
     logger.info(f"Task type: {task_type}")
-
-    # Input validation
-    if not isinstance(prompt, str) or len(prompt.strip()) == 0:
-        return {"success": False, "error": "Invalid prompt: must be non-empty string"}
 
     if len(prompt) > 1000000:  # 1MB limit
         return {"success": False, "error": "Prompt too large (max 1MB)"}
@@ -292,12 +296,12 @@ async def execute_gemini_cli_streaming(
         logger.info(
             f"Executing command: gemini -m {model_name} -p [prompt length: {len(prompt)}]"
         )
-        
+
         # Include GOOGLE_CLOUD_PROJECT if it's set
         env = {"PATH": os.environ.get("PATH", "")}
         if "GOOGLE_CLOUD_PROJECT" in os.environ:
             env["GOOGLE_CLOUD_PROJECT"] = os.environ["GOOGLE_CLOUD_PROJECT"]
-        
+
         process = await asyncio.create_subprocess_exec(
             *cmd_args,
             stdout=asyncio.subprocess.PIPE,
@@ -336,6 +340,10 @@ async def execute_gemini_cli_streaming(
                         last_progress = current_time
                 else:
                     break
+            except (BrokenPipeError, OSError):
+                # Process crashed, try to get stderr
+                logger.warning("Process output stream broken, checking for crash")
+                break
 
         # Get any remaining output
         remaining_stdout, stderr = await process.communicate()
@@ -356,10 +364,22 @@ async def execute_gemini_cli_streaming(
             logger.info("Gemini CLI execution successful")
             return {"success": True, "output": full_output}
         else:
-            logger.error(
-                f"Gemini CLI failed with return code {process.returncode}: {stderr_str[:200]}..."
+            # Sanitize stderr to prevent sensitive information leakage
+            import re
+            sanitized_stderr = re.sub(
+                r"AIzaSy[A-Za-z0-9_-]{25,}", "[API_KEY_REDACTED]", stderr_str
             )
-            return {"success": False, "error": stderr_str}
+            sanitized_stderr = re.sub(
+                r"sk-[A-Za-z0-9_-]{32,}", "[API_KEY_REDACTED]", sanitized_stderr
+            )
+            sanitized_stderr = re.sub(
+                r"Bearer [A-Za-z0-9_.-]{10,}", "[TOKEN_REDACTED]", sanitized_stderr
+            )
+            
+            logger.error(
+                f"Gemini CLI failed with return code {process.returncode}: {sanitized_stderr[:200]}..."
+            )
+            return {"success": False, "error": sanitized_stderr}
 
     except Exception as e:
         logger.error(f"Exception during Gemini CLI execution: {str(e)}")
