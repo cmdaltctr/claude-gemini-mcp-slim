@@ -12,14 +12,14 @@ from pathlib import Path
 # Model configuration with environment variable support
 GEMINI_MODELS = {
     "flash": os.getenv("GEMINI_FLASH_MODEL", "gemini-2.5-flash"),
-    "pro": os.getenv("GEMINI_PRO_MODEL", "gemini-2.5-pro")
+    "pro": os.getenv("GEMINI_PRO_MODEL", "gemini-2.5-pro"),
 }
 
 # Model assignment for hook tasks
 HOOK_MODEL_ASSIGNMENTS = {
-    "pre-edit": "flash",        # Quick context analysis
-    "pre-commit": "pro",        # Thorough review
-    "session-summary": "flash"  # Lightweight overview
+    "pre-edit": "flash",  # Quick context analysis
+    "pre-commit": "pro",  # Thorough review
+    "session-summary": "flash",  # Lightweight overview
 }
 
 ##################################################################
@@ -28,18 +28,31 @@ HOOK_MODEL_ASSIGNMENTS = {
 
 # File analysis configuration optimized for token efficiency
 SLIM_CONFIG = {
-    "max_file_size": 81920,     # 80 KB
-    "max_lines": 800,           # Maximum lines per file
-    "response_word_limit": 800, # Maximum words in response
+    "max_file_size": 81920,  # 80 KB
+    "max_lines": 800,  # Maximum lines per file
+    "response_word_limit": 800,  # Maximum words in response
     "supported_extensions": [
-        ".py", ".js", ".ts", ".java", ".cpp", ".c", ".rs",  # Programming languages
-        ".vue", ".html", ".css", ".scss", ".sass", ".jsx", ".tsx"  # Frontend files
-    ]
+        ".py",
+        ".js",
+        ".ts",
+        ".java",
+        ".cpp",
+        ".c",
+        ".rs",  # Programming languages
+        ".vue",
+        ".html",
+        ".css",
+        ".scss",
+        ".sass",
+        ".jsx",
+        ".tsx",  # Frontend files
+    ],
 }
 
 ##################################################################
 #################### FILE VALIDATION ############################
 ##################################################################
+
 
 def should_analyze_file(file_path: str) -> tuple[bool, str]:
     """Determine if file should be analyzed based on slim configuration"""
@@ -62,7 +75,7 @@ def should_analyze_file(file_path: str) -> tuple[bool, str]:
 
         # Check line count (800 line limit)
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 line_count = sum(1 for _ in f)
 
             if line_count > SLIM_CONFIG["max_lines"]:
@@ -76,9 +89,11 @@ def should_analyze_file(file_path: str) -> tuple[bool, str]:
     except Exception as e:
         return False, f"Error: {str(e)}"
 
+
 ##################################################################
 #################### GEMINI CLI EXECUTION #######################
 ##################################################################
+
 
 def execute_gemini_analysis(analysis_type: str, file_paths: str):
     """Execute Gemini CLI analysis with model selection and token-efficient prompts"""
@@ -118,33 +133,36 @@ def execute_gemini_analysis(analysis_type: str, file_paths: str):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            bufsize=1
+            bufsize=1,
         )
-        
+
         # Stream output and show progress
         output_lines = []
         print(f"🔍 {analysis_type} analysis in progress...", file=sys.stderr)
-        
+
         while True:
             line = process.stdout.readline()
             if line:
                 output_lines.append(line)
                 # Show progress to stderr
-                print(f"📝 {line.strip()[:80]}{'...' if len(line.strip()) > 80 else ''}", file=sys.stderr)
+                print(
+                    f"📝 {line.strip()[:80]}{'...' if len(line.strip()) > 80 else ''}",
+                    file=sys.stderr,
+                )
             elif process.poll() is not None:
                 break
-        
+
         # Get remaining output
         remaining_stdout, stderr = process.communicate()
         if remaining_stdout:
             output_lines.append(remaining_stdout)
-        
+
         # Create result object to match original interface
         result = subprocess.CompletedProcess(
             args=["gemini", "-p", prompt],
             returncode=process.returncode,
-            stdout=''.join(output_lines),
-            stderr=stderr
+            stdout="".join(output_lines),
+            stderr=stderr,
         )
 
         if result.returncode == 0:
@@ -155,15 +173,19 @@ def execute_gemini_analysis(analysis_type: str, file_paths: str):
 
     # No timeout handling needed with streaming
     except FileNotFoundError:
-        print("❌ Gemini CLI not found. Run 'npm install -g @google/gemini-cli'", file=sys.stderr)
+        print(
+            "❌ Gemini CLI not found. Run 'npm install -g @google/gemini-cli'",
+            file=sys.stderr,
+        )
     except Exception as e:
         print(f"❌ Error: {e}", file=sys.stderr)
+
 
 def execute_session_summary(directory_path: str):
     """Execute lightweight session summary analysis"""
 
     print("📋 Generating session summary...", file=sys.stderr)
-    
+
     # Select model for session summary
     model_type = HOOK_MODEL_ASSIGNMENTS.get("session-summary", "flash")
     model_name = GEMINI_MODELS[model_type]
@@ -178,39 +200,39 @@ def execute_session_summary(directory_path: str):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            bufsize=1
+            bufsize=1,
         )
-        
+
         # Stream output
         output_lines = []
-        
+
         while True:
             line = process.stdout.readline()
             if line:
                 output_lines.append(line)
             elif process.poll() is not None:
                 break
-        
+
         # Get remaining output
         remaining_stdout, stderr = process.communicate()
         if remaining_stdout:
             output_lines.append(remaining_stdout)
-        
+
         # Create result object
         result = subprocess.CompletedProcess(
             args=["gemini", "-p", prompt],
             returncode=process.returncode,
-            stdout=''.join(output_lines),
-            stderr=stderr
+            stdout="".join(output_lines),
+            stderr=stderr,
         )
 
         if result.returncode == 0:
             print("✅ Session summary complete", file=sys.stderr)
-            print("\n" + "="*50, file=sys.stderr)
+            print("\n" + "=" * 50, file=sys.stderr)
             print("📋 SESSION SUMMARY", file=sys.stderr)
-            print("="*50, file=sys.stderr)
+            print("=" * 50, file=sys.stderr)
             print(result.stdout)
-            print("="*50, file=sys.stderr)
+            print("=" * 50, file=sys.stderr)
         else:
             print("⚠️ Session summary failed", file=sys.stderr)
 
@@ -218,9 +240,11 @@ def execute_session_summary(directory_path: str):
     except Exception as e:
         print(f"❌ Session summary error: {e}", file=sys.stderr)
 
+
 ##################################################################
 #################### PROMPT GENERATION ##########################
 ##################################################################
+
 
 def create_pre_edit_prompt(file_paths: list) -> str:
     """Create token-efficient pre-edit analysis prompt"""
@@ -239,6 +263,7 @@ Provide detailed analysis including:
 
 Focus on actionable insights that will help make better edits on first attempt."""
 
+
 def create_pre_commit_prompt(file_paths: list) -> str:
     """Create focused pre-commit review prompt"""
     files_list = ", ".join(file_paths)
@@ -256,18 +281,23 @@ Perform thorough analysis including:
 
 Focus on issues that should block this commit. Be thorough and detailed."""
 
+
 def create_session_summary_prompt(directory_path: str) -> str:
     """Create lightweight session summary prompt"""
     return "What can you see in this current directory? List the main files and give a brief project overview in under 200 words in plain text format."
+
 
 ##################################################################
 #################### MAIN EXECUTION #############################
 ##################################################################
 
+
 def main():
     """Main entry point for hook execution"""
     if len(sys.argv) != 3:
-        print("Usage: slim_gemini_hook.py <analysis_type> <file_paths>", file=sys.stderr)
+        print(
+            "Usage: slim_gemini_hook.py <analysis_type> <file_paths>", file=sys.stderr
+        )
         sys.exit(1)
 
     analysis_type = sys.argv[1]
@@ -279,6 +309,6 @@ def main():
     else:
         execute_gemini_analysis(analysis_type, file_paths)
 
+
 if __name__ == "__main__":
     main()
-    
