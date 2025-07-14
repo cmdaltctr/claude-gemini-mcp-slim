@@ -292,12 +292,17 @@ async def execute_gemini_cli_streaming(
         logger.info(
             f"Executing command: gemini -m {model_name} -p [prompt length: {len(prompt)}]"
         )
-
+        
+        # Include GOOGLE_CLOUD_PROJECT if it's set
+        env = {"PATH": os.environ.get("PATH", "")}
+        if "GOOGLE_CLOUD_PROJECT" in os.environ:
+            env["GOOGLE_CLOUD_PROJECT"] = os.environ["GOOGLE_CLOUD_PROJECT"]
+        
         process = await asyncio.create_subprocess_exec(
             *cmd_args,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
-            env={"PATH": os.environ.get("PATH", "")},  # Minimal environment
+            env=env,  # Include necessary environment variables
         )
         logger.info(f"Process created with PID: {process.pid}")
 
