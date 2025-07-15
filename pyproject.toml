@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "claude-gemini-mcp-slim"
-version = "2.0.0"
+version = "3.0.0"
 description = "Streamlined Gemini API & CLI MCP integration for Claude Code"
 authors = [
     {name = "Claude Gemini MCP Team"}
