@@ -1,7 +1,7 @@
 # Claude Gemini MCP Integration
 
 <!-- CI workflow trigger -->
-![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)
 ![Security](https://img.shields.io/badge/security-hardened-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.10+-brightgreen.svg)
@@ -282,6 +282,54 @@ Once everything is working:
 - [docs/TESTING.md](docs/TESTING.md) - Testing guide and best practices
 
 ## Changelog
+
+### Version 1.3.0 (2025-07-15)
+
+**Major Release - Production-Ready Testing Infrastructure**
+
+**New Features:**
+- **Comprehensive Testing Suite** - 1,540+ lines of unit, integration, and end-to-end tests with timeout protection
+- **CI/CD Pipeline** - 3 GitHub Actions workflows for automated testing, security scanning, and dependency checks
+- **Multi-Environment Support** - Python 3.10-3.12 compatibility testing
+- **Development Workflow** - Pre-commit hooks, Makefile automation, and setup script
+- **Code Quality Tools** - MyPy type checking, Black/isort formatting, and coverage reporting
+
+**Security Enhancements:**
+- **Bandit Integration** - Automated security scanning with custom configuration
+- **GitLeaks Integration** - Secret detection and prevention in codebase
+- **Custom Hardening Tests** - Additional security validation beyond standard tools
+- **Enhanced Error Handling** - Improved MCP server robustness and security
+
+**Testing Infrastructure:**
+- **Unit Tests** - Core functionality testing with mocked dependencies
+- **Integration Tests** - API and CLI fallback testing with real interactions
+- **End-to-End Tests** - Full workflow validation including MCP server operations
+- **Security Tests** - Vulnerability scanning and hardening validation
+- **Timeout Protection** - Prevents hanging tests in CI/CD environments
+
+**Development Improvements:**
+- **Automated Setup** - One-command development environment setup (`./setup-dev.sh`)
+- **Pre-commit Hooks** - Automatic code quality checks before commits
+- **Makefile Commands** - Streamlined development workflow automation
+- **Enhanced Documentation** - Updated testing, setup, and security guides
+
+**Project Structure:**
+- 40 files changed with 5,536 lines added and 1,012 removed
+- Reorganized test structure with proper separation of concerns
+- Enhanced project configuration with `pyproject.toml`
+- Improved dependency management with development requirements
+
+**Potentially Breaking Changes:**
+- Updated minimum Python version requirements (backward compatibility maintained)
+- Reorganized project structure for better maintainability
+- Enhanced development setup process (existing setups continue to work)
+
+**Verification:**
+- All tests pass across Python 3.10-3.12
+- Security scans pass with zero critical vulnerabilities
+- Type checking passes with MyPy
+- Code formatting enforced with Black/isort
+- Existing installations continue to work without changes
 
 ### Version 1.2.0 (2025-07-14)
 
