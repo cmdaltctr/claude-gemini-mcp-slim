@@ -8,6 +8,7 @@ permissions:
   contents: write
   pull-requests: write
   actions: write
+  issues: write
 
 jobs:
   release-please:
@@ -25,11 +26,12 @@ jobs:
 
       - name: Run Release Please
         id: release
-        uses: google-github-actions/release-please-action@v4
+        uses: googleapis/release-please-action@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           config-file: .release-please-config.json
           manifest-file: .release-please-manifest.json
+          skip-labeling: true
 
       - name: Update README version badge
         if: ${{ steps.release.outputs.release_created }}
