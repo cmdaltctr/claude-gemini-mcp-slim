@@ -63,7 +63,7 @@ jobs:
         
     - name: Run mypy type checker
       run: |
-        mypy . --ignore-missing-imports --no-strict-optional
+        mypy gemini_mcp_server.py test_security.py tests/ --ignore-missing-imports --no-strict-optional
         
     - name: Run bandit security linter
       run: |
