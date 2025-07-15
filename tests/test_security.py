@@ -12,8 +12,10 @@ from typing import Any, List
 
 import pytest
 
-# Add the current directory to Python path to import our modules
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Add the project root directory to Python path to import our modules
+# This ensures tests work even when executed from inside the tests folder
+root_dir = Path(__file__).resolve().parent.parent  # repo root
+sys.path.insert(0, str(root_dir))
 
 from gemini_mcp_server import sanitize_for_prompt, validate_path_security
 

@@ -162,6 +162,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install bandit[toml] bandit-sarif-formatter
         
+    - name: Ensure project root in PYTHONPATH
+      run: echo "PYTHONPATH=${{ github.workspace }}" >> $GITHUB_ENV
+        
     - name: Run bandit scan
       run: |
         # Find all Python files in the root directory (excluding subdirectories)
@@ -335,6 +338,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
+        
+    - name: Ensure project root in PYTHONPATH
+      run: echo "PYTHONPATH=${{ github.workspace }}" >> $GITHUB_ENV
         
     - name: Run security hardening tests
       run: |
