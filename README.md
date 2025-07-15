@@ -1,7 +1,6 @@
 # Claude Gemini MCP Integration
 
-<!-- CI workflow trigger -->
-![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)
 ![Security](https://img.shields.io/badge/security-hardened-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.10+-brightgreen.svg)
@@ -282,6 +281,32 @@ Once everything is working:
 - [docs/TESTING.md](docs/TESTING.md) - Testing guide and best practices
 
 ## Changelog
+
+### Version 1.3.0 (2025-07-15)
+
+**New Features:**
+- Complete CI/CD pipeline with GitHub Actions workflows for testing, security, and dependencies
+- Comprehensive test suite with unit, integration, and end-to-end tests
+- Security hardening with Bandit, GitLeaks, and custom security tests
+- Pre-commit hooks for automated code quality checks
+- Development automation with Makefile and setup scripts
+
+**Technical Improvements:**
+- Enhanced MCP server with improved error handling and robustness
+- MyPy type checking integration with custom configuration
+- Coverage reporting and code formatting with Black and isort
+- Timeout protection for tests and CI builds
+- Organized project structure with logical directory layout
+
+**Documentation:**
+- Comprehensive testing guide and development workflow documentation
+- Enhanced security documentation and setup instructions
+- Updated contribution guidelines and development setup process
+
+**Possibly Breaking Changes:**
+- Reorganized project structure (moved docs, tests)
+- Enhanced development setup process
+- Updated dependency requirements
 
 ### Version 1.2.0 (2025-07-14)
 
