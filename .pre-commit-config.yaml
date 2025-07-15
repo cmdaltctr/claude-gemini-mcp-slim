@@ -21,7 +21,7 @@ repos:
     hooks:
       - id: pytest
         name: Run pytest
-        entry: pytest
+        entry: bash -c 'source .venv/bin/activate && python -m pytest'
         language: system
         pass_filenames: false
         args: ['-v', '--tb=short']
