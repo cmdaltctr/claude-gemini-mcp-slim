@@ -4,7 +4,7 @@
 ![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
 ![Security](https://img.shields.io/badge/security-hardened-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Python](https://img.shields.io/badge/python-3.8+-brightgreen.svg)
+![Python](https://img.shields.io/badge/python-3.10+-brightgreen.svg)
 ![Status](https://img.shields.io/badge/status-production%20ready-green.svg)
 ![Slash Commands](https://img.shields.io/badge/slash%20commands-20+-orange.svg)
 
@@ -156,7 +156,7 @@ The shared MCP architecture supports multiple AI clients simultaneously:
 3. **Test the integration** with a simple query
 4. **Explore the 20+ slash commands** in [.claude/README-SLASH-COMMANDS.md](.claude/README-SLASH-COMMANDS.md)
 
-**Installation time:** ~5 minutes | **Prerequisites:** Python 3.8+, Node.js 16+
+**Installation time:** ~5 minutes | **Prerequisites:** Python 3.10+, Node.js 16+
 
 ## Usage Examples
 
