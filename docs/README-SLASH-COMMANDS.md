@@ -11,8 +11,8 @@ Slash commands are shortcuts that allow you to interact with Gemini AI without m
 ### Core Commands
 
 #### `/gemini [question]`
-**Purpose:** Ask Gemini any development question  
-**Alias:** `/g`  
+**Purpose:** Ask Gemini any development question
+**Alias:** `/g`
 **Uses:** `gemini_quick_query`
 
 Query Gemini for instant answers to coding questions, explanations, and general development guidance.
@@ -31,8 +31,8 @@ Query Gemini for instant answers to coding questions, explanations, and general 
 - General development guidance
 
 #### `/analyze [file_path] [analysis_type]`
-**Purpose:** Analyze code files with comprehensive insights  
-**Alias:** `/a`  
+**Purpose:** Analyze code files with comprehensive insights
+**Alias:** `/a`
 **Uses:** `gemini_analyze_code`
 
 Perform deep analysis of specific code files, functions, or modules with focus on security, performance, and architecture.
@@ -56,8 +56,8 @@ Perform deep analysis of specific code files, functions, or modules with focus o
 - Performance optimization planning
 
 #### `/codebase [directory_path] [scope]`
-**Purpose:** Analyze entire directories using Gemini's large context window  
-**Alias:** `/c`  
+**Purpose:** Analyze entire directories using Gemini's large context window
+**Alias:** `/c`
 **Uses:** `gemini_codebase_analysis`
 
 Leverage Gemini's 1M+ token context to analyze complete codebases, multiple files, and project architecture.
@@ -83,8 +83,8 @@ Leverage Gemini's 1M+ token context to analyze complete codebases, multiple file
 ### Developer Assistance Commands
 
 #### `/explain [code_or_concept]`
-**Purpose:** Get detailed explanations of code concepts or functions  
-**Alias:** `/e`  
+**Purpose:** Get detailed explanations of code concepts or functions
+**Alias:** `/e`
 **Uses:** `gemini_quick_query`
 
 Receive comprehensive explanations of programming concepts, code snippets, error messages, or technical terms.
@@ -104,8 +104,8 @@ Receive comprehensive explanations of programming concepts, code snippets, error
 - Code documentation and comments
 
 #### `/debug [code_or_error]`
-**Purpose:** Get debugging assistance for code issues  
-**Alias:** `/d`  
+**Purpose:** Get debugging assistance for code issues
+**Alias:** `/d`
 **Uses:** `gemini_quick_query`
 
 Receive specific debugging help, error analysis, and solution suggestions for code problems.

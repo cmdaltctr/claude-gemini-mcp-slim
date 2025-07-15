@@ -469,7 +469,7 @@ def analyze_codebase(directory_path: str, analysis_scope: str = "all") -> None:
 
 Provide comprehensive analysis including:
 1. Overall architecture and design patterns
-2. Code quality and maintainability assessment  
+2. Code quality and maintainability assessment
 3. Security considerations and potential vulnerabilities
 4. Performance implications and bottlenecks
 5. Best practices adherence and improvement suggestions

@@ -3,18 +3,19 @@
 
 import os
 import unittest
-from unittest.mock import patch, MagicMock, Mock
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
 
 # Import functions to test
 from gemini_helper import (
-    sanitize_for_prompt,
-    execute_gemini_api,
-    execute_gemini_cli,
     GEMINI_MODELS,
-    MODEL_ASSIGNMENTS,
     MAX_FILE_SIZE,
     MAX_LINES,
+    MODEL_ASSIGNMENTS,
+    execute_gemini_api,
+    execute_gemini_cli,
+    sanitize_for_prompt,
 )
 
 
@@ -51,7 +52,7 @@ class TestSanitizeForPrompt(unittest.TestCase):
             "[INST]",
             "[/INST]",
         ]
-        
+
         for pattern in dangerous_patterns:
             # Test case insensitive
             for test_pattern in [pattern, pattern.upper(), pattern.capitalize()]:
@@ -96,51 +97,63 @@ class TestExecuteGeminiApi(unittest.TestCase):
 
     def test_execute_gemini_api_missing_api_key(self):
         """Test handling of missing API key"""
-        with patch('gemini_helper.GOOGLE_API_KEY', None):
-            result = execute_gemini_api("test prompt", "test-model", show_progress=False)
+        with patch("gemini_helper.GOOGLE_API_KEY", None):
+            result = execute_gemini_api(
+                "test prompt", "test-model", show_progress=False
+            )
             self.assertFalse(result["success"])
             self.assertIn("Invalid or missing API key", result["error"])
 
     def test_execute_gemini_api_invalid_api_key(self):
         """Test handling of invalid API key"""
-        with patch('gemini_helper.GOOGLE_API_KEY', "short"):
-            result = execute_gemini_api("test prompt", "test-model", show_progress=False)
+        with patch("gemini_helper.GOOGLE_API_KEY", "short"):
+            result = execute_gemini_api(
+                "test prompt", "test-model", show_progress=False
+            )
             self.assertFalse(result["success"])
             self.assertIn("Invalid or missing API key", result["error"])
 
     def test_execute_gemini_api_import_error(self):
         """Test handling of missing google-generativeai library"""
-        with patch('gemini_helper.GOOGLE_API_KEY', "valid_key_123456789"):
-            with patch('builtins.__import__', side_effect=ImportError):
-                result = execute_gemini_api("test prompt", "test-model", show_progress=False)
+        with patch("gemini_helper.GOOGLE_API_KEY", "valid_key_123456789"):
+            with patch("builtins.__import__", side_effect=ImportError):
+                result = execute_gemini_api(
+                    "test prompt", "test-model", show_progress=False
+                )
                 self.assertFalse(result["success"])
                 self.assertIn("API library not available", result["error"])
 
-    @patch('gemini_helper.GOOGLE_API_KEY', "valid_key_123456789")
+    @patch("gemini_helper.GOOGLE_API_KEY", "valid_key_123456789")
     def test_execute_gemini_api_success(self):
         """Test successful API call"""
         mock_response = MagicMock()
         mock_response.text = "Test response"
-        
+
         mock_model = MagicMock()
         mock_model.generate_content.return_value = mock_response
-        
+
         mock_genai = MagicMock()
         mock_genai.GenerativeModel.return_value = mock_model
-        
-        with patch.dict('sys.modules', {'google.generativeai': mock_genai}):
-            result = execute_gemini_api("test prompt", "test-model", show_progress=False)
+
+        with patch.dict("sys.modules", {"google.generativeai": mock_genai}):
+            result = execute_gemini_api(
+                "test prompt", "test-model", show_progress=False
+            )
             self.assertTrue(result["success"])
             self.assertEqual(result["output"], "Test response")
 
-    @patch('gemini_helper.GOOGLE_API_KEY', "valid_key_123456789")
+    @patch("gemini_helper.GOOGLE_API_KEY", "valid_key_123456789")
     def test_execute_gemini_api_exception_handling(self):
         """Test exception handling and error sanitization"""
         mock_genai = MagicMock()
-        mock_genai.GenerativeModel.side_effect = Exception("API error with AIzaSy123456789012345678901234567890123")
-        
-        with patch.dict('sys.modules', {'google.generativeai': mock_genai}):
-            result = execute_gemini_api("test prompt", "test-model", show_progress=False)
+        mock_genai.GenerativeModel.side_effect = Exception(
+            "API error with AIzaSy123456789012345678901234567890123"
+        )
+
+        with patch.dict("sys.modules", {"google.generativeai": mock_genai}):
+            result = execute_gemini_api(
+                "test prompt", "test-model", show_progress=False
+            )
             self.assertFalse(result["success"])
             self.assertIn("[API_KEY_REDACTED]", result["error"])
             self.assertNotIn("AIzaSy123456789012345678901234567890123", result["error"])
@@ -176,7 +189,9 @@ class TestExecuteGeminiCli(unittest.TestCase):
 
     def test_execute_gemini_cli_invalid_model_name_characters(self):
         """Test handling of model name with invalid characters"""
-        result = execute_gemini_cli("test prompt", model_name="model$name", show_progress=False)
+        result = execute_gemini_cli(
+            "test prompt", model_name="model$name", show_progress=False
+        )
         self.assertFalse(result["success"])
         self.assertIn("Invalid model name characters", result["error"])
 
@@ -184,14 +199,16 @@ class TestExecuteGeminiCli(unittest.TestCase):
         """Test validation of valid model name"""
         valid_names = ["gemini-pro", "gemini-2.5-flash", "model-1.0"]
         for model_name in valid_names:
-            with patch('subprocess.Popen') as mock_popen:
+            with patch("subprocess.Popen") as mock_popen:
                 mock_process = MagicMock()
                 mock_process.stdout.readline.side_effect = ["", ""]
                 mock_process.poll.return_value = 0
                 mock_process.communicate.return_value = ("success", "")
                 mock_popen.return_value = mock_process
-                
-                result = execute_gemini_cli("test prompt", model_name=model_name, show_progress=False)
+
+                result = execute_gemini_cli(
+                    "test prompt", model_name=model_name, show_progress=False
+                )
                 # Should not fail on model name validation
                 self.assertTrue("Invalid model name" not in str(result))
 
@@ -213,7 +230,7 @@ class TestConstants(unittest.TestCase):
         self.assertIn("quick_query", MODEL_ASSIGNMENTS)
         self.assertIn("analyze_code", MODEL_ASSIGNMENTS)
         self.assertIn("analyze_codebase", MODEL_ASSIGNMENTS)
-        
+
         # Check that assignments reference valid models
         for assignment in MODEL_ASSIGNMENTS.values():
             self.assertIn(assignment, GEMINI_MODELS)

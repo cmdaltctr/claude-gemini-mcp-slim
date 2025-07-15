@@ -55,7 +55,7 @@
         "/a UserForm.vue security"
       ],
       "action": {
-        "type": "mcp_tool", 
+        "type": "mcp_tool",
         "tool": "gemini_analyze_code",
         "parameters": {
           "code_content": "{file_content}",
@@ -73,7 +73,7 @@
       ],
       "action": {
         "type": "mcp_tool",
-        "tool": "gemini_codebase_analysis", 
+        "tool": "gemini_codebase_analysis",
         "parameters": {
           "directory_path": "{arg1}",
           "analysis_scope": "{arg2:all}"
@@ -147,7 +147,7 @@
       }
     },
     "p": {
-      "description": "Quick alias for /performance", 
+      "description": "Quick alias for /performance",
       "usage": "/p [target_path]",
       "examples": [
         "/p database.py",
@@ -310,7 +310,7 @@
     },
     "optimize": {
       "description": "Get optimization suggestions for code or architecture",
-      "usage": "/optimize [target_path]", 
+      "usage": "/optimize [target_path]",
       "examples": [
         "/optimize src/api/queries.js",
         "/optimize ./components",
@@ -410,10 +410,10 @@
   },
   "smart_analyze_logic": {
     "file_detection": "If target is a file, use gemini_analyze_code",
-    "directory_detection": "If target is a directory, use gemini_codebase_analysis", 
+    "directory_detection": "If target is a directory, use gemini_codebase_analysis",
     "analysis_type_mapping": {
       "security": "security",
-      "performance": "performance", 
+      "performance": "performance",
       "architecture": "architecture",
       "optimization": "performance"
     }

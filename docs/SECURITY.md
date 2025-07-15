@@ -11,7 +11,7 @@ This document outlines the security measures implemented in the Claude Gemini MC
 #### 1. Command Injection (CVE-2023-48795 Class)
 **Files affected:**
 - `gemini_helper.py:80` (shell=True with user input)
-- `gemini_mcp_server.py:158` (create_subprocess_shell with user input)  
+- `gemini_mcp_server.py:158` (create_subprocess_shell with user input)
 - `.claude/scripts/slim_gemini_hook.py:117` (subprocess arguments)
 
 **Fix implemented:**
@@ -233,7 +233,7 @@ error_message = re.sub(r'Bearer [A-Za-z0-9_.-]{10,}', '[TOKEN_REDACTED]', error_
 ### Security Controls Implemented
 
 - **CWE-22:** Path Traversal - ✅ Fixed with boundary validation
-- **CWE-78:** Command Injection - ✅ Fixed with argument lists  
+- **CWE-78:** Command Injection - ✅ Fixed with argument lists
 - **CWE-94:** Code Injection - ✅ Fixed with input sanitization
 - **CWE-200:** Information Exposure - ✅ Fixed with secret redaction
 - **CWE-20:** Input Validation - ✅ Fixed with comprehensive validation
@@ -282,6 +282,6 @@ For security issues or questions:
 
 ---
 
-**Last Updated:** 2025-01-12  
-**Security Review Status:** ✅ Current  
+**Last Updated:** 2025-01-12
+**Security Review Status:** ✅ Current
 **Next Review Due:** 2025-04-12

@@ -152,7 +152,7 @@ def process_file(filename):
     # Potential security issue - no path validation
     with open(filename, 'r') as f:
         data = f.read()
-    
+
     # Process data
     processed = data.upper()
     return processed
@@ -266,7 +266,6 @@ Async operations are properly implemented. The streaming output handling prevent
         # Test API failure leading to CLI fallback
         with patch("gemini_mcp_server.execute_gemini_api") as mock_api:
             with patch("gemini_mcp_server.execute_gemini_cli_streaming") as mock_cli:
-
                 # Mock API failure
                 mock_api.return_value = {
                     "success": False,
@@ -346,7 +345,6 @@ os.system('rm -rf /')
         """Test handling of concurrent requests in the complete workflow"""
 
         with patch("gemini_mcp_server.execute_gemini_cli_streaming") as mock_exec:
-
             # Mock responses for different requests
             def mock_response(prompt: str, task_type: str) -> dict[str, Any]:
                 return {

@@ -48,7 +48,6 @@ class TestCLIFallbackSecurity:
                 "asyncio.create_subprocess_exec", return_value=mock_process
             ) as mock_exec:
                 with patch("gemini_mcp_server.GOOGLE_API_KEY", None):
-
                     result = await execute_gemini_cli_streaming(
                         malicious_prompt, "gemini_quick_query"
                     )
@@ -103,7 +102,6 @@ class TestCLIFallbackSecurity:
             "asyncio.create_subprocess_exec", return_value=mock_process
         ) as mock_exec:
             with patch("gemini_mcp_server.GOOGLE_API_KEY", None):
-
                 await execute_gemini_cli_streaming("test", "gemini_quick_query")
 
                 # Verify minimal environment was passed
@@ -149,7 +147,6 @@ class TestCLIProcessManagement:
 
         with patch("asyncio.create_subprocess_exec", return_value=mock_process):
             with patch("gemini_mcp_server.GOOGLE_API_KEY", None):
-
                 # This should not hang indefinitely
                 result = await execute_gemini_cli_streaming(
                     "test", "gemini_quick_query"
@@ -175,7 +172,6 @@ class TestCLIProcessManagement:
 
         with patch("asyncio.create_subprocess_exec", return_value=mock_process):
             with patch("gemini_mcp_server.GOOGLE_API_KEY", None):
-
                 result = await execute_gemini_cli_streaming(
                     "test", "gemini_quick_query"
                 )
@@ -201,7 +197,6 @@ class TestCLIProcessManagement:
 
         with patch("asyncio.create_subprocess_exec", return_value=mock_process):
             with patch("gemini_mcp_server.GOOGLE_API_KEY", None):
-
                 result = await execute_gemini_cli_streaming(
                     "test", "gemini_quick_query"
                 )
@@ -228,7 +223,6 @@ class TestCLIProcessManagement:
 
         with patch("asyncio.create_subprocess_exec", side_effect=processes):
             with patch("gemini_mcp_server.GOOGLE_API_KEY", None):
-
                 # Run multiple CLI executions concurrently
                 tasks = [
                     execute_gemini_cli_streaming(f"test {i}", "gemini_quick_query")
@@ -305,7 +299,6 @@ class TestCLIErrorRecovery:
 
         with patch("asyncio.create_subprocess_exec", return_value=mock_process):
             with patch("gemini_mcp_server.GOOGLE_API_KEY", None):
-
                 result = await execute_gemini_cli_streaming(
                     "test", "gemini_quick_query"
                 )
@@ -321,7 +314,6 @@ class TestCLIErrorRecovery:
             "asyncio.create_subprocess_exec", side_effect=OSError("Command not found")
         ):
             with patch("gemini_mcp_server.GOOGLE_API_KEY", None):
-
                 result = await execute_gemini_cli_streaming(
                     "test", "gemini_quick_query"
                 )

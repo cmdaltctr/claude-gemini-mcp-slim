@@ -32,7 +32,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=7.4.0",
-    "pytest-asyncio>=0.21.0", 
+    "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.1.0",
     "pytest-mock>=3.11.0",
     "black>=23.0.0",
@@ -57,7 +57,7 @@ minversion = "7.0"
 # Basic configuration - parallel execution controlled by test scripts
 addopts = [
     "-ra",
-    "-q", 
+    "-q",
     "--strict-markers",
     "--strict-config",
     "--timeout=30",           # 30 second timeout per test
@@ -153,7 +153,7 @@ max-line-length = 88
 extend-ignore = ["E203", "W503", "E501"]
 exclude = [
     ".git",
-    "__pycache__", 
+    "__pycache__",
     ".venv",
     "venv",
     ".tox",

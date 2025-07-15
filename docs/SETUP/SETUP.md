@@ -417,4 +417,3 @@ pip list | grep mcp
 - **Use Labels:** When submitting issues, please use appropriate labels/tags such as `bug`, `feature-request`, `documentation`, and so on ([available labels](https://github.com/cmdaltctr/claude-gemini-mcp-slim/labels)) to help me categorize and address your concerns more efficiently.
 - **Check Documentation:** Review the [README.md](../README.md) and [.claude/README-SLASH-COMMANDS.md](../.claude/README-SLASH-COMMANDS.md) for comprehensive guides.
 - **Console Logs:** Check your Claude Desktop/Code console for detailed error messages that can help diagnose issues.
-

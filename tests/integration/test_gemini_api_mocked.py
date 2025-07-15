@@ -179,7 +179,6 @@ class TestCLIFallbackIntegration:
             "asyncio.create_subprocess_exec", return_value=mock_process
         ) as mock_exec:
             with patch("gemini_mcp_server.GOOGLE_API_KEY", None):  # Force CLI usage
-
                 result = await execute_gemini_cli_streaming(
                     "Test prompt", "gemini_quick_query"
                 )
@@ -216,7 +215,6 @@ class TestCLIFallbackIntegration:
 
         with patch("asyncio.create_subprocess_exec", return_value=mock_process):
             with patch("gemini_mcp_server.GOOGLE_API_KEY", None):
-
                 result = await execute_gemini_cli_streaming(
                     "Test prompt", "gemini_quick_query"
                 )
@@ -244,7 +242,6 @@ class TestCLIFallbackIntegration:
 
         with patch("asyncio.create_subprocess_exec", return_value=mock_process):
             with patch("gemini_mcp_server.GOOGLE_API_KEY", None):
-
                 result = await execute_gemini_cli_streaming(
                     "Test prompt", "gemini_quick_query"
                 )
@@ -282,7 +279,6 @@ class TestModelSelection:
                 "asyncio.create_subprocess_exec", return_value=mock_process
             ) as mock_exec:
                 with patch("gemini_mcp_server.GOOGLE_API_KEY", None):
-
                     await execute_gemini_cli_streaming("Test prompt", task_type)
 
                     # Verify correct model was selected

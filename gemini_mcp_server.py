@@ -489,7 +489,7 @@ Provide comprehensive analysis including:
 8. Specific recommendations for improvements
 
 CRITICAL FORMATTING: Output ONLY plain text. Do NOT use:
-- No ### headers or ** bold text or * italics  
+- No ### headers or ** bold text or * italics
 - No --- separators or bullet points
 - No markdown formatting whatsoever
 - No special characters for emphasis
@@ -567,7 +567,7 @@ Provide comprehensive analysis including:
 
 MANDATORY PLAIN TEXT FORMAT - NO EXCEPTIONS:
 Output must be 100% plain text. Do NOT use:
-### (pound signs) ** (asterisks) --- (dashes) * (stars) 
+### (pound signs) ** (asterisks) --- (dashes) * (stars)
 Do NOT create headers or bold text
 Do NOT use any special symbols for formatting
 Write like a simple text file with only:
