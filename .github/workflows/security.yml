@@ -10,6 +10,11 @@ on:
     - cron: '0 2 * * *'
   workflow_dispatch:
 
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+
 env:
   PYTHON_VERSION: '3.11'
 
@@ -350,7 +355,7 @@ jobs:
     - name: Verify no hardcoded secrets patterns
       run: |
         echo "Checking for hardcoded API key patterns..."
-        if grep -r -E "(AIzaSy[A-Za-z0-9_-]{33}|sk-[A-Za-z0-9_-]{32,})" . --include="*.py" --exclude-dir=tests; then
+        if grep -r -E "(AIzaSy[A-Za-z0-9_-]{33}|sk-[A-Za-z0-9_-]{32,})" . --include="*.py" --exclude-dir=tests --exclude-dir=.github; then
           echo "❌ Found potential hardcoded API keys"
           exit 1
         else

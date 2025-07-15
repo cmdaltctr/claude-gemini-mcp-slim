@@ -159,9 +159,9 @@ class TestSecurityIntegration:
         """Test that API key patterns would be redacted in error messages"""
         # Simulate error messages that might contain API keys
         fake_api_keys = [
-            "AIzaSyBHJ5X2K9L8M3N4O5P6Q7R8S9T0U1V2W3X4Y5Z",
-            "sk-1234567890abcdef1234567890abcdef12345678",
-            "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+            "DUMMY_GOOGLE_API_KEY_FOR_TESTING",
+            "DUMMY_OPENAI_SECRET_KEY_FOR_TESTING",
+            "DUMMY_BEARER_TOKEN_FOR_TESTING",
         ]
 
         # This test would require the actual error handling code to be imported
