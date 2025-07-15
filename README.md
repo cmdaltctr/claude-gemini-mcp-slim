@@ -399,7 +399,73 @@ This project is designed to be lightweight and focused. The core functionality i
 - **Fallback Mechanisms**: Implement API with CLI fallbacks for resilience
 - **Testing**: Verify changes work with both direct API and CLI integrations
 
+### Development Setup
 
+To set up a local development environment for this MCP server:
+
+#### Quick Setup (Recommended)
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/claude-gemini-mcp-slim.git
+cd claude-gemini-mcp-slim
+
+# Run the automated setup script
+./setup-dev.sh
+```
+
+The setup script will:
+- Create a Python virtual environment (`.venv`)
+- Install all production and development dependencies
+- Set up pre-commit hooks for code quality
+- Run a quick test to verify everything is working
+
+#### Manual Setup
+
+If you prefer to set up manually:
+
+```bash
+# Create virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+
+# Install pre-commit hooks
+pre-commit install
+
+# Run tests
+python -m pytest
+```
+
+#### Development Workflow
+
+Once set up, your typical development workflow will be:
+
+```bash
+# Activate virtual environment
+source .venv/bin/activate
+
+# Make your changes
+# ...
+
+# Run tests
+python -m pytest
+
+# Run pre-commit hooks (optional, they run automatically on commit)
+pre-commit run --all-files
+
+# Commit changes (pre-commit hooks will run automatically)
+git add .
+git commit -m "Your commit message"
+```
+
+**Important Notes:**
+- The virtual environment (`.venv`) is automatically ignored by git
+- Pre-commit hooks will run automatically on every commit to ensure code quality
+- If you're using an IDE like Windsurf, make sure it's configured to use the virtual environment
 
 ## License
 
