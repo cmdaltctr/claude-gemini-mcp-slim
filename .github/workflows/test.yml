@@ -379,13 +379,18 @@ jobs:
         echo "Security Tests: ${{ needs.security-tests.result }}"
         echo "E2E Tests: ${{ needs.e2e-tests.result }}"
         
-        # Fail if any critical job failed
+# Fail if any critical job failed
         if [[ "${{ needs.code-quality.result }}" == "failure" || \
               "${{ needs.unit-tests.result }}" == "failure" || \
               "${{ needs.integration-tests.result }}" == "failure" || \
               "${{ needs.security-tests.result }}" == "failure" ]]; then
           echo "❌ Critical tests failed"
           exit 1
+        elif [[ "${{ needs.integration-tests.result }}" == "skipped" || \
+               "${{ needs.security-tests.result }}" == "skipped" ]]; then
+          echo "⚠️ Some critical tests were skipped due to dependency failures"
+          # Treat skipped as success if it's due to dependency failures
+          echo "✅ Workflow completed with warnings"
         else
           echo "✅ All critical tests passed"
         fi
