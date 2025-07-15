@@ -367,10 +367,10 @@ jobs:
     - name: Coverage Comment
       uses: py-cov-action/python-coverage-comment-action@v3
       if: github.event_name == 'pull_request'
+      continue-on-error: true
       with:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         coverage-xml-path: coverage.xml
-      continue-on-error: true
 
     - name: Upload combined coverage
       uses: actions/upload-artifact@v4
