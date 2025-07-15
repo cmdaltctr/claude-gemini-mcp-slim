@@ -24,7 +24,7 @@ help:
 	@echo "  make test-fast"
 	@echo "  make test-integration"
 	@echo "  make test-debug TEST_PATTERN=tests/integration/test_cli_fallback.py"
-	@echo "  make test-specific TEST_PATTERN=tests/unit/test_gemini_helper.py::TestPromptSanitization"
+	@echo "  make test-specific TEST_PATTERN=tests/unit/test_basic_operations.py::BasicTests"
 
 # Install dependencies
 install:
@@ -63,7 +63,7 @@ test-debug:
 test-specific:
 	@if [ -z "$(TEST_PATTERN)" ]; then \
 		echo "Error: TEST_PATTERN environment variable is required"; \
-		echo "Usage: make test-specific TEST_PATTERN=tests/unit/test_gemini_helper.py"; \
+		echo "Usage: make test-specific TEST_PATTERN=tests/unit/test_basic_operations.py"; \
 		exit 1; \
 	fi
 	python3 scripts/run_tests.py specific --test-pattern="$(TEST_PATTERN)"
@@ -109,10 +109,10 @@ test-help:
 	@echo "  TEST_PATTERN=tests/integration/test_cli_fallback.py make test-specific"
 	@echo ""
 	@echo "Run a specific test class:"
-	@echo "  TEST_PATTERN=tests/unit/test_gemini_helper.py::TestPromptSanitization make test-specific"
+	@echo "  TEST_PATTERN=tests/unit/test_basic_operations.py::BasicTests make test-specific"
 	@echo ""
 	@echo "Run a specific test method:"
-	@echo "  TEST_PATTERN=tests/unit/test_gemini_helper.py::TestPromptSanitization::test_basic_sanitization make test-specific"
+	@echo "  TEST_PATTERN=tests/unit/test_basic_operations.py::BasicTests::test_addition make test-specific"
 	@echo ""
 	@echo "Run tests with keyword matching:"
 	@echo "  TEST_PATTERN='-k sanitization' make test-specific"

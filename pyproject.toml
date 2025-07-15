@@ -92,6 +92,7 @@ filterwarnings = [
 source = ["."]
 omit = [
     "tests/*",
+    "test_*.py",
     "venv/*",
     "env/*",
     ".venv/*",

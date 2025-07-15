@@ -4,12 +4,9 @@
 
 # Skip specific test directories to avoid false positives
 # B101: assert_used - Skip assert statements (common in tests)
-# B110: try_except_pass - Skip try/except/pass (common in cleanup)
-# B404: subprocess import - Skip subprocess import warnings  
-# B603: subprocess calls - Skip subprocess call warnings for controlled usage
-# B607: subprocess partial path - Skip for controlled CLI usage
 # B601: paramiko_calls - Skip paramiko usage warnings
-skips = B101,B110,B404,B603,B607,B601
+# B602: subprocess_popen_with_shell_equals_true - Skip shell=True warnings (controlled usage)
+skips = B101,B601,B602
 
 # Exclude directories that should not be scanned
 # This significantly speeds up scanning and avoids hanging

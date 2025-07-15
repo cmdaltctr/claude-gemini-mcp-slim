@@ -9,7 +9,7 @@ This document describes the implementation of Bandit SARIF generation for the CI
 - **Location**: `.bandit` (project root)
 - **Purpose**: Configure Bandit to skip test directories and virtual environments
 - **Key settings**:
-  - Skip tests: `B101` (assert_used), `B601` (paramiko_calls)
+  - Skip tests: `B101` (assert_used), `B601` (paramiko_calls), `B602` (subprocess_popen_with_shell_equals_true)
   - Exclude directories: `/tests/`, `/venv/`, `/.venv/`, `/.test-env/`, `/htmlcov/`, `/.pytest_cache/`, `/.mypy_cache/`, `/.benchmarks/`, `/__pycache__/`, `/.git/`, `/node_modules/`, `/.github/`
   - Exclude file types: `*.pyc`, `*.pyo`, `*.swp`, `*.bak`, `*~`, `*.log`
 
@@ -66,7 +66,7 @@ The CI workflow automatically:
 
 ## Configuration Details
 The `.bandit` file is configured to:
-- Skip common false positives (assert statements, paramiko calls)
+- Skip common false positives (assert statements, paramiko calls, shell=True warnings)
 - Exclude virtual environments and cache directories
 - Focus on actual source code files
 - Provide efficient scanning without timeouts
