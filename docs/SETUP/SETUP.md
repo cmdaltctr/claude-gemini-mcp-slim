@@ -9,7 +9,7 @@ This project provides a bridge between Claude Code and Google's Gemini AI models
 3. [Install Python and Node Dependencies](#install-python-and-node-dependencies)
 4. [Set Up Gemini MCP Folder](#set-up-gemini-mcp-folder)
 5. [Configure AI Clients](#configure-ai-clients)
-6. [Optional Hook Setup](#optional-hook-setup)
+6. [Optional Hook and Slash Command Setup](#optional-hook-and-slash-command-setup)
 7. [Verification and Testing](#verification-and-testing)
 8. [Configuration](#configuration)
 9. [Troubleshooting](#troubleshooting)
@@ -133,22 +133,26 @@ Configure your AI clients to use the shared Gemini MCP server:
 - **Windows:** Run `echo %USERNAME%` in command prompt
 - **Example:** If your username is `john`, the path would be `/Users/john/mcp-servers/shared-mcp-env/bin/python`
 
-### Optional Hook Setup
+### Optional Hook and Slash Command Setup
 
-Hooks require a `.claude/hooks.json` file in your project directory and only work in the Claude Code ecosystem. You have three options:
+Hooks and slash commands require a `.claude/` folder in your project directory and only work in the Claude Code ecosystem. This folder contains:
+- **Hooks**: `.claude/hooks.json` and `.claude/scripts/` for pre-edit/pre-commit analysis
+- **Slash Commands**: `.claude/commands/` for convenient shortcuts like `/analyze`, `/codebase`, etc.
 
-#### Option A: Symlink to Shared Hooks (Recommended)
+You have three options:
 
-**Best for:** Teams, multiple projects, easy maintenance
+#### Option A: Symlink to Shared .claude Folder (Recommended)
+
+**Best for:** Teams, multiple projects, easy maintenance, access to both hooks and slash commands
 
 ```bash
 cd /path/to/your-project
 ln -s ~/mcp-servers/gemini-mcp/.claude .claude
 ```
 
-#### Option B: Copy Hook Files Directly
+#### Option B: Copy .claude Files Directly
 
-**Best for:** Project-specific customization, offline work
+**Best for:** Project-specific customization, offline work, full control over hooks and slash commands
 
 ```bash
 cd /path/to/your-project
@@ -158,25 +162,28 @@ cp -r ~/mcp-servers/gemini-mcp/.claude/commands/ .claude/
 cp ~/mcp-servers/gemini-mcp/.claude/scripts/slim_gemini_hook.py .claude/scripts/
 ```
 
-#### Option C: No Hooks
+#### Option C: No Hooks or Slash Commands
 
-**Best for:** Simple workflows, non-Claude Code clients
+**Best for:** Simple workflows, non-Claude Code clients, MCP tools only
 
 ```bash
 # Do nothing - no .claude folder needed
 # MCP tools still work perfectly
+# Note: You'll need to use full MCP syntax like /mcp__gemini-mcp__gemini_quick_query
 ```
 
-**Hook Setup Comparison:**
+**.claude Setup Comparison:**
 
-| Feature | Symlink | Copy | No Hooks |
-|---------|---------|------|----------|
+| Feature | Symlink | Copy | No .claude |
+|---------|---------|------|-----------|
 | Easy updates | Yes | No | N/A |
 | Consistency | Yes | No | N/A |
 | Quick setup | Yes | No | Yes |
 | Version control friendly | Yes | Yes | Yes |
 | Independent customization | No | Yes | N/A |
 | Full control | No | Yes | N/A |
+| Hooks support | Yes | Yes | No |
+| Slash commands support | Yes | Yes | No |
 | Clean projects | No | No | Yes |
 | Universal compatibility | No | No | Yes |
 | Zero maintenance | No | No | Yes |
