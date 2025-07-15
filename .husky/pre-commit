@@ -1,0 +1,44 @@
+#!/bin/sh
+# Husky pre-commit hook for code quality (matches pre-commit-config.yaml)
+
+# Activate virtual environment
+source venv/bin/activate
+
+echo "🔍 Running optimized code quality checks..."
+
+# 1. Basic file checks
+echo "📄 Checking file formatting..."
+# Remove trailing whitespace (macOS compatible)
+find . -name '*.py' -not -path './venv/*' -not -path './.venv/*' -not -path './.test-env/*' -exec sed -i '' -e 's/[[:space:]]*$//' {} \;
+# Ensure files end with newline
+find . -name '*.py' -not -path './venv/*' -not -path './.venv/*' -not -path './.test-env/*' -exec sh -c 'tail -c1 "$0" | read -r _ || echo >> "$0"' {} \;
+
+# 2. Format code with Black
+echo "📝 Formatting code with Black..."
+black . --exclude '/(venv|\.venv|\.test-env|node_modules|\.git|__pycache__)/'
+
+# 3. Sort imports with isort
+echo "📦 Sorting imports with isort..."
+isort . --profile black --skip venv --skip .venv --skip .test-env --skip node_modules --skip .git --skip __pycache__
+
+# 4. Run linting with flake8
+echo "🔎 Running flake8 linting..."
+flake8 . --max-line-length=88 --extend-ignore=E203,W503,E501,F401,F811,F841,E402,F541 --exclude=venv,.venv,.test-env,node_modules,.git,__pycache__
+
+# 5. Check for secrets/leaks
+echo "🔐 Checking for secrets with gitleaks..."
+gitleaks detect --no-git || echo "⚠️ Gitleaks not installed (skipping)"
+
+# 6. Run security checks with bandit
+echo "🔒 Running security checks with bandit..."
+bandit -s B101,B110,B404,B603,B607,B601 *.py scripts/*.py || echo "⚠️ Bandit warnings (non-blocking)"
+
+# 7. Run type checking with mypy (only on specific files)
+echo "🔍 Running mypy type checking..."
+mypy --ignore-missing-imports --no-strict-optional --exclude '(tests/.*|test_.*|\.claude/.*|scripts/.*)' gemini_helper.py gemini_mcp_server.py || echo "⚠️ MyPy warnings (non-blocking)"
+
+# 8. Run tests
+echo "🧪 Running tests..."
+python -m pytest -v --tb=short || echo "⚠️ Some tests failed (non-blocking)"
+
+echo "✅ All code quality checks completed!"

@@ -22,9 +22,7 @@ HOOK_MODEL_ASSIGNMENTS = {
     "session-summary": "flash",  # Lightweight overview
 }
 
-##################################################################
-#################### CONFIGURATION ##############################
-##################################################################
+# Configuration
 
 # File analysis configuration optimized for token efficiency
 SLIM_CONFIG = {
@@ -49,9 +47,7 @@ SLIM_CONFIG = {
     ],
 }
 
-##################################################################
-#################### FILE VALIDATION ############################
-##################################################################
+# File validation
 
 
 def should_analyze_file(file_path: str) -> tuple[bool, str]:
@@ -80,7 +76,7 @@ def should_analyze_file(file_path: str) -> tuple[bool, str]:
 
             if line_count > SLIM_CONFIG["max_lines"]:
                 return False, f"Too many lines ({line_count})"
-        except:
+        except Exception:
             # If can't read file, skip analysis
             return False, "Cannot read file"
 
@@ -90,9 +86,7 @@ def should_analyze_file(file_path: str) -> tuple[bool, str]:
         return False, f"Error: {str(e)}"
 
 
-##################################################################
-#################### GEMINI CLI EXECUTION #######################
-##################################################################
+# Gemini CLI execution
 
 
 def execute_gemini_analysis(analysis_type: str, file_paths: str):
@@ -241,9 +235,7 @@ def execute_session_summary(directory_path: str):
         print(f"❌ Session summary error: {e}", file=sys.stderr)
 
 
-##################################################################
-#################### PROMPT GENERATION ##########################
-##################################################################
+# Prompt generation
 
 
 def create_pre_edit_prompt(file_paths: list) -> str:
@@ -287,9 +279,7 @@ def create_session_summary_prompt(directory_path: str) -> str:
     return "What can you see in this current directory? List the main files and give a brief project overview in under 200 words in plain text format."
 
 
-##################################################################
-#################### MAIN EXECUTION #############################
-##################################################################
+# Main execution
 
 
 def main():

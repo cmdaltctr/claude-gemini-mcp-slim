@@ -1,6 +1,76 @@
 # Development Workflow
 
-This document outlines the development workflow for the Claude Gemini MCP Slim project to ensure code quality and consistency.
+This document outlines the development workflow for the Claude Gemini MCP Slim project to ensure code quality, consistency, and automated release management.
+
+## Automated Release and Commit Message Enforcement
+
+This project uses automated releases and commit message enforcement to ensure consistent versioning and changelog management.
+
+### Release Automation with Release Please
+
+Release Please automates the versioning and release process based on conventional commits.
+
+#### Configuration Overview
+
+1. **Release Please Config**
+   - `.release-please-config.json`: Defines the release process tailored for our setup.
+   - `.release-please-manifest.json`: Tracks current version.
+
+2. **GitHub Actions Workflow**
+   - **Path**: `.github/workflows/release.yml`
+   - **Triggers**: On push to `main` branch.
+   - **Steps**:
+     1. Validate commit messages.
+     2. Run Release Please for version tagging and changelog updates.
+     3. Update version badge and changelog in `README.md`.
+     4. Push changes and create GitHub release.
+     5. Build and optionally publish to PyPI.
+
+### Local Commit Message Enforcement
+
+To enforce commit message conventions locally, Husky and Commitlint are set up.
+
+#### Setup Steps
+
+1. **Install Dependencies**:
+   ```bash
+   npm install --save-dev @commitlint/config-conventional @commitlint/cli
+   npm install --save-dev husky
+   ```
+
+2. **Initialize Husky**:
+   ```bash
+   npx husky install
+   npx husky add .husky/commit-msg 'npx --no-install commitlint --edit "$1"'
+   ```
+
+3. **Commitlint Configuration**:
+   - **File**: `commitlint.config.js`
+   - **Rules**: Ensures conventional commits like `feat!`, `fix`, etc.
+
+#### Usage
+
+- **Valid Commit Example**:
+  ```bash
+  git commit -m "feat: add new feature"
+  git commit -m "fix: resolve bug"
+  ```
+
+- **Invalid Commit**:
+  - Non-conventional messages will be rejected.
+
+### Full Workflow Summary
+
+1. **Locally**:
+   - Commit message gets validated before commit.
+   - Ensures adherence to conventional commit style.
+
+2. **On GitHub**:
+   - Pushing to `main` triggers:
+     - Commit message validation.
+     - Release version bumping.
+     - Changelog and README updates.
+     - GitHub release creation.
 
 ## Prerequisites
 
@@ -85,12 +155,38 @@ pre-commit run isort --all-files
 
 ### 4. Committing Changes
 
+Commit messages must follow conventional commit format:
+
 ```bash
 git add .
-git commit -m "Your descriptive commit message"
+git commit -m "feat: add new feature"
 
-# The pre-commit hooks will run automatically
+# The pre-commit hooks and commitlint will run automatically
 # If they fail, fix the issues and commit again
+```
+
+**Conventional Commit Types:**
+- `feat:` - New features (minor version bump)
+- `fix:` - Bug fixes (patch version bump)
+- `feat!:` - Breaking changes (major version bump)
+- `fix!:` - Breaking bug fixes (major version bump)
+- `docs:` - Documentation changes
+- `style:` - Code style changes (formatting, etc.)
+- `refactor:` - Code refactoring
+- `perf:` - Performance improvements
+- `test:` - Adding or updating tests
+- `build:` - Build system or dependency changes
+- `ci:` - CI/CD changes
+- `chore:` - Maintenance tasks
+- `revert:` - Reverting changes
+
+**Examples:**
+```bash
+git commit -m "feat: add OAuth2 authentication"
+git commit -m "fix: resolve memory leak in parser"
+git commit -m "feat!: change API response format"
+git commit -m "docs: update installation guide"
+git commit -m "test: add unit tests for user service"
 ```
 
 ### 5. Pushing Changes
@@ -147,8 +243,35 @@ isort .
 
 # Then commit again
 git add .
-git commit -m "Your message"
+git commit -m "feat: your message"  # Use conventional commit format
 ```
+
+### Commit blocked by commitlint
+
+```bash
+# Your commit message doesn't follow conventional commits
+# Fix the message format:
+git commit -m "feat: add new feature"  # ✅ Valid
+git commit -m "fix: resolve bug"       # ✅ Valid
+git commit -m "feat!: breaking change" # ✅ Valid
+
+# Instead of:
+git commit -m "added new feature"      # ❌ Invalid
+git commit -m "bug fix"               # ❌ Invalid
+```
+
+### Release automation not working
+
+1. **Check GitHub repository permissions**:
+   - Go to Settings → Actions → General
+   - Ensure "Read and write permissions" is selected
+   - Ensure "Allow GitHub Actions to create and approve pull requests" is checked
+
+2. **Check workflow files**:
+   - `.github/workflows/release.yml` exists
+   - `.github/workflows/validate-commits.yml` exists
+   - `.release-please-config.json` exists
+   - `.release-please-manifest.json` exists
 
 ### CI fails due to formatting
 
@@ -186,7 +309,24 @@ git push origin your-branch-name
 
 ## Configuration Files
 
+### Code Quality
 - `.pre-commit-config.yaml`: Pre-commit hook configuration
 - `pyproject.toml`: Black and isort configuration
-- `.github/workflows/test.yml`: CI/CD pipeline configuration
 - `requirements-dev.txt`: Development dependencies
+
+### Release Automation
+- `.release-please-config.json`: Release Please configuration
+- `.release-please-manifest.json`: Current version tracking
+- `commitlint.config.js`: Commit message linting rules
+- `package.json`: Node.js dependencies for commitlint and husky
+- `.husky/commit-msg`: Git hook for commit message validation
+
+### GitHub Actions
+- `.github/workflows/release.yml`: Automated release workflow
+- `.github/workflows/validate-commits.yml`: Commit message validation
+- `.github/workflows/test.yml`: CI/CD pipeline configuration
+
+### Project Structure
+- `docs/DEVELOPMENT.md`: This development guide
+- `CHANGELOG.md`: Automatically generated changelog
+- `README.md`: Project documentation (auto-updated with version)

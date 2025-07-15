@@ -1,0 +1,108 @@
+name: Validate Commit Messages
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  validate-commits:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install commitlint
+        run: |
+          npm install --save-dev @commitlint/config-conventional @commitlint/cli
+
+      - name: Create commitlint config
+        run: |
+          cat > commitlint.config.js << 'EOF'
+          module.exports = {
+            extends: ['@commitlint/config-conventional'],
+            rules: {
+              'type-enum': [
+                2,
+                'always',
+                [
+                  'feat',     // New features
+                  'fix',      // Bug fixes
+                  'docs',     // Documentation changes
+                  'style',    // Code style changes (formatting, etc.)
+                  'refactor', // Code refactoring
+                  'perf',     // Performance improvements
+                  'test',     // Adding or updating tests
+                  'build',    // Build system or dependency changes
+                  'ci',       // CI/CD changes
+                  'chore',    // Maintenance tasks
+                  'revert'    // Reverting changes
+                ]
+              ],
+              'subject-case': [2, 'always', 'lower-case'],
+              'subject-empty': [2, 'never'],
+              'subject-max-length': [2, 'always', 72],
+              'type-case': [2, 'always', 'lower-case'],
+              'type-empty': [2, 'never']
+            }
+          };
+          EOF
+
+      - name: Validate commit messages
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            # For pull requests, validate all commits in the PR
+            npx commitlint --from=${{ github.event.pull_request.base.sha }} --to=${{ github.event.pull_request.head.sha }} --verbose
+          else
+            # For push events, validate the last commit
+            npx commitlint --from=HEAD~1 --to=HEAD --verbose
+          fi
+
+      - name: Show commit convention examples
+        if: failure()
+        run: |
+          echo "❌ Commit message validation failed!"
+          echo ""
+          echo "📝 Conventional Commit Format:"
+          echo "   <type>[optional scope]: <description>"
+          echo "   [optional body]"
+          echo "   [optional footer(s)]"
+          echo ""
+          echo "🔧 Valid commit types:"
+          echo "   feat:     New features"
+          echo "   fix:      Bug fixes"
+          echo "   docs:     Documentation changes"
+          echo "   style:    Code style changes (formatting, etc.)"
+          echo "   refactor: Code refactoring"
+          echo "   perf:     Performance improvements"
+          echo "   test:     Adding or updating tests"
+          echo "   build:    Build system or dependency changes"
+          echo "   ci:       CI/CD changes"
+          echo "   chore:    Maintenance tasks"
+          echo "   revert:   Reverting changes"
+          echo ""
+          echo "💥 Breaking Changes:"
+          echo "   Add '!' after type for breaking changes:"
+          echo "   feat!: remove support for Node 12"
+          echo "   fix!: change API response format"
+          echo ""
+          echo "✅ Valid examples:"
+          echo "   feat: add new authentication method"
+          echo "   fix: resolve memory leak in parser"
+          echo "   feat!: change default configuration format"
+          echo "   docs: update API documentation"
+          echo "   test: add unit tests for user service"
+          echo "   chore: update dependencies"
+          echo ""
+          echo "📋 With scope (optional):"
+          echo "   feat(auth): add OAuth2 support"
+          echo "   fix(parser): handle edge case for empty strings"
+          echo "   feat(api)!: remove deprecated endpoints"

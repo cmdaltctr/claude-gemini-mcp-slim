@@ -46,6 +46,12 @@ pip-licenses>=4.3.0
 # Dependency Updates
 pur>=7.3.0  # For updating requirements files
 
+# Release Automation (Optional Python tools)
+# These complement the Node.js tools (commitlint, husky) in package.json
+build>=1.0.0  # For building Python packages
+twine>=4.0.0  # For uploading to PyPI
+wheel>=0.41.0  # For creating wheel distributions
+
 # IDE Integration
 pylsp-mypy>=0.6.0  # MyPy integration for language servers
 python-lsp-server>=1.8.0  # Language server

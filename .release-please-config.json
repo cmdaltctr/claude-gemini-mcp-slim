@@ -1,0 +1,26 @@
+{
+  "release-type": "python",
+  "packages": {
+    ".": {
+      "package-name": "claude-gemini-mcp-slim",
+      "changelog-sections": [
+        {"type": "feat", "section": "Features", "hidden": false},
+        {"type": "fix", "section": "Bug Fixes", "hidden": false},
+        {"type": "docs", "section": "Documentation", "hidden": false},
+        {"type": "test", "section": "Testing", "hidden": false},
+        {"type": "ci", "section": "CI/CD", "hidden": false},
+        {"type": "refactor", "section": "Code Refactoring", "hidden": false},
+        {"type": "perf", "section": "Performance Improvements", "hidden": false},
+        {"type": "security", "section": "Security", "hidden": false},
+        {"type": "chore", "section": "Miscellaneous", "hidden": true}
+      ],
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "README.md",
+          "glob": true
+        }
+      ]
+    }
+  }
+}
