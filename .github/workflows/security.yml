@@ -339,7 +339,7 @@ jobs:
     - name: Run security hardening tests
       run: |
         # Run our custom security tests
-        pytest test_security.py -v --tb=short
+        pytest tests/test_security.py -v --tb=short
         
     - name: Verify no shell=True usage
       run: |
