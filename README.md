@@ -152,9 +152,9 @@ The shared MCP architecture supports multiple AI clients simultaneously:
 **New to this project?** Here's what you need to do:
 
 1. **Get your Google API key** from [Google AI Studio](https://makersuite.google.com/)
-2. **Follow the complete setup guide** in [SETUP/SETUP.md](SETUP/SETUP.md)
+2. **Follow the complete setup guide** in [docs/SETUP/SETUP.md](docs/SETUP/SETUP.md)
 3. **Test the integration** with a simple query
-4. **Explore the 20+ slash commands** in [.claude/README-SLASH-COMMANDS.md](.claude/README-SLASH-COMMANDS.md)
+4. **Explore the 20+ slash commands** in [docs/README-SLASH-COMMANDS.md](docs/README-SLASH-COMMANDS.md)
 
 **Installation time:** ~5 minutes | **Prerequisites:** Python 3.10+, Node.js 16+
 
@@ -255,7 +255,7 @@ The slash commands provide a much simpler way to access Gemini's powerful analys
 /c ./src security
 ```
 
-See [.claude/README-SLASH-COMMANDS.md](.claude/README-SLASH-COMMANDS.md) for all available shortcuts.
+See [docs/README-SLASH-COMMANDS.md](docs/README-SLASH-COMMANDS.md) for all available shortcuts.
 
 ## What's Next?
 
@@ -264,21 +264,22 @@ Once everything is working:
 1. **Try the tools** - Start with simple queries: `/mcp__gemini-mcp__gemini_quick_query "How do I optimize React performance?"`
 2. **Analyze some code** - Analyze specific functions: `/mcp__gemini-mcp__gemini_analyze_code "your function code here" security`
 3. **Review your project** - Get architectural insights: `/mcp__gemini-mcp__gemini_codebase_analysis "./src" architecture`
-4. **Explore slash commands** - Check `.claude/README-SLASH-COMMANDS.md` for 20+ shortcuts
+4. **Explore slash commands** - Check `docs/README-SLASH-COMMANDS.md` for 20+ shortcuts
 
 ## Need Help?
 
 - **Submit an Issue:** If you encounter any problems, please submit an issue on our [GitHub repository](https://github.com/cmdaltctr/claude-gemini-mcp-slim/issues) with details about your environment, steps to reproduce, and any error messages you received.
 - **Use Labels:** When submitting issues, please use appropriate labels/tags such as `bug`, `feature-request`, `documentation`, and so on ([available labels](https://github.com/cmdaltctr/claude-gemini-mcp-slim/labels)) to help us categorize and address your concerns more efficiently.
 - **Test files:** Check the `tests/` folder for examples and testing scripts
-- **Slash commands:** See `.claude/README-SLASH-COMMANDS.md` for comprehensive command reference
+- **Slash commands:** See `docs/README-SLASH-COMMANDS.md` for comprehensive command reference
 - **Console Logs:** Check your Claude Desktop/Code console for detailed error messages that can help diagnose issues
 
 ## Further Documentation
 
-- [SETUP/SETUP.md](SETUP/SETUP.md) - Complete installation and configuration guide
-- [.claude/README-SLASH-COMMANDS.md](.claude/README-SLASH-COMMANDS.md) - Slash commands reference
-- [SECURITY.md](SECURITY.md) - Security documentation and hardening details
+- [docs/SETUP/SETUP.md](docs/SETUP/SETUP.md) - Complete installation and configuration guide
+- [docs/README-SLASH-COMMANDS.md](docs/README-SLASH-COMMANDS.md) - Slash commands reference
+- [docs/SECURITY.md](docs/SECURITY.md) - Security documentation and hardening details
+- [docs/TESTING.md](docs/TESTING.md) - Testing guide and best practices
 
 ## Changelog
 

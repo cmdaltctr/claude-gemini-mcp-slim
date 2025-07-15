@@ -27,8 +27,8 @@ make test-all
 tests/
 ├── conftest.py              # Shared fixtures and configuration
 ├── unit/                    # Unit tests (fast, isolated)
-│   ├── test_gemini_helper.py
-│   └── test_security.py
+│   ├── __init__.py
+│   └── test_basic_operations.py
 ├── integration/             # Integration tests (slower, real components)
 │   ├── test_cli_fallback.py
 │   ├── test_gemini_api_mocked.py
@@ -95,13 +95,13 @@ python3 scripts/run_tests.py debug --test-pattern="tests/integration/test_cli_fa
 ### 6. Specific Test Patterns
 ```bash
 # Run specific test file
-make test-specific TEST_PATTERN=tests/unit/test_gemini_helper.py
+make test-specific TEST_PATTERN=tests/unit/test_basic_operations.py
 
 # Run specific test class
-make test-specific TEST_PATTERN=tests/unit/test_gemini_helper.py::TestPromptSanitization
+make test-specific TEST_PATTERN=tests/unit/test_basic_operations.py::BasicTests
 
 # Run specific test method
-make test-specific TEST_PATTERN=tests/unit/test_gemini_helper.py::TestPromptSanitization::test_basic_sanitization
+make test-specific TEST_PATTERN=tests/unit/test_basic_operations.py::BasicTests::test_addition
 
 # Run tests with keyword matching
 make test-specific TEST_PATTERN='-k sanitization'
@@ -196,7 +196,7 @@ python3 -m pytest tests/integration/ --no-cov -n 1
 ### 2. Run Only Changed Tests
 ```bash
 # Run tests related to specific files
-make test-specific TEST_PATTERN=tests/unit/test_gemini_helper.py
+make test-specific TEST_PATTERN=tests/unit/test_basic_operations.py
 ```
 
 ### 3. Use Test Markers

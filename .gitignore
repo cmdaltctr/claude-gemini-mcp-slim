@@ -79,6 +79,10 @@ coverage.xml
 nosetests.xml
 coverage.xml
 *.lcov
+.mypy_cache/
+.ruff_cache/
+pytest_cache/
+.nox/
 
 # Security scan reports
 bandit-report.json
@@ -87,10 +91,13 @@ pip-audit-report.json
 sbom.json
 gitleaks-report.json
 security-report.md
+semgrep-report.json
+trufflehog-report.json
 
 # License reports
 licenses.json
 licenses.csv
+license-report.html
 
 # Dependency management
 requirements-backup.txt
@@ -100,10 +107,58 @@ security-update-report.md
 outdated-packages.json
 current-audit.json
 post-update-audit.json
+vulnerability-report.json
 
 # Performance benchmarks
 benchmark-results.json
 .benchmarks/
+profile_output/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+.wheel/
+
+# Documentation artifacts
+docs/_build/
+docs/build/
+site/
+.mkdocs/
+
+# Linting and formatting
+.pylint.d/
+.flake8
+.black
+.isort.cfg
+
+# CI/CD artifacts
+.github/workflows/cache/
+.gitlab-ci-cache/
+.circleci/
+.drone.yml
+.travis.yml
+
+# Container and deployment
+Dockerfile.prod
+docker-compose.override.yml
+.dockerignore
+kubernetes-manifests/
+
+# Database artifacts
+*.db
+*.sqlite
+*.sqlite3
+database.sql
+migrations/versions/
+
+# Temporary and backup files
+*.swp
+*.swo
+*~
+.#*
+#*#
 
 # Misc
 *.bak
