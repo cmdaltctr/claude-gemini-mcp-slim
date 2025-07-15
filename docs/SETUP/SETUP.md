@@ -107,7 +107,8 @@ Configure your AI clients to use the shared Gemini MCP server:
 
 #### For Claude Code
 
-**Location:** Project-specific or global MCP configuration
+**Global Location:** `~/.claude.json` (macOS/Linux) or `C:\Users\USERNAME\.claude.json` (Windows)
+**Project-specific Location:** `.claude/` folder in your project directory
 
 ```json
 {
