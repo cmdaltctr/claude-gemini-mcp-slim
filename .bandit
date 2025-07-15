@@ -1,0 +1,44 @@
+[bandit]
+# Bandit configuration file
+# This file configures bandit security scanning options
+
+# Skip specific test directories to avoid false positives
+# B101: assert_used - Skip assert statements (common in tests)
+# B601: paramiko_calls - Skip paramiko usage warnings
+# B602: subprocess_popen_with_shell_equals_true - Skip shell=True warnings (controlled usage)
+skips = B101,B601,B602
+
+# Exclude directories that should not be scanned
+# This significantly speeds up scanning and avoids hanging
+# Virtual environments and Python installations
+exclude_dirs = tests,venv,.venv,.test-env,env,.env,.python-env,
+    # Cache and temporary directories
+    htmlcov,.pytest_cache,.mypy_cache,.benchmarks,__pycache__,.tox,
+    # Version control and CI/CD
+    .git,.github,.gitlab,
+    # Node.js (if present)
+    node_modules,
+    # IDE and editor files
+    .vscode,.idea,
+    # Build and distribution
+    build,dist,*.egg-info,
+    # Documentation builds
+    docs/_build,
+    # Jupyter notebooks checkpoints
+    .ipynb_checkpoints,
+    # Additional Python environments
+    site-packages,lib,lib64,include,bin,Scripts
+
+# Exclude file patterns that should not be scanned
+# Compiled Python files, temporary files, logs
+exclude = *.pyc,*.pyo,*.pyd,*.so,*.dll,*.dylib,
+    # Temporary and backup files
+    *.swp,*.bak,*~,*.tmp,
+    # Log files
+    *.log,*.out,
+    # Configuration and data files that aren't Python
+    *.json,*.yaml,*.yml,*.xml,*.csv,*.txt,*.md,
+    # Image and media files
+    *.png,*.jpg,*.jpeg,*.gif,*.ico,*.svg,
+    # Archive files
+    *.zip,*.tar,*.gz,*.bz2

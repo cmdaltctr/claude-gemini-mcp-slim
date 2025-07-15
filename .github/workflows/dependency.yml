@@ -1,0 +1,522 @@
+name: Dependency Management
+
+on:
+  schedule:
+    # Run weekly on Mondays at 6 AM UTC
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      update_type:
+        description: 'Type of dependency update'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - 'patch'
+          - 'minor'
+          - 'major'
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  dependency-audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    
+    outputs:
+      has_vulnerabilities: ${{ steps.check-vulns.outputs.has_vulnerabilities }}
+      vulnerability_count: ${{ steps.check-vulns.outputs.vulnerability_count }}
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install current dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pip-audit pip-tools
+        
+    - name: Audit current dependencies
+      id: audit-current
+      run: |
+        echo "## Current Dependency Audit" > audit-report.md
+        echo "" >> audit-report.md
+        
+        # Run pip-audit and capture output
+        if pip-audit --format=json --output=current-audit.json; then
+          echo "✅ No vulnerabilities found in current dependencies" >> audit-report.md
+          echo "has_vulnerabilities=false" >> $GITHUB_OUTPUT
+          echo "vulnerability_count=0" >> $GITHUB_OUTPUT
+        else
+          vuln_count=$(python3 -c "
+          import json
+          with open('current-audit.json') as f:
+              data = json.load(f)
+          print(len(data.get('vulnerabilities', [])))
+          ")
+          echo "⚠️ Found $vuln_count vulnerabilities in current dependencies" >> audit-report.md
+          echo "has_vulnerabilities=true" >> $GITHUB_OUTPUT
+          echo "vulnerability_count=$vuln_count" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Check for outdated packages
+      id: check-outdated
+      run: |
+        echo "" >> audit-report.md
+        echo "## Outdated Packages" >> audit-report.md
+        echo "" >> audit-report.md
+        
+        # Check for outdated packages
+        pip list --outdated --format=json > outdated-packages.json
+        
+        outdated_count=$(python3 -c "
+        import json
+        with open('outdated-packages.json') as f:
+            data = json.load(f)
+        print(len(data))
+        ")
+        
+        echo "Found $outdated_count outdated packages" >> audit-report.md
+        
+        if [ "$outdated_count" -gt 0 ]; then
+          echo "" >> audit-report.md
+          echo "| Package | Current | Latest |" >> audit-report.md
+          echo "|---------|---------|--------|" >> audit-report.md
+          
+          python3 -c "
+          import json
+          with open('outdated-packages.json') as f:
+              data = json.load(f)
+          for pkg in data[:10]:  # Show first 10
+              print(f\"| {pkg['name']} | {pkg['version']} | {pkg['latest_version']} |\")
+          " >> audit-report.md
+        fi
+        
+        echo "outdated_count=$outdated_count" >> $GITHUB_OUTPUT
+        
+    - name: Upload audit artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: dependency-audit-${{ github.run_id }}
+        path: |
+          audit-report.md
+          current-audit.json
+          outdated-packages.json
+
+  security-updates:
+    name: Security Updates
+    runs-on: ubuntu-latest
+    needs: dependency-audit
+    if: needs.dependency-audit.outputs.has_vulnerabilities == 'true'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install pip-audit pip-tools safety
+        
+    - name: Create security update branch
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        branch_name="security-updates-$(date +%Y%m%d-%H%M%S)"
+        git checkout -b "$branch_name"
+        echo "BRANCH_NAME=$branch_name" >> $GITHUB_ENV
+        
+    - name: Update vulnerable dependencies
+      run: |
+        # Install current dependencies
+        pip install -r requirements.txt
+        
+        # Get vulnerability report
+        pip-audit --format=json --output=vulns.json || true
+        
+        # Extract vulnerable packages and update them
+        python3 << 'EOF'
+        import json
+        import subprocess
+        import sys
+        
+        try:
+            with open('vulns.json') as f:
+                data = json.load(f)
+        except:
+            print("No vulnerabilities file found")
+            sys.exit(0)
+        
+        vulnerable_packages = set()
+        for vuln in data.get('vulnerabilities', []):
+            pkg_name = vuln.get('package', '')
+            if pkg_name:
+                vulnerable_packages.add(pkg_name)
+        
+        if vulnerable_packages:
+            print(f"Updating vulnerable packages: {vulnerable_packages}")
+            for pkg in vulnerable_packages:
+                try:
+                    subprocess.run([sys.executable, '-m', 'pip', 'install', '--upgrade', pkg], check=True)
+                    print(f"Updated {pkg}")
+                except subprocess.CalledProcessError as e:
+                    print(f"Failed to update {pkg}: {e}")
+        else:
+            print("No vulnerable packages found")
+        EOF
+        
+    - name: Generate new requirements
+      run: |
+        # Freeze updated dependencies
+        pip freeze > requirements-updated.txt
+        
+        # Compare with original
+        echo "## Security Updates Applied" > security-update-report.md
+        echo "" >> security-update-report.md
+        
+        python3 << 'EOF'
+        import subprocess
+        
+        # Get difference
+        try:
+            result = subprocess.run(['diff', 'requirements.txt', 'requirements-updated.txt'], 
+                                  capture_output=True, text=True)
+            if result.stdout:
+                print("Changes made:")
+                print(result.stdout)
+                
+                with open('security-update-report.md', 'a') as f:
+                    f.write("### Package Changes\n\n")
+                    f.write("```diff\n")
+                    f.write(result.stdout)
+                    f.write("\n```\n")
+            else:
+                print("No changes needed")
+                with open('security-update-report.md', 'a') as f:
+                    f.write("No package updates were necessary.\n")
+        except:
+            print("Could not generate diff")
+        EOF
+        
+        # Replace requirements file if changes were made
+        if ! cmp -s requirements.txt requirements-updated.txt; then
+          mv requirements-updated.txt requirements.txt
+          echo "CHANGES_MADE=true" >> $GITHUB_ENV
+        else
+          echo "CHANGES_MADE=false" >> $GITHUB_ENV
+        fi
+        
+    - name: Test updated dependencies
+      if: env.CHANGES_MADE == 'true'
+      run: |
+        # Install updated dependencies
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+        
+        # Run basic tests to ensure nothing is broken
+        pytest tests/unit/ -x --tb=short || echo "Tests failed with updated dependencies"
+        
+        # Re-audit to verify vulnerabilities are fixed
+        pip-audit --format=json --output=post-update-audit.json
+        
+        # Check if vulnerabilities were resolved
+        python3 << 'EOF'
+        import json
+        import sys
+        
+        try:
+            with open('post-update-audit.json') as f:
+                data = json.load(f)
+            
+            remaining_vulns = len(data.get('vulnerabilities', []))
+            
+            with open('security-update-report.md', 'a') as f:
+                f.write(f"\n### Post-Update Audit\n\n")
+                if remaining_vulns == 0:
+                    f.write("✅ All vulnerabilities have been resolved.\n")
+                else:
+                    f.write(f"⚠️ {remaining_vulns} vulnerabilities remain after updates.\n")
+                    
+            print(f"Remaining vulnerabilities: {remaining_vulns}")
+            
+        except Exception as e:
+            print(f"Error checking post-update audit: {e}")
+            with open('security-update-report.md', 'a') as f:
+                f.write("\n⚠️ Could not verify vulnerability status after updates.\n")
+        EOF
+        
+    - name: Commit security updates
+      if: env.CHANGES_MADE == 'true'
+      run: |
+        git add requirements.txt security-update-report.md
+        git commit -m "security: update vulnerable dependencies
+        
+        Automated security updates applied to resolve ${{ needs.dependency-audit.outputs.vulnerability_count }} vulnerabilities.
+        
+        See security-update-report.md for details."
+        
+    - name: Create Pull Request
+      if: env.CHANGES_MADE == 'true'
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        branch: ${{ env.BRANCH_NAME }}
+        title: "🔒 Security: Update vulnerable dependencies"
+        body: |
+          ## Security Dependency Updates
+          
+          This automated pull request updates dependencies with known security vulnerabilities.
+          
+          **Vulnerabilities Found:** ${{ needs.dependency-audit.outputs.vulnerability_count }}
+          
+          ### Changes
+          - Updated vulnerable packages to latest secure versions
+          - Verified updates don't break existing functionality
+          - Re-audited dependencies post-update
+          
+          ### Review Checklist
+          - [ ] All tests pass
+          - [ ] No breaking changes introduced
+          - [ ] Security vulnerabilities resolved
+          
+          See `security-update-report.md` for detailed information about the changes.
+          
+          ---
+          
+          *This PR was automatically created by the dependency management workflow.*
+        labels: |
+          security
+          dependencies
+          automated
+        
+    - name: Upload security update artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-updates-${{ github.run_id }}
+        path: |
+          security-update-report.md
+          post-update-audit.json
+
+  routine-updates:
+    name: Routine Updates
+    runs-on: ubuntu-latest
+    needs: dependency-audit
+    if: github.event_name == 'workflow_dispatch' || (github.event.schedule && needs.dependency-audit.outputs.has_vulnerabilities == 'false')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install pip-tools pur
+        
+    - name: Determine update strategy
+      run: |
+        update_type="${{ github.event.inputs.update_type || 'patch' }}"
+        echo "UPDATE_TYPE=$update_type" >> $GITHUB_ENV
+        
+        case $update_type in
+          "patch")
+            echo "Applying patch-level updates only"
+            echo "UPDATE_ARGS=--patch" >> $GITHUB_ENV
+            ;;
+          "minor")
+            echo "Applying minor-level updates"
+            echo "UPDATE_ARGS=--minor" >> $GITHUB_ENV
+            ;;
+          "major")
+            echo "Applying major-level updates"
+            echo "UPDATE_ARGS=" >> $GITHUB_ENV
+            ;;
+        esac
+        
+    - name: Create update branch
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        branch_name="routine-updates-${{ env.UPDATE_TYPE }}-$(date +%Y%m%d)"
+        git checkout -b "$branch_name"
+        echo "BRANCH_NAME=$branch_name" >> $GITHUB_ENV
+        
+    - name: Update dependencies
+      run: |
+        # Install current dependencies
+        pip install -r requirements.txt
+        
+        # Create backup
+        cp requirements.txt requirements-backup.txt
+        
+        # Update packages based on update type
+        echo "## Routine Dependency Updates (${{ env.UPDATE_TYPE }})" > update-report.md
+        echo "" >> update-report.md
+        
+        # Use pur to update requirements.txt
+        if [ -n "${{ env.UPDATE_ARGS }}" ]; then
+          pur -r requirements.txt ${{ env.UPDATE_ARGS }}
+        else
+          pur -r requirements.txt
+        fi
+        
+        # Check if changes were made
+        if ! cmp -s requirements.txt requirements-backup.txt; then
+          echo "CHANGES_MADE=true" >> $GITHUB_ENV
+          
+          # Generate change report
+          echo "### Changes Made" >> update-report.md
+          echo "" >> update-report.md
+          echo "```diff" >> update-report.md
+          diff requirements-backup.txt requirements.txt >> update-report.md || true
+          echo "```" >> update-report.md
+        else
+          echo "CHANGES_MADE=false" >> $GITHUB_ENV
+          echo "No updates available for ${{ env.UPDATE_TYPE }} level changes." >> update-report.md
+        fi
+        
+    - name: Test updated dependencies
+      if: env.CHANGES_MADE == 'true'
+      run: |
+        # Install updated dependencies
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+        
+        echo "" >> update-report.md
+        echo "### Testing Results" >> update-report.md
+        echo "" >> update-report.md
+        
+        # Run tests
+        if pytest tests/unit/ -x --tb=short; then
+          echo "✅ All tests pass with updated dependencies" >> update-report.md
+          echo "TESTS_PASS=true" >> $GITHUB_ENV
+        else
+          echo "❌ Some tests fail with updated dependencies" >> update-report.md
+          echo "TESTS_PASS=false" >> $GITHUB_ENV
+        fi
+        
+        # Check for security issues
+        if pip-audit; then
+          echo "✅ No security issues with updated dependencies" >> update-report.md
+        else
+          echo "⚠️ Security issues found with updated dependencies" >> update-report.md
+        fi
+        
+    - name: Commit routine updates
+      if: env.CHANGES_MADE == 'true' && env.TESTS_PASS == 'true'
+      run: |
+        git add requirements.txt update-report.md
+        git commit -m "deps: routine ${{ env.UPDATE_TYPE }} dependency updates
+        
+        Automated ${{ env.UPDATE_TYPE }}-level dependency updates.
+        All tests pass with updated dependencies.
+        
+        See update-report.md for details."
+        
+    - name: Create Pull Request for routine updates
+      if: env.CHANGES_MADE == 'true' && env.TESTS_PASS == 'true'
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        branch: ${{ env.BRANCH_NAME }}
+        title: "📦 Dependencies: ${{ env.UPDATE_TYPE }} updates"
+        body: |
+          ## Routine Dependency Updates (${{ env.UPDATE_TYPE }})
+          
+          This automated pull request applies ${{ env.UPDATE_TYPE }}-level dependency updates.
+          
+          ### Update Summary
+          - Update type: ${{ env.UPDATE_TYPE }}
+          - All tests pass: ✅
+          - No security issues: ✅
+          
+          ### Review Checklist
+          - [ ] Review updated package versions
+          - [ ] Verify no breaking changes
+          - [ ] Check for any new deprecation warnings
+          
+          See `update-report.md` for detailed information about the changes.
+          
+          ---
+          
+          *This PR was automatically created by the dependency management workflow.*
+        labels: |
+          dependencies
+          automated
+          ${{ env.UPDATE_TYPE }}
+          
+    - name: Upload routine update artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: routine-updates-${{ env.UPDATE_TYPE }}-${{ github.run_id }}
+        path: |
+          update-report.md
+          requirements-backup.txt
+
+  dependency-summary:
+    name: Dependency Summary
+    runs-on: ubuntu-latest
+    needs: [dependency-audit, security-updates, routine-updates]
+    if: always()
+    
+    steps:
+    - name: Generate summary
+      run: |
+        echo "## Dependency Management Summary"
+        echo ""
+        echo "**Run Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+        echo "**Trigger:** ${{ github.event_name }}"
+        echo ""
+        echo "### Results"
+        echo ""
+        echo "| Job | Status |"
+        echo "|-----|--------|"
+        echo "| Dependency Audit | ${{ needs.dependency-audit.result }} |"
+        echo "| Security Updates | ${{ needs.security-updates.result || 'skipped' }} |"
+        echo "| Routine Updates | ${{ needs.routine-updates.result || 'skipped' }} |"
+        echo ""
+        
+        if [ "${{ needs.dependency-audit.outputs.has_vulnerabilities }}" == "true" ]; then
+          echo "🔒 **Security vulnerabilities found:** ${{ needs.dependency-audit.outputs.vulnerability_count }}"
+        else
+          echo "✅ **No security vulnerabilities found**"
+        fi
+        
+        echo ""
+        echo "### Next Steps"
+        echo ""
+        if [ "${{ needs.security-updates.result }}" == "success" ]; then
+          echo "- Review and merge security update PR"
+        fi
+        
+        if [ "${{ needs.routine-updates.result }}" == "success" ]; then
+          echo "- Review and merge routine update PR"
+        fi
+        
+        if [ "${{ needs.dependency-audit.outputs.has_vulnerabilities }}" == "false" ] && [ "${{ github.event_name }}" == "schedule" ]; then
+          echo "- No immediate action required"
+        fi

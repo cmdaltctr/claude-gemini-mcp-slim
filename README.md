@@ -1,9 +1,10 @@
 # Claude Gemini MCP Integration
 
+<!-- CI workflow trigger -->
 ![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
 ![Security](https://img.shields.io/badge/security-hardened-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Python](https://img.shields.io/badge/python-3.8+-brightgreen.svg)
+![Python](https://img.shields.io/badge/python-3.10+-brightgreen.svg)
 ![Status](https://img.shields.io/badge/status-production%20ready-green.svg)
 ![Slash Commands](https://img.shields.io/badge/slash%20commands-20+-orange.svg)
 
@@ -151,11 +152,11 @@ The shared MCP architecture supports multiple AI clients simultaneously:
 **New to this project?** Here's what you need to do:
 
 1. **Get your Google API key** from [Google AI Studio](https://makersuite.google.com/)
-2. **Follow the complete setup guide** in [SETUP/SETUP.md](SETUP/SETUP.md)
+2. **Follow the complete setup guide** in [docs/SETUP/SETUP.md](docs/SETUP/SETUP.md)
 3. **Test the integration** with a simple query
-4. **Explore the 20+ slash commands** in [.claude/README-SLASH-COMMANDS.md](.claude/README-SLASH-COMMANDS.md)
+4. **Explore the 20+ slash commands** in [docs/README-SLASH-COMMANDS.md](docs/README-SLASH-COMMANDS.md)
 
-**Installation time:** ~5 minutes | **Prerequisites:** Python 3.8+, Node.js 16+
+**Installation time:** ~5 minutes | **Prerequisites:** Python 3.10+, Node.js 16+
 
 ## Usage Examples
 
@@ -254,7 +255,7 @@ The slash commands provide a much simpler way to access Gemini's powerful analys
 /c ./src security
 ```
 
-See [.claude/README-SLASH-COMMANDS.md](.claude/README-SLASH-COMMANDS.md) for all available shortcuts.
+See [docs/README-SLASH-COMMANDS.md](docs/README-SLASH-COMMANDS.md) for all available shortcuts.
 
 ## What's Next?
 
@@ -263,21 +264,22 @@ Once everything is working:
 1. **Try the tools** - Start with simple queries: `/mcp__gemini-mcp__gemini_quick_query "How do I optimize React performance?"`
 2. **Analyze some code** - Analyze specific functions: `/mcp__gemini-mcp__gemini_analyze_code "your function code here" security`
 3. **Review your project** - Get architectural insights: `/mcp__gemini-mcp__gemini_codebase_analysis "./src" architecture`
-4. **Explore slash commands** - Check `.claude/README-SLASH-COMMANDS.md` for 20+ shortcuts
+4. **Explore slash commands** - Check `docs/README-SLASH-COMMANDS.md` for 20+ shortcuts
 
 ## Need Help?
 
 - **Submit an Issue:** If you encounter any problems, please submit an issue on our [GitHub repository](https://github.com/cmdaltctr/claude-gemini-mcp-slim/issues) with details about your environment, steps to reproduce, and any error messages you received.
 - **Use Labels:** When submitting issues, please use appropriate labels/tags such as `bug`, `feature-request`, `documentation`, and so on ([available labels](https://github.com/cmdaltctr/claude-gemini-mcp-slim/labels)) to help us categorize and address your concerns more efficiently.
 - **Test files:** Check the `tests/` folder for examples and testing scripts
-- **Slash commands:** See `.claude/README-SLASH-COMMANDS.md` for comprehensive command reference
+- **Slash commands:** See `docs/README-SLASH-COMMANDS.md` for comprehensive command reference
 - **Console Logs:** Check your Claude Desktop/Code console for detailed error messages that can help diagnose issues
 
 ## Further Documentation
 
-- [SETUP/SETUP.md](SETUP/SETUP.md) - Complete installation and configuration guide
-- [.claude/README-SLASH-COMMANDS.md](.claude/README-SLASH-COMMANDS.md) - Slash commands reference
-- [SECURITY.md](SECURITY.md) - Security documentation and hardening details
+- [docs/SETUP/SETUP.md](docs/SETUP/SETUP.md) - Complete installation and configuration guide
+- [docs/README-SLASH-COMMANDS.md](docs/README-SLASH-COMMANDS.md) - Slash commands reference
+- [docs/SECURITY.md](docs/SECURITY.md) - Security documentation and hardening details
+- [docs/TESTING.md](docs/TESTING.md) - Testing guide and best practices
 
 ## Changelog
 
@@ -397,7 +399,73 @@ This project is designed to be lightweight and focused. The core functionality i
 - **Fallback Mechanisms**: Implement API with CLI fallbacks for resilience
 - **Testing**: Verify changes work with both direct API and CLI integrations
 
+### Development Setup
 
+To set up a local development environment for this MCP server:
+
+#### Quick Setup (Recommended)
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/claude-gemini-mcp-slim.git
+cd claude-gemini-mcp-slim
+
+# Run the automated setup script
+./setup-dev.sh
+```
+
+The setup script will:
+- Create a Python virtual environment (`.venv`)
+- Install all production and development dependencies
+- Set up pre-commit hooks for code quality
+- Run a quick test to verify everything is working
+
+#### Manual Setup
+
+If you prefer to set up manually:
+
+```bash
+# Create virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+
+# Install pre-commit hooks
+pre-commit install
+
+# Run tests
+python -m pytest
+```
+
+#### Development Workflow
+
+Once set up, your typical development workflow will be:
+
+```bash
+# Activate virtual environment
+source .venv/bin/activate
+
+# Make your changes
+# ...
+
+# Run tests
+python -m pytest
+
+# Run pre-commit hooks (optional, they run automatically on commit)
+pre-commit run --all-files
+
+# Commit changes (pre-commit hooks will run automatically)
+git add .
+git commit -m "Your commit message"
+```
+
+**Important Notes:**
+- The virtual environment (`.venv`) is automatically ignored by git
+- Pre-commit hooks will run automatically on every commit to ensure code quality
+- If you're using an IDE like Windsurf, make sure it's configured to use the virtual environment
 
 ## License
 

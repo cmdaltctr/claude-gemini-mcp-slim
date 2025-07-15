@@ -1,0 +1,28 @@
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.27.2
+    hooks:
+      - id: gitleaks
+
+  - repo: https://github.com/pycqa/bandit
+    rev: 1.8.6
+    hooks:
+      - id: bandit
+        args: ['-s', 'B101,B110,B404,B603,B607,B601', '*.py', 'scripts/*.py']
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.16.1
+    hooks:
+      - id: mypy
+        args: ['--ignore-missing-imports', '--no-strict-optional', '--exclude', '(tests/.*|test_.*|\.claude/.*|scripts/.*)']
+        files: ^(gemini_helper\.py|gemini_mcp_server\.py)$
+
+  - repo: local
+    hooks:
+      - id: pytest
+        name: Run pytest
+        entry: bash -c 'source .venv/bin/activate && python -m pytest'
+        language: system
+        pass_filenames: false
+        args: ['-v', '--tb=short']
+

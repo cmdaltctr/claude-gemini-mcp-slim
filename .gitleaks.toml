@@ -1,0 +1,72 @@
+# Gitleaks configuration file
+# This configuration helps prevent secret leaks while allowing legitimate test patterns
+
+[allowlist]
+# Allow test API keys in test files
+# This prevents false positives for deterministic test keys
+description = "Test API keys are safe and deterministic"
+regexes = [
+    # Allow test-api-key patterns in test files
+    '''test-api-key-.*''',
+    # Allow other common test patterns
+    '''test_.*_key''',
+    '''mock_.*_key''',
+    '''fake_.*_key''',
+    '''dummy_.*_key''',
+]
+paths = [
+    # Allow these patterns in test directories
+    '''tests/.*''',
+    '''test/.*''',
+    '''test.*\.py$''',
+    '''tests.*\.py$''',
+    '''.*test.*\.py$''',
+    '''.*tests.*\.py$''',
+    '''conftest\.py$''',
+]
+
+# Additional allowlist for known safe patterns
+[[rules]]
+description = "Allow deterministic test keys"
+id = "test-api-keys"
+regex = '''test-api-key-[0-9]+'''
+path = '''tests/.*'''
+
+[[rules]]
+description = "Allow mock API keys in tests"
+id = "mock-api-keys"
+regex = '''mock_api_key_.*'''
+path = '''tests/.*'''
+
+[[rules]]
+description = "Allow fake API keys in tests"
+id = "fake-api-keys"
+regex = '''fake_api_key.*'''
+path = '''tests/.*'''
+
+# Standard configuration for secret detection
+[extend]
+# You can extend this with additional rules as needed
+useDefault = true
+
+# Configure specific secret types
+[[rules]]
+description = "Google API Key"
+id = "google-api-key"
+regex = '''AIza[0-9A-Za-z\\-_]{35}'''
+tags = ["key", "google", "api"]
+
+[[rules]]
+description = "Generic API Key"
+id = "generic-api-key"
+regex = '''[aA][pP][iI][_-]?[kK][eE][yY].*[=:]\s*['\"]?[0-9a-zA-Z]{32,}['\"]?'''
+tags = ["key", "api", "generic"]
+
+# Global settings
+[gitleaks]
+# Default behavior
+verbose = false
+# Report format
+format = "json"
+# Enable baseline scanning
+baseline = false

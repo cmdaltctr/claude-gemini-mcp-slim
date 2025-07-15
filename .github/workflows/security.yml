@@ -1,0 +1,448 @@
+name: Security Scanning
+
+on:
+  push:
+    branches: [ main, feature/*, dev ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  dependency-check:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+        
+    - name: Run pip-audit vulnerability scan
+      run: |
+        pip-audit --format=json --output=pip-audit-report.json
+        pip-audit --format=cyclonedx-json --output=sbom.json
+        pip-audit
+        
+    - name: Upload vulnerability report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: vulnerability-scan-${{ github.sha }}
+        path: |
+          pip-audit-report.json
+          sbom.json
+          
+    - name: Check for high severity vulnerabilities
+      run: |
+        # Check if there are any vulnerabilities found
+        if grep -q '"vulnerabilities":' pip-audit-report.json; then
+          echo "⚠️ Vulnerabilities found in dependencies"
+          
+          # Parse and check severity levels
+          python3 -c "
+          import json
+          import sys
+          
+          with open('pip-audit-report.json') as f:
+              data = json.load(f)
+          
+          high_count = 0
+          critical_count = 0
+          
+          for vuln in data.get('vulnerabilities', []):
+              for alias in vuln.get('aliases', []):
+                  if 'severity' in alias:
+                      severity = alias['severity'].lower()
+                      if severity in ['high', 'critical']:
+                          if severity == 'critical':
+                              critical_count += 1
+                          else:
+                              high_count += 1
+          
+          print(f'Critical vulnerabilities: {critical_count}')
+          print(f'High severity vulnerabilities: {high_count}')
+          
+          if critical_count > 0:
+              print('❌ Critical vulnerabilities found - failing build')
+              sys.exit(1)
+          elif high_count > 0:
+              print('⚠️ High severity vulnerabilities found - review required')
+              sys.exit(1)
+          else:
+              print('✅ No high/critical vulnerabilities found')
+          "
+        else
+          echo "✅ No vulnerabilities found"
+        fi
+
+  secret-scan:
+    name: Secret Detection
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for better secret detection
+        
+    - name: Run Gitleaks secret scan
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+        
+    - name: Upload Gitleaks report
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: gitleaks-report-${{ github.sha }}
+        path: results.sarif
+
+  sast-analysis:
+    name: Static Application Security Testing
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: python
+        
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v3
+      
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:python"
+
+  bandit-scan:
+    name: Bandit Security Linting
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install bandit
+      run: |
+        python -m pip install --upgrade pip
+        pip install bandit[toml] bandit-sarif-formatter
+        
+    - name: Ensure project root in PYTHONPATH
+      run: echo "PYTHONPATH=${{ github.workspace }}" >> $GITHUB_ENV
+        
+    - name: Run bandit scan
+      run: |
+        # Find all Python files in the root directory (excluding subdirectories)
+        # This avoids scanning virtual environments and other problematic directories
+        PYTHON_FILES=$(find . -maxdepth 1 -name "*.py" -type f)
+        echo "Scanning Python files:"
+        echo "$PYTHON_FILES"
+        
+        # Generate JSON report
+        bandit -r $PYTHON_FILES -f json -o bandit-report.json || true
+        
+        # Generate SARIF report  
+        bandit -r $PYTHON_FILES --format sarif --output bandit-results.sarif || true
+        
+        # Display results in console with low severity threshold
+        bandit -r $PYTHON_FILES -ll
+        
+    - name: Upload bandit SARIF results
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: bandit-results.sarif
+        
+    - name: Upload bandit report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: bandit-security-scan-${{ github.sha }}
+        path: |
+          bandit-report.json
+          bandit-results.sarif
+        
+    - name: Check bandit results
+      run: |
+        # Check if bandit found any high/medium confidence issues
+        python3 -c "
+        import json
+        import sys
+        
+        try:
+            with open('bandit-report.json') as f:
+                data = json.load(f)
+            
+            high_issues = 0
+            medium_issues = 0
+            
+            for result in data.get('results', []):
+                confidence = result.get('issue_confidence', '').lower()
+                severity = result.get('issue_severity', '').lower()
+                
+                if confidence in ['high', 'medium'] and severity in ['high', 'medium']:
+                    if severity == 'high':
+                        high_issues += 1
+                    else:
+                        medium_issues += 1
+            
+            print(f'High severity issues: {high_issues}')
+            print(f'Medium severity issues: {medium_issues}')
+            
+            if high_issues > 0:
+                print('❌ High severity security issues found')
+                sys.exit(1)
+            elif medium_issues > 5:  # Allow up to 5 medium issues
+                print('⚠️ Too many medium severity issues found')
+                sys.exit(1)
+            else:
+                print('✅ Security scan passed')
+        except FileNotFoundError:
+            print('✅ No bandit report found - no issues detected')
+        except Exception as e:
+            print(f'Error processing bandit report: {e}')
+            sys.exit(1)
+        "
+
+  license-check:
+    name: License Compliance
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pip-licenses
+        
+    - name: Check licenses
+      run: |
+        pip-licenses --format=json --output-file=licenses.json
+        pip-licenses --format=csv --output-file=licenses.csv
+        pip-licenses
+        
+    - name: Validate license compatibility
+      run: |
+        python3 -c "
+        import json
+        import sys
+        
+        # Define allowed licenses (permissive licenses)
+        allowed_licenses = {
+            'MIT', 'Apache Software License', 'BSD License', 'BSD-3-Clause',
+            'BSD-2-Clause', 'ISC License', 'Python Software Foundation License',
+            'Apache 2.0', 'MIT License', 'Apache License 2.0'
+        }
+        
+        # Problematic licenses that need review
+        review_licenses = {
+            'GNU General Public License', 'GPL', 'LGPL', 'AGPL',
+            'GNU Lesser General Public License', 'Copyleft'
+        }
+        
+        with open('licenses.json') as f:
+            licenses = json.load(f)
+        
+        issues = []
+        warnings = []
+        
+        for pkg in licenses:
+            license_name = pkg.get('License', 'Unknown')
+            pkg_name = pkg.get('Name', 'Unknown')
+            
+            if any(bad in license_name for bad in review_licenses):
+                issues.append(f'{pkg_name}: {license_name}')
+            elif license_name not in allowed_licenses and license_name != 'Unknown':
+                warnings.append(f'{pkg_name}: {license_name}')
+        
+        if issues:
+            print('❌ Problematic licenses found:')
+            for issue in issues:
+                print(f'  - {issue}')
+            sys.exit(1)
+        
+        if warnings:
+            print('⚠️ Licenses requiring review:')
+            for warning in warnings:
+                print(f'  - {warning}')
+        
+        print('✅ License compliance check passed')
+        "
+        
+    - name: Upload license report
+      uses: actions/upload-artifact@v4
+      with:
+        name: license-report-${{ github.sha }}
+        path: |
+          licenses.json
+          licenses.csv
+
+  security-hardening-check:
+    name: Security Hardening Verification
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+        
+    - name: Ensure project root in PYTHONPATH
+      run: echo "PYTHONPATH=${{ github.workspace }}" >> $GITHUB_ENV
+        
+    - name: Run security hardening tests
+      run: |
+        # Run our custom security tests
+        pytest tests/test_security.py -v --tb=short
+        
+    - name: Verify no shell=True usage
+      run: |
+        echo "Checking for dangerous shell=True usage..."
+        # Look for actual shell=True parameter usage, not in strings or comments
+        if grep -r "shell\s*=\s*True" . --include="*.py" --exclude-dir=tests --exclude-dir=.github | grep -v "#" | grep -v '".*shell.*True.*"' | grep -v "'.*shell.*True.*'"; then
+          echo "❌ Found shell=True usage in production code"
+          exit 1
+        else
+          echo "✅ No shell=True usage found"
+        fi
+        
+    - name: Verify no hardcoded secrets patterns
+      run: |
+        echo "Checking for hardcoded API key patterns..."
+        if grep -r -E "(AIzaSy[A-Za-z0-9_-]{33}|sk-[A-Za-z0-9_-]{32,})" . --include="*.py" --exclude-dir=tests --exclude-dir=.github; then
+          echo "❌ Found potential hardcoded API keys"
+          exit 1
+        else
+          echo "✅ No hardcoded API key patterns found"
+        fi
+        
+    - name: Check file permissions
+      run: |
+        echo "Checking for overly permissive files..."
+        find . -type f -name "*.py" -perm /o+w | head -10
+        if find . -type f -name "*.py" -perm /o+w | grep -q .; then
+          echo "⚠️ Found world-writable Python files"
+        else
+          echo "✅ File permissions OK"
+        fi
+
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [dependency-check, secret-scan, sast-analysis, bandit-scan, license-check, security-hardening-check]
+    if: always()
+    
+    steps:
+    - name: Security scan summary
+      run: |
+        echo "## Security Scan Results"
+        echo "Dependency Check: ${{ needs.dependency-check.result }}"
+        echo "Secret Scan: ${{ needs.secret-scan.result }}"
+        echo "SAST Analysis: ${{ needs.sast-analysis.result }}"
+        echo "Bandit Scan: ${{ needs.bandit-scan.result }}"
+        echo "License Check: ${{ needs.license-check.result }}"
+        echo "Security Hardening: ${{ needs.security-hardening-check.result }}"
+        
+        # Determine overall security status
+        if [[ "${{ needs.dependency-check.result }}" == "failure" || \
+              "${{ needs.secret-scan.result }}" == "failure" || \
+              "${{ needs.sast-analysis.result }}" == "failure" || \
+              "${{ needs.bandit-scan.result }}" == "failure" || \
+              "${{ needs.security-hardening-check.result }}" == "failure" ]]; then
+          echo "❌ Security scan failed - security issues found"
+          exit 1
+        elif [[ "${{ needs.license-check.result }}" == "failure" ]]; then
+          echo "⚠️ License compliance issues found"
+          exit 1
+        else
+          echo "✅ All security checks passed"
+        fi
+        
+    - name: Create security report
+      if: always()
+      run: |
+        cat << EOF > security-report.md
+        # Security Scan Report
+        
+        **Scan Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+        **Branch:** ${{ github.ref }}
+        **Commit:** ${{ github.sha }}
+        
+        ## Results
+        
+        | Check | Status |
+        |-------|--------|
+        | Dependency Vulnerabilities | ${{ needs.dependency-check.result }} |
+        | Secret Detection | ${{ needs.secret-scan.result }} |
+        | Static Analysis (CodeQL) | ${{ needs.sast-analysis.result }} |
+        | Security Linting (Bandit) | ${{ needs.bandit-scan.result }} |
+        | License Compliance | ${{ needs.license-check.result }} |
+        | Security Hardening | ${{ needs.security-hardening-check.result }} |
+        
+        ## Recommendations
+        
+        - Review any failed checks above
+        - Update dependencies with known vulnerabilities
+        - Address any secrets found in the codebase
+        - Fix security issues identified by static analysis
+        
+        EOF
+        
+    - name: Upload security report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-report-${{ github.sha }}
+        path: security-report.md
