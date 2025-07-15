@@ -253,14 +253,14 @@ async def execute_gemini_cli_streaming(
 ) -> Dict[str, Any]:
     """Execute Gemini CLI with model selection and API fallback"""
     logger.info("Starting Gemini CLI execution with streaming")
-    
+
     # Input validation
     if not isinstance(prompt, str):
         return {"success": False, "error": "Invalid prompt: must be non-empty string"}
-    
+
     if len(prompt.strip()) == 0:
         return {"success": False, "error": "Invalid prompt: must be non-empty string"}
-    
+
     logger.info(f"Prompt length: {len(prompt)} characters")
     logger.info(f"Task type: {task_type}")
 
@@ -366,6 +366,7 @@ async def execute_gemini_cli_streaming(
         else:
             # Sanitize stderr to prevent sensitive information leakage
             import re
+
             sanitized_stderr = re.sub(
                 r"AIzaSy[A-Za-z0-9_-]{25,}", "[API_KEY_REDACTED]", stderr_str
             )
@@ -375,7 +376,7 @@ async def execute_gemini_cli_streaming(
             sanitized_stderr = re.sub(
                 r"Bearer [A-Za-z0-9_.-]{10,}", "[TOKEN_REDACTED]", sanitized_stderr
             )
-            
+
             logger.error(
                 f"Gemini CLI failed with return code {process.returncode}: {sanitized_stderr[:200]}..."
             )

@@ -5,8 +5,8 @@ Optimized for Claude Code token savings with essential analysis only
 """
 
 import os
-import sys
 import subprocess
+import sys
 from pathlib import Path
 
 # Model configuration with environment variable support

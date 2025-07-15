@@ -126,9 +126,10 @@ class TestCLIProcessManagement:
         # Mock a process that times out a few times then completes
         mock_process = MagicMock()
         mock_process.pid = 12345
-        
+
         # Create a sequence: timeout a few times, then process completes
         timeout_count = 0
+
         async def mock_readline():
             nonlocal timeout_count
             if timeout_count < 3:
@@ -138,10 +139,10 @@ class TestCLIProcessManagement:
                 # Process completes after timeouts
                 mock_process.returncode = 0
                 return b""  # EOF
-        
+
         mock_process.stdout.readline = mock_readline
         mock_process.communicate = AsyncMock(return_value=(b"partial output", b""))
-        
+
         # Initially still running, then completed
         mock_process.returncode = None
 
