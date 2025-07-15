@@ -64,7 +64,7 @@ jobs:
         
     - name: Run mypy type checker
       run: |
-        mypy gemini_mcp_server.py gemini_helper.py test_security.py tests/unit/ tests/integration/ tests/e2e/ --ignore-missing-imports --no-strict-optional
+        find tests -name "*.py" | xargs mypy gemini_mcp_server.py gemini_helper.py test_security.py --ignore-missing-imports --no-strict-optional
         
     - name: Run bandit security linter
       run: |

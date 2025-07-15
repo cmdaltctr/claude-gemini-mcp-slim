@@ -339,8 +339,8 @@ jobs:
     - name: Verify no shell=True usage
       run: |
         echo "Checking for dangerous shell=True usage..."
-        # More specific pattern to avoid false positives from comments
-        if grep -r "shell=True" . --include="*.py" --exclude-dir=tests --exclude-dir=.github | grep -v "#.*shell=True" | grep -v "# noqa" | grep -v "shell=False"; then
+        # Look for actual shell=True parameter usage, not in strings or comments
+        if grep -r "shell\s*=\s*True" . --include="*.py" --exclude-dir=tests --exclude-dir=.github | grep -v "#" | grep -v '".*shell.*True.*"' | grep -v "'.*shell.*True.*'"; then
           echo "❌ Found shell=True usage in production code"
           exit 1
         else
