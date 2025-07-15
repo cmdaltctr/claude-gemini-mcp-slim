@@ -286,20 +286,6 @@ Once everything is working:
 
 ## Changelog
 
-### Version 1.3.1 (2025-07-15)
-
-**Bug Fixes:**
-- **E2E Test Async Mocking Issues** - Fixed critical async mocking problems that were causing CI failures
-- **Resolved "MagicMock can't be used in await expression" Error** - Properly configured async function mocking using `AsyncMock` and `side_effect` parameters
-- **Improved Test Reliability** - All E2E tests now pass consistently when `TEST_WITH_REAL_API=true` and `TEST_GOOGLE_API_KEY` is set
-
-**Technical Improvements:**
-- Applied pytest-asyncio best practices for async test mocking
-- Fixed CI deployment pipeline blocking issues
-- Maintained test isolation and proper cleanup across all test suites
-
----
-
 **📋 Complete Changelog:** For detailed release notes and full version history, see [docs/CHANGELOG.md](docs/CHANGELOG.md)
 
 ## Contributing
@@ -348,7 +334,7 @@ cd claude-gemini-mcp-slim
 The setup script will:
 - Create a Python virtual environment (`.venv`)
 - Install all production and development dependencies
-- Set up pre-commit hooks for code quality
+- Set up unified Husky hooks for code quality and commit validation
 - Run a quick test to verify everything is working
 
 #### Manual Setup
@@ -364,8 +350,8 @@ source .venv/bin/activate
 pip install -r requirements.txt
 pip install -r requirements-dev.txt
 
-# Install pre-commit hooks
-pre-commit install
+# Set up unified Husky hooks (handled by setup-dev.sh)
+# This includes pre-commit formatting/linting and commit-msg validation
 
 # Run tests
 python -m pytest
@@ -385,8 +371,9 @@ source .venv/bin/activate
 # Run tests
 python -m pytest
 
-# Run pre-commit hooks (optional, they run automatically on commit)
-pre-commit run --all-files
+# Run Husky hooks manually (optional, they run automatically on commit)
+.husky/pre-commit  # Run formatting, linting, and tests
+.husky/commit-msg  # Validate commit message format
 
 # Commit changes (pre-commit hooks will run automatically)
 git add .
@@ -395,7 +382,7 @@ git commit -m "Your commit message"
 
 **Important Notes:**
 - The virtual environment (`.venv`) is automatically ignored by git
-- Pre-commit hooks will run automatically on every commit to ensure code quality
+- Husky hooks will run automatically on every commit to ensure code quality and enforce conventional commit messages
 - If you're using an IDE like Windsurf, make sure it's configured to use the virtual environment
 
 ## License

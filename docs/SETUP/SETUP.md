@@ -60,6 +60,12 @@ source shared-mcp-env/bin/activate
 ```bash
 # Install MCP dependencies inside virtual environment
 pip install mcp google-generativeai python-dotenv
+
+# Install Node.js dependencies for unified Husky hook system (recommended)
+npm install --save-dev @commitlint/config-conventional @commitlint/cli husky
+
+# Initialize Husky git hooks
+npx husky install
 ```
 
 ### Set Up Gemini MCP Folder

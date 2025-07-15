@@ -38,9 +38,9 @@ pip install -r requirements.txt
 echo "🛠️ Installing development dependencies..."
 pip install -r requirements-dev.txt
 
-# Install pre-commit hooks
-echo "🔧 Installing pre-commit hooks..."
-pre-commit install
+# Initialize Husky hooks
+echo "🔧 Initializing Husky hooks..."
+npx husky install || echo "ℹ️  Husky hooks already initialized or npm not available"
 
 # Run a test to make sure everything is working
 echo "🧪 Running a quick test..."
@@ -55,7 +55,9 @@ echo ""
 echo "🧪 To run all tests:"
 echo "   python -m pytest"
 echo ""
-echo "🔍 To run pre-commit hooks manually:"
-echo "   pre-commit run --all-files"
+echo "🔍 To run code quality checks manually:"
+echo "   npm run lint" 
+echo "   npm run format"
+echo "   npm run test"
 echo ""
 echo "🚀 You're ready to start developing!"

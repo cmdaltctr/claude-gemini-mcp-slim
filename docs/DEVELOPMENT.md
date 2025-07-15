@@ -86,25 +86,36 @@ To enforce commit message conventions locally, Husky and Commitlint are set up.
    pip install -r requirements-dev.txt
    ```
 
-3. **Install Pre-commit Hooks**:
+3. **Set Up Git Hooks**:
    ```bash
-   pre-commit install
+   # Run the setup script which handles both Python and Node.js dependencies
+   ./setup-dev.sh
+   
+   # Or manually install Node.js dependencies for commit validation
+   npm install --save-dev @commitlint/config-conventional @commitlint/cli husky
+   npx husky install
    ```
 
 ## Code Formatting
 
-### Automatic Formatting Before Commits
+### Unified Husky Hook System
 
-We use pre-commit hooks to automatically format code before commits. The hooks will:
+We use a unified Husky hook system that runs multiple code quality checks automatically:
 
+**Pre-commit Hook (`.husky/pre-commit`):**
 - Remove trailing whitespace
 - Fix end-of-file issues
 - Format code with Black
 - Sort imports with isort
 - Check for basic linting issues with flake8
+- Scan for secrets with gitleaks
 - Scan for security issues with bandit
 - Run type checking with mypy
 - Run basic pytest tests
+
+**Commit-msg Hook (`.husky/commit-msg`):**
+- Validates commit messages follow conventional commit format
+- Enforces consistent commit message structure for automated releases
 
 ### Manual Formatting
 
@@ -142,15 +153,18 @@ git checkout -b feature/your-feature-name
 
 ### 3. Before Committing
 
-The pre-commit hooks will automatically run when you commit, but you can also run them manually:
+The Husky hooks will automatically run when you commit, but you can also run them manually:
 
 ```bash
-# Run all pre-commit hooks
-pre-commit run --all-files
+# Run the pre-commit hook manually
+.husky/pre-commit
 
-# Or just run specific hooks
-pre-commit run black --all-files
-pre-commit run isort --all-files
+# Or run specific formatting tools
+black .
+isort .
+flake8 .
+mypy .
+pytest
 ```
 
 ### 4. Committing Changes
@@ -161,7 +175,7 @@ Commit messages must follow conventional commit format:
 git add .
 git commit -m "feat: add new feature"
 
-# The pre-commit hooks and commitlint will run automatically
+# The Husky hooks (.husky/pre-commit and .husky/commit-msg) will run automatically
 # If they fail, fix the issues and commit again
 ```
 
@@ -215,13 +229,15 @@ Our GitHub Actions workflow includes:
 
 ## Common Issues and Solutions
 
-### "pre-commit command not found"
+### "Husky hooks not running"
 
 ```bash
-# Make sure you're in the virtual environment
-source venv/bin/activate
-pip install pre-commit
-pre-commit install
+# Make sure Husky is installed and hooks are set up
+npm install --save-dev husky
+npx husky install
+
+# Or run the setup script which handles everything
+./setup-dev.sh
 ```
 
 ### "black/isort/flake8 command not found"
@@ -305,12 +321,14 @@ git push origin your-branch-name
 - **mypy**: Type checker
 - **bandit**: Security scanner
 - **pytest**: Testing framework
-- **pre-commit**: Git hooks manager
+- **husky**: Git hooks manager
+- **commitlint**: Commit message validation
 
 ## Configuration Files
 
 ### Code Quality
-- `.pre-commit-config.yaml`: Pre-commit hook configuration
+- `.husky/pre-commit`: Pre-commit hook script (formatting, linting, testing)
+- `.husky/commit-msg`: Commit message validation hook
 - `pyproject.toml`: Black and isort configuration
 - `requirements-dev.txt`: Development dependencies
 
