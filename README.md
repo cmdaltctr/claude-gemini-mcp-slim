@@ -1,12 +1,15 @@
 # Claude Gemini MCP Integration
 
 <!-- CI workflow trigger -->
-![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.3.1-blue.svg)
 ![Security](https://img.shields.io/badge/security-hardened-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.10+-brightgreen.svg)
 ![Status](https://img.shields.io/badge/status-production%20ready-green.svg)
 ![Slash Commands](https://img.shields.io/badge/slash%20commands-20+-orange.svg)
+
+> **🚀 What's Coming Next:**
+> I'm building an **AI Agent Feedback Loop System** that enables intelligent collaboration between Claude Code and Gemini AI. This will create a continuous improvement cycle where both AI agents learn from each other's suggestions, creating smarter code analysis and more contextual development assistance. Starting with Claude Code, then expanding to other IDEs. Stay tuned!
 
 **A lightweight integration that brings Google's Gemini AI capabilities to Claude Code through MCP (Model Context Protocol)**
 
@@ -283,141 +286,21 @@ Once everything is working:
 
 ## Changelog
 
-### Version 1.3.0 (2025-07-15)
+### Version 1.3.1 (2025-07-15)
 
-**Major Release - Production-Ready Testing Infrastructure**
-
-**New Features:**
-- **Comprehensive Testing Suite** - 1,540+ lines of unit, integration, and end-to-end tests with timeout protection
-- **CI/CD Pipeline** - 3 GitHub Actions workflows for automated testing, security scanning, and dependency checks
-- **Multi-Environment Support** - Python 3.10-3.12 compatibility testing
-- **Development Workflow** - Pre-commit hooks, Makefile automation, and setup script
-- **Code Quality Tools** - MyPy type checking, Black/isort formatting, and coverage reporting
-
-**Security Enhancements:**
-- **Bandit Integration** - Automated security scanning with custom configuration
-- **GitLeaks Integration** - Secret detection and prevention in codebase
-- **Custom Hardening Tests** - Additional security validation beyond standard tools
-- **Enhanced Error Handling** - Improved MCP server robustness and security
-
-**Testing Infrastructure:**
-- **Unit Tests** - Core functionality testing with mocked dependencies
-- **Integration Tests** - API and CLI fallback testing with real interactions
-- **End-to-End Tests** - Full workflow validation including MCP server operations
-- **Security Tests** - Vulnerability scanning and hardening validation
-- **Timeout Protection** - Prevents hanging tests in CI/CD environments
-
-**Development Improvements:**
-- **Automated Setup** - One-command development environment setup (`./setup-dev.sh`)
-- **Pre-commit Hooks** - Automatic code quality checks before commits
-- **Makefile Commands** - Streamlined development workflow automation
-- **Enhanced Documentation** - Updated testing, setup, and security guides
-
-**Project Structure:**
-- 40 files changed with 5,536 lines added and 1,012 removed
-- Reorganized test structure with proper separation of concerns
-- Enhanced project configuration with `pyproject.toml`
-- Improved dependency management with development requirements
-
-**Potentially Breaking Changes:**
-- Updated minimum Python version requirements (backward compatibility maintained)
-- Reorganized project structure for better maintainability
-- Enhanced development setup process (existing setups continue to work)
-
-**Verification:**
-- All tests pass across Python 3.10-3.12
-- Security scans pass with zero critical vulnerabilities
-- Type checking passes with MyPy
-- Code formatting enforced with Black/isort
-- Existing installations continue to work without changes
-
-### Version 1.2.0 (2025-07-14)
-
-**New Features:**
-- **Enhanced Documentation Structure** - Improved README with table of contents and architecture overview
-- **Streamlined User Experience** - Better organization of setup and usage instructions
-- **Improved Issue Reporting** - Added detailed guidance for submitting issues with labels
-
-**Documentation Improvements:**
-- Added comprehensive architecture diagrams and explanations
-- Restructured documentation for better navigation and user experience
-- Enhanced "Need Help?" section with better issue submission guidance
-- Added link to GitHub labels for better issue categorization
-
-### Version 1.1.0 (2025-07-14)
-
-**New Features:**
-- **Streamlined Slash Commands** - Simplified implementation with individual command files
-- **Improved Command Structure** - Removed legacy `slash_commands.py` and `slash-commands.json` in favor of modular approach
-- **Enhanced Command Organization** - Individual markdown files for each command in `.claude/commands/`
-- **Better Documentation** - Comprehensive slash commands guide with examples
-
-**Slash Commands Added:**
-- Core: `/gemini`, `/g`, `/analyze`, `/a`, `/codebase`, `/c`
-- Focus: `/security`, `/s`, `/performance`, `/p`, `/architecture`, `/arch`
-- Assistance: `/explain`, `/e`, `/debug`, `/d`, `/review`, `/r`, `/research`
-- Improvement: `/optimize`, `/test`, `/fix`
-- Utilities: `/help`, `/status`, `/models`
+**Bug Fixes:**
+- **E2E Test Async Mocking Issues** - Fixed critical async mocking problems that were causing CI failures
+- **Resolved "MagicMock can't be used in await expression" Error** - Properly configured async function mocking using `AsyncMock` and `side_effect` parameters
+- **Improved Test Reliability** - All E2E tests now pass consistently when `TEST_WITH_REAL_API=true` and `TEST_GOOGLE_API_KEY` is set
 
 **Technical Improvements:**
-- Modular command architecture for easier maintenance and updates
-- Direct markdown-based command definitions
-- Simplified implementation with reduced dependencies
-- Improved error handling with helpful messages and usage hints
-
-### Version 1.0.0 (2025-07-12)
-
-**Major Release - Security Hardened Version**
-
-**New Features:**
-- Complete MCP server implementation with three core tools
-- Smart model selection (Gemini Flash for speed, Pro for depth)
-- Real-time streaming output with progress indicators
-- Shared MCP architecture supporting multiple AI clients
-- API-first approach with CLI fallback
-- Comprehensive hook system for automated workflows
-
-**Security Enhancements:**
-- **CRITICAL:** Fixed command injection vulnerabilities (CWE-78)
-- **CRITICAL:** Fixed path traversal vulnerabilities (CWE-22)
-- **CRITICAL:** Fixed prompt injection vulnerabilities (CWE-94)
-- **CRITICAL:** Fixed secrets exposure issues (CWE-200)
-- **CRITICAL:** Enhanced input validation (CWE-20)
-- Implemented defense-in-depth security architecture
-- Added comprehensive security testing suite
-- Created detailed security documentation
-
-**Technical Improvements:**
-- Replaced all `shell=True` usage with secure subprocess execution
-- Added path validation and directory boundary enforcement
-- Implemented input sanitization for all user inputs
-- Added API key redaction in error handling
-- Enhanced error handling with fail-safe defaults
-- Optimized for production deployment
-
-**Documentation:**
-- Complete setup guide with 5-minute quick start
-- Comprehensive security documentation
-- Architecture diagrams and code examples
-- Troubleshooting guides and best practices
-- Professional deployment patterns
-
-**Breaking Changes:**
-- Removed vulnerable test files and insecure code patterns
-- Enhanced security may reject previously accepted inputs
-- File access restricted to current directory tree only
+- Applied pytest-asyncio best practices for async test mocking
+- Fixed CI deployment pipeline blocking issues
+- Maintained test isolation and proper cleanup across all test suites
 
 ---
 
-### Pre-1.0.0 Development Versions
-
-**Initial Development (July 10-12, 2025):**
-- Initial MCP server prototype (July 10)
-- Basic Gemini CLI integration (July 10-11)
-- Experimental hook implementations (July 11)
-- Security vulnerability identification and analysis (July 11-12)
-
-**Note:** Versions prior to 1.0.0 contained critical security vulnerabilities and should not be used in production environments.
+**📋 Complete Changelog:** For detailed release notes and full version history, see [docs/CHANGELOG.md](docs/CHANGELOG.md)
 
 ## Contributing
 
