@@ -369,6 +369,7 @@ jobs:
       if: github.event_name == 'pull_request'
       with:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        coverage-xml-path: coverage.xml
       continue-on-error: true
 
     - name: Upload combined coverage
