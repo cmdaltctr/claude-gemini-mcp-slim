@@ -3,6 +3,7 @@
   "packages": {
     ".": {
       "package-name": "claude-gemini-mcp-slim",
+      "changelog-path": "docs/CHANGELOG.md",
       "changelog-sections": [
         {"type": "feat", "section": "Features", "hidden": false},
         {"type": "fix", "section": "Bug Fixes", "hidden": false},
