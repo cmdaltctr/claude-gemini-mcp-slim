@@ -181,10 +181,10 @@ warn_unreachable = true
 strict_equality = true
 ignore_missing_imports = true
 exclude = [
-    "^\.venv/",
+    "^\\.venv/",
     "^venv/",
     "^env/",
-    "^\.test-env/",
+    "^\\.test-env/",
 ]
 
 [[tool.mypy.overrides]]
