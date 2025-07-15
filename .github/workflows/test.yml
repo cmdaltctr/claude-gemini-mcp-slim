@@ -64,7 +64,7 @@ jobs:
 
     - name: Run mypy type checker
       run: |
-        mypy gemini_mcp_server.py gemini_helper.py test_security.py --ignore-missing-imports --no-strict-optional
+        mypy gemini_mcp_server.py gemini_helper.py tests/test_security.py --ignore-missing-imports --no-strict-optional
 
     - name: Run bandit security linter
       run: |
@@ -111,6 +111,8 @@ jobs:
         pip install -r requirements-dev.txt
 
     - name: Run unit tests
+      env:
+        PYTHONPATH: .
       run: |
         pytest tests/unit/ -v --tb=short --cov=. --cov-report=xml --cov-report=html --cov-report=term
 
@@ -189,6 +191,8 @@ jobs:
         npm install -g @google/gemini-cli
 
     - name: Run integration tests
+      env:
+        PYTHONPATH: .
       run: |
         pytest tests/integration/ -v --tb=short --cov=. --cov-report=xml
 
@@ -246,8 +250,10 @@ jobs:
         pip install -r requirements-dev.txt
 
     - name: Run security-focused tests
+      env:
+        PYTHONPATH: .
       run: |
-        pytest test_security.py -v --tb=short
+        pytest tests/test_security.py -v --tb=short
 
     - name: Run pip-audit for vulnerability scanning
       run: |
@@ -288,6 +294,8 @@ jobs:
         npm install -g @google/gemini-cli
 
     - name: Run E2E tests (mocked)
+      env:
+        PYTHONPATH: .
       run: |
         pytest tests/e2e/ -v --tb=short -k "not TestRealAPIWorkflow"
 
@@ -296,6 +304,7 @@ jobs:
       env:
         TEST_WITH_REAL_API: 'true'
         TEST_GOOGLE_API_KEY: ${{ secrets.TEST_GOOGLE_API_KEY }}
+        PYTHONPATH: .
       run: |
         if [ -n "$TEST_GOOGLE_API_KEY" ]; then
           echo "Running E2E tests with real API..."
@@ -327,6 +336,8 @@ jobs:
         pip install pytest-benchmark
 
     - name: Run performance benchmarks
+      env:
+        PYTHONPATH: .
       run: |
         pytest tests/ -v --benchmark-only --benchmark-json=benchmark-results.json
 
