@@ -1,5 +1,6 @@
 # Claude Gemini MCP Integration
 
+<!-- CI workflow trigger -->
 ![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
 ![Security](https://img.shields.io/badge/security-hardened-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
