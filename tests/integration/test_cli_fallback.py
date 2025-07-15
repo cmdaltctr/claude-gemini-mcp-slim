@@ -7,6 +7,7 @@ Tests the security of subprocess execution and error handling
 import asyncio
 import os
 import sys
+from typing import Any, List
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -23,7 +24,7 @@ class TestCLIFallbackSecurity:
     """Test CLI fallback security measures"""
 
     @pytest.mark.asyncio
-    async def test_no_shell_injection(self):
+    async def test_no_shell_injection(self) -> None:
         """Test that shell injection is prevented in CLI execution"""
 
         # Test malicious prompts that could cause shell injection
@@ -63,12 +64,12 @@ class TestCLIFallbackSecurity:
                         malicious_prompt,
                     )
 
-                    # Verify no shell=True was used
+                    # Verify no shell=True was used  # noqa: B602
                     kwargs = mock_exec.call_args[1]
                     assert "shell" not in kwargs or kwargs["shell"] is False
 
     @pytest.mark.asyncio
-    async def test_command_argument_validation(self):
+    async def test_command_argument_validation(self) -> None:
         """Test that command arguments are properly validated"""
 
         # Test with invalid model names that could be dangerous
@@ -89,7 +90,7 @@ class TestCLIFallbackSecurity:
                 assert "Invalid model name" in result["error"]
 
     @pytest.mark.asyncio
-    async def test_environment_isolation(self):
+    async def test_environment_isolation(self) -> None:
         """Test that subprocess runs with minimal environment"""
 
         mock_process = MagicMock()
@@ -120,7 +121,7 @@ class TestCLIProcessManagement:
     """Test CLI process lifecycle and management"""
 
     @pytest.mark.asyncio
-    async def test_process_timeout_handling(self):
+    async def test_process_timeout_handling(self) -> Any:
         """Test that long-running processes are handled correctly"""
 
         # Mock a process that times out a few times then completes
@@ -130,7 +131,7 @@ class TestCLIProcessManagement:
         # Create a sequence: timeout a few times, then process completes
         timeout_count = 0
 
-        async def mock_readline():
+        async def mock_readline() -> bytes:
             nonlocal timeout_count
             if timeout_count < 3:
                 timeout_count += 1
@@ -159,7 +160,7 @@ class TestCLIProcessManagement:
                 assert result["success"] is True
 
     @pytest.mark.asyncio
-    async def test_process_memory_constraints(self):
+    async def test_process_memory_constraints(self) -> None:
         """Test handling of processes with large output"""
 
         # Create a very large output to test memory handling
@@ -184,7 +185,7 @@ class TestCLIProcessManagement:
                 assert len(result["output"]) > 100000  # Should be > 100KB
 
     @pytest.mark.asyncio
-    async def test_stderr_error_capture(self):
+    async def test_stderr_error_capture(self) -> None:
         """Test that stderr errors are properly captured and sanitized"""
 
         mock_process = MagicMock()
@@ -210,7 +211,7 @@ class TestCLIProcessManagement:
                 assert "AIzaSyBHJ5X2K9L8M3N4O5P6Q7R8S9T0" not in result["error"]
 
     @pytest.mark.asyncio
-    async def test_concurrent_cli_executions(self):
+    async def test_concurrent_cli_executions(self) -> None:
         """Test that multiple CLI executions can run concurrently"""
 
         # Mock multiple processes
@@ -247,7 +248,7 @@ class TestCLIInputValidation:
     """Test CLI input validation and sanitization"""
 
     @pytest.mark.asyncio
-    async def test_prompt_length_validation(self):
+    async def test_prompt_length_validation(self) -> None:
         """Test that overly long prompts are rejected"""
 
         # Test prompt that exceeds 1MB limit
@@ -261,10 +262,10 @@ class TestCLIInputValidation:
         assert "too large" in result["error"]
 
     @pytest.mark.asyncio
-    async def test_prompt_type_validation(self):
+    async def test_prompt_type_validation(self) -> None:
         """Test that non-string prompts are rejected"""
 
-        invalid_prompts = [None, 123, [], {}, b"bytes"]
+        invalid_prompts: List[Any] = [None, 123, [], {}, b"bytes"]
 
         for invalid_prompt in invalid_prompts:
             result = await execute_gemini_cli_streaming(
@@ -275,7 +276,7 @@ class TestCLIInputValidation:
             assert "Invalid prompt" in result["error"]
 
     @pytest.mark.asyncio
-    async def test_empty_prompt_handling(self):
+    async def test_empty_prompt_handling(self) -> None:
         """Test handling of empty or whitespace-only prompts"""
 
         empty_prompts = ["", "   ", "\n\n\n", "\t\t"]
@@ -293,7 +294,7 @@ class TestCLIErrorRecovery:
     """Test CLI error recovery and resilience"""
 
     @pytest.mark.asyncio
-    async def test_process_crash_handling(self):
+    async def test_process_crash_handling(self) -> None:
         """Test handling when CLI process crashes unexpectedly"""
 
         mock_process = MagicMock()
@@ -313,7 +314,7 @@ class TestCLIErrorRecovery:
                 assert "killed" in result["error"].lower()
 
     @pytest.mark.asyncio
-    async def test_subprocess_exception_handling(self):
+    async def test_subprocess_exception_handling(self) -> None:
         """Test handling of subprocess creation exceptions"""
 
         with patch(

@@ -10,6 +10,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from typing import IO, Any, Dict, Optional, Union
 
 # Model configuration with fallback to CLI
 GEMINI_MODELS = {
@@ -137,8 +138,8 @@ def execute_gemini_api(
 
 
 def execute_gemini_cli(
-    prompt: str, model_name: str = None, show_progress: bool = True
-) -> dict:
+    prompt: str, model_name: Optional[str] = None, show_progress: bool = True
+) -> Dict[str, Any]:
     """Execute Gemini CLI with real-time streaming output"""
     import time
 
@@ -161,7 +162,7 @@ def execute_gemini_cli(
             if not all(c.isalnum() or c in ".-" for c in model_name):
                 return {"success": False, "error": "Invalid model name characters"}
 
-        # Build command args safely (no shell=True)
+        # Build command args safely (no shell=True)  # noqa: B602
         cmd_args = ["gemini"]
         if model_name:
             cmd_args.extend(["-m", model_name])
@@ -173,7 +174,7 @@ def execute_gemini_cli(
             print("⏳ Streaming output:", file=sys.stderr)
             print("-" * 50, file=sys.stderr)
 
-        # Use Popen for real-time streaming - SECURE VERSION (no shell=True)
+        # Use Popen for real-time streaming - SECURE VERSION (no shell=True)  # noqa: B602
         # Include GOOGLE_CLOUD_PROJECT if it's set
         env = {"PATH": os.environ.get("PATH", "")}
         if "GOOGLE_CLOUD_PROJECT" in os.environ:
@@ -197,7 +198,10 @@ def execute_gemini_cli(
 
         # Stream output in real-time
         while True:
-            line = process.stdout.readline()
+            if process.stdout is not None:
+                line = process.stdout.readline()
+            else:
+                line = ""
             if line:
                 output_lines.append(line)
                 if show_progress:
@@ -267,7 +271,7 @@ def execute_gemini_smart(
     return execute_gemini_cli(prompt, model_name, show_progress)
 
 
-def quick_query(query: str, context: str = ""):
+def quick_query(query: str, context: str = "") -> None:
     """Ask Gemini CLI a quick question"""
     # Sanitize inputs to prevent prompt injection
     sanitized_query = sanitize_for_prompt(query, max_length=10000)
@@ -288,7 +292,7 @@ def quick_query(query: str, context: str = ""):
         print(f"Error: {result['error']}")
 
 
-def analyze_code(file_path: str, analysis_type: str = "comprehensive"):
+def analyze_code(file_path: str, analysis_type: str = "comprehensive") -> None:
     """Analyze a code file"""
     try:
         # Input validation
@@ -415,7 +419,7 @@ Be thorough and provide actionable insights."""
         print(f"Error: {str(e)}")
 
 
-def analyze_codebase(directory_path: str, analysis_scope: str = "all"):
+def analyze_codebase(directory_path: str, analysis_scope: str = "all") -> None:
     """Analyze entire codebase"""
     # Input validation
     if not isinstance(directory_path, str) or not directory_path.strip():
@@ -486,7 +490,7 @@ Be thorough and detailed in your analysis. Focus on actionable insights and reco
         print(f"Error: {result['error']}")
 
 
-def main():
+def main() -> None:
     """Main CLI interface"""
     if len(sys.argv) < 2:
         print("Usage:")

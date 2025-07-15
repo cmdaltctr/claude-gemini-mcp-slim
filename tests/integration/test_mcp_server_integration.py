@@ -26,7 +26,7 @@ class TestMCPServerIntegration:
     """Integration tests for MCP server protocol compliance"""
 
     @pytest.mark.asyncio
-    async def test_server_tool_registration(self):
+    async def test_server_tool_registration(self) -> None:
         """Test that all expected tools are registered"""
         tools = await list_tools()
 
@@ -49,7 +49,7 @@ class TestMCPServerIntegration:
             assert "required" in tool.inputSchema
 
     @pytest.mark.asyncio
-    async def test_tool_input_validation(self):
+    async def test_tool_input_validation(self) -> None:
         """Test that tools properly validate their inputs"""
 
         # Test gemini_quick_query with invalid inputs
@@ -66,7 +66,7 @@ class TestMCPServerIntegration:
         assert "Error" in result[0].text
 
     @pytest.mark.asyncio
-    async def test_tool_security_validation(self):
+    async def test_tool_security_validation(self) -> None:
         """Test that security functions are applied to tool inputs"""
 
         # Test prompt injection attempts
@@ -94,7 +94,7 @@ class TestMCPServerIntegration:
                 assert "```" not in call_args
 
     @pytest.mark.asyncio
-    async def test_error_handling_integration(self):
+    async def test_error_handling_integration(self) -> None:
         """Test error handling across the full request flow"""
 
         # Test unknown tool
@@ -111,7 +111,7 @@ class TestMCPServerIntegration:
             assert "failed" in result[0].text.lower()
 
     @pytest.mark.asyncio
-    async def test_async_operations_integration(self):
+    async def test_async_operations_integration(self) -> None:
         """Test that async operations work correctly in integration"""
 
         # Test that multiple concurrent tool calls work
@@ -133,7 +133,7 @@ class TestMCPServerIntegration:
                 assert "Test response" in result[0].text
 
     @pytest.mark.asyncio
-    async def test_large_input_handling(self):
+    async def test_large_input_handling(self) -> None:
         """Test handling of large inputs at integration level"""
 
         # Test code analysis with large content
@@ -157,7 +157,7 @@ class TestMCPToolFlows:
     """Test complete tool execution flows"""
 
     @pytest.mark.asyncio
-    async def test_gemini_quick_query_flow(self):
+    async def test_gemini_quick_query_flow(self) -> None:
         """Test complete gemini_quick_query execution flow"""
 
         with patch("gemini_mcp_server.execute_gemini_cli_streaming") as mock_exec:
@@ -177,7 +177,7 @@ class TestMCPToolFlows:
             assert "Programming languages" in call_args
 
     @pytest.mark.asyncio
-    async def test_gemini_analyze_code_flow(self):
+    async def test_gemini_analyze_code_flow(self) -> None:
         """Test complete gemini_analyze_code execution flow"""
 
         test_code = """
@@ -206,7 +206,7 @@ def hello_world():
             assert "hello_world" in call_args
 
     @pytest.mark.asyncio
-    async def test_codebase_analysis_path_security(self):
+    async def test_codebase_analysis_path_security(self) -> None:
         """Test codebase analysis with path security validation"""
 
         # Test valid path

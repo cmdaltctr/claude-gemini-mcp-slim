@@ -8,7 +8,7 @@ import asyncio
 import os
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, Generator
+from typing import Any, Callable, Dict, Generator, List
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -16,7 +16,7 @@ from mcp.types import TextContent
 
 
 @pytest.fixture(scope="session")
-def event_loop():
+def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
     """
     Create an event loop for the entire test session.
     This prevents event loop issues in async tests.
@@ -28,7 +28,7 @@ def event_loop():
 
 
 @pytest.fixture(autouse=True)
-def reset_environment():
+def reset_environment() -> Generator[None, None, None]:
     """
     Reset environment variables and state between tests.
     This ensures test isolation.
@@ -44,7 +44,7 @@ def reset_environment():
 
 
 @pytest.fixture
-def temp_workspace():
+def temp_workspace() -> Generator[Path, None, None]:
     """
     Create a temporary workspace for file operations.
     Automatically cleaned up after test.
@@ -59,7 +59,7 @@ def temp_workspace():
 
 
 @pytest.fixture
-def mock_process():
+def mock_process() -> MagicMock:
     """
     Create a mock subprocess for CLI testing.
     Provides proper cleanup and realistic behavior.
@@ -77,7 +77,7 @@ def mock_process():
 
 
 @pytest.fixture
-def mock_gemini_api():
+def mock_gemini_api() -> Dict[str, Any]:
     """
     Create a mock Gemini API for testing.
     Provides realistic API responses.
@@ -94,7 +94,7 @@ def mock_gemini_api():
 
 
 @pytest.fixture
-def mock_api_key():
+def mock_api_key() -> str:
     """
     Provide a mock API key for testing.
     """
@@ -102,7 +102,16 @@ def mock_api_key():
 
 
 @pytest.fixture
-def sample_code():
+def fake_api_key() -> str:
+    """
+    Provide a deterministic dummy API key for testing.
+    This key is non-secret and safe for use in tests.
+    """
+    return "test-api-key-1234567890"
+
+
+@pytest.fixture
+def sample_code() -> str:
     """
     Provide sample code for testing code analysis.
     """
@@ -124,7 +133,7 @@ if __name__ == "__main__":
 
 
 @pytest.fixture
-def large_code_sample():
+def large_code_sample() -> str:
     """
     Provide a large code sample for testing limits.
     """
@@ -139,7 +148,7 @@ def large_code_sample():
 
 
 @pytest.fixture
-def mock_text_content():
+def mock_text_content() -> Callable[[str], TextContent]:
     """
     Create mock TextContent for MCP responses.
     """
@@ -151,7 +160,7 @@ def mock_text_content():
 
 
 @pytest.fixture
-def integration_test_timeout():
+def integration_test_timeout() -> int:
     """
     Provide a shorter timeout for integration tests.
     """
@@ -159,7 +168,7 @@ def integration_test_timeout():
 
 
 @pytest.fixture(autouse=True)
-def patch_imports():
+def patch_imports() -> Generator[None, None, None]:
     """
     Patch problematic imports that might cause issues in tests.
     """
@@ -168,7 +177,7 @@ def patch_imports():
 
 
 @pytest.fixture
-def mock_cli_execution():
+def mock_cli_execution() -> Callable[..., Dict[str, Any]]:
     """
     Create a factory for mock CLI execution results.
     """
@@ -190,12 +199,12 @@ def mock_cli_execution():
 
 
 @pytest.fixture
-def slow_operation_mock():
+def slow_operation_mock() -> Callable[[float], Any]:
     """
     Create a mock that simulates slow operations for timeout testing.
     """
 
-    async def _slow_operation(delay: float = 0.1):
+    async def _slow_operation(delay: float = 0.1) -> str:
         await asyncio.sleep(delay)
         return "Slow operation completed"
 
@@ -203,13 +212,13 @@ def slow_operation_mock():
 
 
 @pytest.fixture
-def resource_cleanup():
+def resource_cleanup() -> Generator[Callable[[Any], None], None, None]:
     """
     Track resources that need cleanup after tests.
     """
     resources = []
 
-    def register_resource(resource):
+    def register_resource(resource: Any) -> None:
         resources.append(resource)
 
     yield register_resource
@@ -229,22 +238,24 @@ def resource_cleanup():
 
 
 @pytest.fixture
-def parallel_safe_mock():
+def parallel_safe_mock() -> Callable[..., MagicMock]:
     """
     Create process-safe mocks for parallel test execution.
     """
 
-    def _create_mock(**kwargs):
+    def _create_mock(**kwargs: Any) -> MagicMock:
         mock = MagicMock(**kwargs)
         # Make the mock process-safe
-        mock.__reduce__ = lambda: (MagicMock, ())
+        # Make the mock process-safe by setting a custom __reduce__ method
+        # This helps with parallel test execution
+        mock.__dict__["__reduce__"] = lambda: (MagicMock, ())
         return mock
 
     return _create_mock
 
 
 # Pytest hooks for better test execution
-def pytest_configure(config):
+def pytest_configure(config: Any) -> None:
     """
     Configure pytest for optimal parallel execution.
     """
@@ -256,7 +267,7 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "timeout: marks tests that should timeout")
 
 
-def pytest_collection_modifyitems(config, items):
+def pytest_collection_modifyitems(config: Any, items: List[Any]) -> None:
     """
     Modify test collection to add appropriate markers.
     """
@@ -270,7 +281,7 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(pytest.mark.slow)
 
 
-def pytest_runtest_setup(item):
+def pytest_runtest_setup(item: Any) -> None:
     """
     Setup each test with proper isolation.
     """
@@ -283,7 +294,7 @@ def pytest_runtest_setup(item):
         item._patches = []
 
 
-def pytest_runtest_teardown(item):
+def pytest_runtest_teardown(item: Any) -> None:
     """
     Teardown each test with proper cleanup.
     """

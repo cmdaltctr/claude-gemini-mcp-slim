@@ -27,6 +27,7 @@ mypy>=1.5.0
 
 # Security
 bandit[toml]>=1.7.0
+bandit-sarif-formatter>=1.1.1  # For SARIF output from bandit
 pip-audit>=2.6.0
 safety>=2.3.0
 

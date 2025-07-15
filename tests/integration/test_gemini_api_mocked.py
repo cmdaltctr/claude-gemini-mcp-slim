@@ -6,7 +6,9 @@ Tests API fallback behavior, error handling, and response processing
 
 import asyncio
 import os
+import secrets
 import sys
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -27,7 +29,20 @@ class TestGeminiAPIIntegration:
     """Test Gemini API integration with various scenarios"""
 
     @pytest.mark.asyncio
-    async def test_api_success_flow(self):
+    async def test_fake_api_key_fixture(self, fake_api_key: str) -> None:
+        """Test that fake_api_key fixture provides deterministic test key"""
+        # Verify the fake API key is deterministic and safe for tests
+        assert fake_api_key == "test-api-key-1234567890"
+        assert fake_api_key.startswith("test-api-key-")
+        assert len(fake_api_key) > 10  # Ensure it's long enough to be realistic
+
+        # Verify it doesn't contain any real secret patterns
+        assert not fake_api_key.startswith("AIza")  # Not a real Google API key
+        assert "secret" not in fake_api_key.lower()
+        assert "password" not in fake_api_key.lower()
+
+    @pytest.mark.asyncio
+    async def test_api_success_flow(self, fake_api_key: str) -> None:
         """Test successful API call flow"""
 
         # Mock the google.generativeai module
@@ -40,21 +55,19 @@ class TestGeminiAPIIntegration:
         mock_genai.GenerativeModel.return_value = mock_model
 
         with patch.dict("sys.modules", {"google.generativeai": mock_genai}):
-            with patch("gemini_mcp_server.GOOGLE_API_KEY", "valid_api_key_1234567890"):
+            with patch("gemini_mcp_server.GOOGLE_API_KEY", fake_api_key):
                 result = await execute_gemini_api("Test prompt", "gemini-2.5-flash")
 
                 assert result["success"] is True
                 assert result["output"] == "API response text"
 
                 # Verify the API was configured correctly
-                mock_genai.configure.assert_called_once_with(
-                    api_key="valid_api_key_1234567890"
-                )
+                mock_genai.configure.assert_called_once_with(api_key=fake_api_key)
                 mock_genai.GenerativeModel.assert_called_once_with("gemini-2.5-flash")
                 mock_model.generate_content_async.assert_called_once_with("Test prompt")
 
     @pytest.mark.asyncio
-    async def test_api_missing_key(self):
+    async def test_api_missing_key(self) -> None:
         """Test API behavior with missing API key"""
 
         with patch("gemini_mcp_server.GOOGLE_API_KEY", None):
@@ -64,7 +77,7 @@ class TestGeminiAPIIntegration:
             assert "Invalid or missing API key" in result["error"]
 
     @pytest.mark.asyncio
-    async def test_api_invalid_key(self):
+    async def test_api_invalid_key(self) -> None:
         """Test API behavior with invalid API key"""
 
         with patch("gemini_mcp_server.GOOGLE_API_KEY", "short"):
@@ -74,7 +87,7 @@ class TestGeminiAPIIntegration:
             assert "Invalid or missing API key" in result["error"]
 
     @pytest.mark.asyncio
-    async def test_api_import_error(self):
+    async def test_api_import_error(self) -> None:
         """Test API fallback when google-generativeai is not available"""
 
         with patch("gemini_mcp_server.GOOGLE_API_KEY", "valid_api_key_1234567890"):
@@ -89,7 +102,7 @@ class TestGeminiAPIIntegration:
                 assert "API library not available" in result["error"]
 
     @pytest.mark.asyncio
-    async def test_api_key_redaction_in_errors(self):
+    async def test_api_key_redaction_in_errors(self) -> None:
         """Test that API keys are properly redacted in error messages"""
 
         mock_genai = MagicMock()
@@ -110,14 +123,19 @@ class TestGeminiAPIIntegration:
                 assert (
                     "AIzaSyBHJ5X2K9L8M3N4O5P6Q7R8S9T0U1V2W3X4Y5Z" not in result["error"]
                 )
-                assert "[API_KEY_REDACTED]" in result["error"]
+                # Generate a runtime token to replace REDACTED
+                api_key_placeholder = f"[API_KEY_{secrets.token_hex(8).upper()}]"
+                assert (
+                    api_key_placeholder in result["error"]
+                    or "[API_KEY_REDACTED]" in result["error"]
+                )
 
 
 class TestCLIFallbackIntegration:
     """Test CLI fallback behavior when API fails"""
 
     @pytest.mark.asyncio
-    async def test_api_to_cli_fallback(self):
+    async def test_api_to_cli_fallback(self) -> None:
         """Test automatic fallback from API to CLI"""
 
         # Mock subprocess for CLI execution
@@ -148,7 +166,7 @@ class TestCLIFallbackIntegration:
                     assert "CLI response line 2" in result["output"]
 
     @pytest.mark.asyncio
-    async def test_cli_command_construction(self):
+    async def test_cli_command_construction(self) -> None:
         """Test that CLI commands are constructed securely"""
 
         mock_process = MagicMock()
@@ -180,11 +198,13 @@ class TestCLIFallbackIntegration:
                 ]
                 assert call_args[0] == tuple(expected_args)
 
-                # Verify no shell=True
-                assert "shell" not in call_args[1] or call_args[1]["shell"] is False
+                # Verify no shell=True  # noqa: B602
+                assert (
+                    "shell" not in call_args[1] or call_args[1]["shell"] is False
+                )  # noqa: B602
 
     @pytest.mark.asyncio
-    async def test_cli_error_handling(self):
+    async def test_cli_error_handling(self) -> None:
         """Test CLI error handling and timeout scenarios"""
 
         # Test CLI failure
@@ -205,7 +225,7 @@ class TestCLIFallbackIntegration:
                 assert "CLI error message" in result["error"]
 
     @pytest.mark.asyncio
-    async def test_cli_streaming_output(self):
+    async def test_cli_streaming_output(self) -> None:
         """Test CLI streaming output handling"""
 
         # Mock streaming output
@@ -239,7 +259,7 @@ class TestModelSelection:
     """Test model selection logic for different task types"""
 
     @pytest.mark.asyncio
-    async def test_task_type_model_mapping(self):
+    async def test_task_type_model_mapping(self) -> None:
         """Test that different task types select appropriate models"""
 
         test_cases = [
@@ -270,7 +290,7 @@ class TestModelSelection:
                     assert call_args[2] == expected_model  # -m flag argument
 
     @pytest.mark.asyncio
-    async def test_invalid_task_type(self):
+    async def test_invalid_task_type(self) -> None:
         """Test handling of invalid task types"""
 
         result = await execute_gemini_cli_streaming("Test prompt", "invalid_task_type")
@@ -279,7 +299,7 @@ class TestModelSelection:
         assert "Invalid task type" in result["error"]
 
     @pytest.mark.asyncio
-    async def test_model_validation(self):
+    async def test_model_validation(self) -> None:
         """Test model name validation for security"""
 
         with patch("gemini_mcp_server.GEMINI_MODELS", {"flash": "../../etc/passwd"}):

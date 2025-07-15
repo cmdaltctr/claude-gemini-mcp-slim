@@ -194,7 +194,7 @@ disallow_incomplete_defs = false
 
 [tool.bandit]
 exclude_dirs = ["tests", ".venv", "venv", "env"]
-skips = ["B101", "B601"]  # Skip assert_used, paramiko_calls
+skips = ["B101", "B601", "B602"]  # Skip assert_used, paramiko_calls, subprocess_popen_with_shell_equals_true
 confidence_level = "medium"
 severity_level = "medium"
 

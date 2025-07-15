@@ -10,7 +10,7 @@ import shlex
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
@@ -21,7 +21,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Create server instance
-server = Server("slim-gemini-cli-mcp")
+server: Server = Server("slim-gemini-cli-mcp")
 
 # Configuration
 MAX_FILE_SIZE = 81920  # 80KB
@@ -72,7 +72,7 @@ def sanitize_for_prompt(text: str, max_length: int = 100000) -> str:
     return text
 
 
-def validate_path_security(file_path: str) -> tuple[bool, str, Path]:
+def validate_path_security(file_path: str) -> tuple[bool, str, Optional[Path]]:
     """Validate path for security - prevent path traversal attacks"""
     try:
         if not isinstance(file_path, str) or not file_path.strip():
@@ -172,7 +172,7 @@ async def execute_gemini_api(prompt: str, model_name: str) -> Dict[str, Any]:
         return {"success": False, "error": error_message}
 
 
-@server.list_tools()
+@server.list_tools()  # type: ignore
 async def list_tools() -> List[Tool]:
     """List available tools"""
     return [
@@ -291,7 +291,7 @@ async def execute_gemini_cli_streaming(
                 return result
             logger.warning("API call failed, falling back to CLI")
 
-        # Fallback to CLI - SECURE VERSION (no shell=True)
+        # Fallback to CLI - SECURE VERSION (no shell=True)  # noqa: B602
         cmd_args = ["gemini", "-m", model_name, "-p", prompt]
         logger.info(
             f"Executing command: gemini -m {model_name} -p [prompt length: {len(prompt)}]"
@@ -320,7 +320,12 @@ async def execute_gemini_cli_streaming(
         while True:
             try:
                 # Read line with timeout to check for progress
-                line = await asyncio.wait_for(process.stdout.readline(), timeout=1.0)
+                if process.stdout is not None:
+                    line = await asyncio.wait_for(
+                        process.stdout.readline(), timeout=1.0
+                    )
+                else:
+                    line = b""
                 if line:
                     decoded_line = line.decode("utf-8", errors="replace")
                     output_lines.append(decoded_line)
@@ -387,7 +392,7 @@ async def execute_gemini_cli_streaming(
         return {"success": False, "error": str(e)}
 
 
-@server.call_tool()
+@server.call_tool()  # type: ignore
 async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
     logger.info(f"Tool call received: {name} with arguments: {list(arguments.keys())}")
     logger.debug(f"Full arguments: {arguments}")
@@ -527,7 +532,7 @@ Write exactly like a plain text document. Use simple numbered points and paragra
 
             # Path security validation
             is_valid, error_msg, resolved_path = validate_path_security(directory_path)
-            if not is_valid:
+            if not is_valid or resolved_path is None:
                 return [TextContent(type="text", text=f"❌ {error_msg}")]
 
             if not resolved_path.exists():
@@ -593,7 +598,7 @@ Terminal cannot display markdown - use only plain characters"""
         return [TextContent(type="text", text=f"Error: {str(e)}")]
 
 
-async def main():
+async def main() -> None:
     """Run the server"""
     try:
         logger.info("Starting Slim Gemini CLI MCP Server...")

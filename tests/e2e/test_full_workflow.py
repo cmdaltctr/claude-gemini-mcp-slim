@@ -8,9 +8,11 @@ import asyncio
 import os
 import sys
 from pathlib import Path
+from typing import Any, Callable, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
+from mcp.types import TextContent
 
 # Import our server components
 sys.path.insert(
@@ -32,7 +34,7 @@ class TestRealAPIWorkflow:
     """End-to-end tests with real Gemini API (conditional)"""
 
     @pytest.mark.asyncio
-    async def test_real_quick_query(self):
+    async def test_real_quick_query(self) -> None:
         """Test real quick query with actual API"""
 
         with patch("gemini_mcp_server.GOOGLE_API_KEY", TEST_API_KEY):
@@ -52,7 +54,7 @@ class TestRealAPIWorkflow:
             assert len(response_text) < 100  # Should be concise
 
     @pytest.mark.asyncio
-    async def test_real_code_analysis(self):
+    async def test_real_code_analysis(self) -> None:
         """Test real code analysis with actual API"""
 
         test_code = """
@@ -87,7 +89,7 @@ print(result)
             )
 
     @pytest.mark.asyncio
-    async def test_real_api_rate_limiting(self):
+    async def test_real_api_rate_limiting(self) -> None:
         """Test that rapid API calls don't cause rate limiting issues"""
 
         with patch("gemini_mcp_server.GOOGLE_API_KEY", TEST_API_KEY):
@@ -104,15 +106,17 @@ print(result)
             # All should succeed (no exceptions)
             for result in results:
                 assert not isinstance(result, Exception)
-                assert len(result) == 1
-                assert len(result[0].text) > 10  # Should have meaningful responses
+                # Type cast to ensure we have the correct type for mypy
+                result_list = cast(list[TextContent], result)
+                assert len(result_list) == 1
+                assert len(result_list[0].text) > 10  # Should have meaningful responses
 
 
 class TestMockedE2EWorkflow:
     """End-to-end tests with mocked responses (always run)"""
 
     @pytest.mark.asyncio
-    async def test_complete_quick_query_workflow(self):
+    async def test_complete_quick_query_workflow(self) -> None:
         """Test complete quick query workflow from start to finish"""
 
         with patch("gemini_mcp_server.execute_gemini_cli_streaming") as mock_exec:
@@ -137,7 +141,7 @@ class TestMockedE2EWorkflow:
             assert "plain text format" in call_args  # Formatting instruction
 
     @pytest.mark.asyncio
-    async def test_complete_code_analysis_workflow(self):
+    async def test_complete_code_analysis_workflow(self) -> None:
         """Test complete code analysis workflow"""
 
         test_code = """
@@ -199,7 +203,7 @@ Missing error handling for file operations. The code will crash if the file does
             assert "security analysis" in call_args
 
     @pytest.mark.asyncio
-    async def test_codebase_analysis_workflow(self):
+    async def test_codebase_analysis_workflow(self) -> None:
         """Test complete codebase analysis workflow"""
 
         # Create a temporary directory structure for testing
@@ -256,7 +260,7 @@ Async operations are properly implemented. The streaming output handling prevent
                 mock_validate.assert_called_once_with("./test_analysis_dir")
 
     @pytest.mark.asyncio
-    async def test_error_handling_workflow(self):
+    async def test_error_handling_workflow(self) -> None:
         """Test complete error handling across the workflow"""
 
         # Test API failure leading to CLI fallback
@@ -281,7 +285,7 @@ Async operations are properly implemented. The streaming output handling prevent
                 assert "CLI fallback response" in result[0].text
 
     @pytest.mark.asyncio
-    async def test_security_integration_workflow(self):
+    async def test_security_integration_workflow(self) -> None:
         """Test security measures integrated into the complete workflow"""
 
         # Test prompt injection prevention
@@ -310,14 +314,14 @@ os.system('rm -rf /')
             assert "```" not in call_args
 
     @pytest.mark.asyncio
-    async def test_performance_benchmarks(self):
+    async def test_performance_benchmarks(self) -> None:
         """Test performance benchmarks for the complete workflow"""
 
         import time
 
         with patch("gemini_mcp_server.execute_gemini_cli_streaming") as mock_exec:
             # Simulate realistic response time
-            async def slow_response(*args, **kwargs):
+            async def slow_response(*args: Any, **kwargs: Any) -> dict[str, Any]:
                 await asyncio.sleep(0.1)  # 100ms simulated processing
                 return {"success": True, "output": "Performance test response"}
 
@@ -338,13 +342,13 @@ os.system('rm -rf /')
             assert "Performance test response" in result[0].text
 
     @pytest.mark.asyncio
-    async def test_concurrent_requests_workflow(self):
+    async def test_concurrent_requests_workflow(self) -> None:
         """Test handling of concurrent requests in the complete workflow"""
 
         with patch("gemini_mcp_server.execute_gemini_cli_streaming") as mock_exec:
 
             # Mock responses for different requests
-            def mock_response(prompt, task_type):
+            def mock_response(prompt: str, task_type: str) -> dict[str, Any]:
                 return {
                     "success": True,
                     "output": f"Response for {task_type}: {prompt[:20]}...",

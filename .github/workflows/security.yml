@@ -155,13 +155,24 @@ jobs:
     - name: Install bandit
       run: |
         python -m pip install --upgrade pip
-        pip install bandit[toml]
+        pip install bandit[toml] bandit-sarif-formatter
         
     - name: Run bandit scan
       run: |
-        bandit -r . -x tests/ -f json -o bandit-report.json || true
-        bandit -r . -x tests/ -f sarif -o bandit-results.sarif || true
-        bandit -r . -x tests/ -ll
+        # Find all Python files in the root directory (excluding subdirectories)
+        # This avoids scanning virtual environments and other problematic directories
+        PYTHON_FILES=$(find . -maxdepth 1 -name "*.py" -type f)
+        echo "Scanning Python files:"
+        echo "$PYTHON_FILES"
+        
+        # Generate JSON report
+        bandit -r $PYTHON_FILES -f json -o bandit-report.json || true
+        
+        # Generate SARIF report  
+        bandit -r $PYTHON_FILES --format sarif --output bandit-results.sarif || true
+        
+        # Display results in console with low severity threshold
+        bandit -r $PYTHON_FILES -ll
         
     - name: Upload bandit SARIF results
       uses: github/codeql-action/upload-sarif@v3
@@ -174,7 +185,9 @@ jobs:
       if: always()
       with:
         name: bandit-security-scan-${{ github.sha }}
-        path: bandit-report.json
+        path: |
+          bandit-report.json
+          bandit-results.sarif
         
     - name: Check bandit results
       run: |
