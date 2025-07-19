@@ -163,3 +163,6 @@ migrations/versions/
 # Misc
 *.bak
 *.tmp
+
+# Development Plans
+dev-plans/
