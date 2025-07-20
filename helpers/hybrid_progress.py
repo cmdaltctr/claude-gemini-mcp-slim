@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, List, Optional, TextIO, Union
 
+
 # Enum for progress types
 class ProgressType(Enum):
     """Types of progress indicators"""
@@ -23,6 +24,7 @@ class ProgressType(Enum):
     SPINNER = "spinner"
     BAR = "bar"
     PULSE = "pulse"
+
 
 # Enum for progress states
 class ProgressState(Enum):
@@ -33,6 +35,7 @@ class ProgressState(Enum):
     STREAMING = "streaming"
     COMPLETE = "complete"
     STOPPED = "stopped"
+
 
 # Dataclass for progress configuration
 @dataclass
@@ -50,6 +53,7 @@ class ProgressConfig:
     width: int = 30  # Progress bar width
     show_elapsed: bool = False  # Show elapsed time
 
+
 # Hybrid streaming progress utility class
 # Hybrid streaming progress utility class
 class HybridStreamingProgress:
@@ -57,6 +61,7 @@ class HybridStreamingProgress:
     Hybrid streaming progress utility that shows progress indicators while waiting,
     then switches to displaying actual response chunks when they arrive.
     """
+
     # Initialize progress indicator
     def __init__(self, config: Optional[ProgressConfig] = None):
         self.config = config or ProgressConfig()
@@ -288,6 +293,7 @@ def create_dots_progress(
     )
     return HybridStreamingProgress(config)
 
+
 # Create a spinner progress indicator
 def create_spinner_progress(
     prefix: str = "", colors: bool = True
@@ -298,6 +304,7 @@ def create_spinner_progress(
     )
     return HybridStreamingProgress(config)
 
+
 # Create a pulse progress indicator
 def create_pulse_progress(
     prefix: str = "", colors: bool = True
@@ -307,6 +314,7 @@ def create_pulse_progress(
         progress_type=ProgressType.PULSE, prefix=prefix, colors=colors, interval=0.1
     )
     return HybridStreamingProgress(config)
+
 
 # Create a progress bar indicator
 def create_bar_progress(
@@ -322,5 +330,3 @@ def create_bar_progress(
         show_elapsed=True,
     )
     return HybridStreamingProgress(config)
-
-

@@ -6,15 +6,24 @@ Slim Gemini CLI MCP Server
 import asyncio
 import logging
 import os
-import shlex
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
+
+from helpers.code_analyzer import CodebaseAnalysisError, analyze_codebase
+
+# Import markdown utilities
+try:
+    from helpers.markdown_utils import markdown_to_text
+
+    MARKDOWN_UTILS_AVAILABLE = True
+except ImportError:
+    MARKDOWN_UTILS_AVAILABLE = False
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -28,15 +37,20 @@ MAX_FILE_SIZE = 81920  # 80KB
 MAX_LINES = 800
 
 
-# Security functions - prevent prompt injection and path traversal attacks
+# Enhanced Security functions - prevent prompt injection and path traversal attacks
 def sanitize_for_prompt(text: str, max_length: int = 100000) -> str:
-    """Sanitize text input to prevent prompt injection attacks"""
+    """Enhanced sanitize text input to prevent prompt injection attacks"""
     if not isinstance(text, str):
         return ""
 
     # Truncate if too long
     if len(text) > max_length:
         text = text[:max_length]
+
+    # Unicode normalization to prevent homograph attacks
+    import unicodedata
+
+    text = unicodedata.normalize("NFC", text)
 
     # Remove/escape potential prompt injection patterns
     dangerous_patterns = [
@@ -53,6 +67,24 @@ def sanitize_for_prompt(text: str, max_length: int = 100000) -> str:
         "|>",
         "[INST]",
         "[/INST]",
+        # Additional enterprise security patterns
+        "javascript:",
+        "data:",
+        "vbscript:",
+        "file://",
+        "ftp://",
+        # SQL injection patterns
+        "' or 1=1--",
+        "'; drop table",
+        "union select",
+        "exec(",
+        "eval(",
+        # Script injection patterns
+        "<script",
+        "</script>",
+        "onload=",
+        "onerror=",
+        "onclick=",
     ]
 
     text_lower = text.lower()
@@ -248,8 +280,54 @@ async def list_tools() -> List[Tool]:
     ]
 
 
+def _process_result_output(
+    result: Dict[str, Any], convert_markdown: bool = True
+) -> Dict[str, Any]:
+    """Process result output through markdown parser if enabled and available.
+
+    Args:
+        result: Result dictionary with 'success' and 'output' keys
+        convert_markdown: Whether to convert markdown to plain text
+
+    Returns:
+        dict: Processed result dictionary
+    """
+    if not result["success"] or not result.get("output"):
+        return result
+
+    # Skip conversion if disabled or markdown utils not available
+    if not convert_markdown or not MARKDOWN_UTILS_AVAILABLE:
+        if not convert_markdown:
+            logger.info("Markdown conversion bypassed for debugging")
+        elif not MARKDOWN_UTILS_AVAILABLE:
+            logger.warning("Markdown utils not available, skipping conversion")
+        return result
+
+    try:
+        original_output = result["output"]
+        logger.info("Converting markdown to plain text...")
+
+        # Convert markdown to plain text
+        converted_output = markdown_to_text(original_output)
+
+        # Update result with converted output
+        result["output"] = converted_output
+
+        original_len = len(original_output)
+        converted_len = len(converted_output)
+        logger.info(
+            f"Markdown conversion complete: {original_len} → {converted_len} chars"
+        )
+
+    except Exception as e:
+        logger.warning(f"Markdown conversion failed: {str(e)}, using original output")
+        # Keep original output if conversion fails
+
+    return result
+
+
 async def execute_gemini_cli_streaming(
-    prompt: str, task_type: str = "gemini_quick_query"
+    prompt: str, task_type: str = "gemini_quick_query", convert_markdown: bool = True
 ) -> Dict[str, Any]:
     """Execute Gemini CLI with model selection and API fallback"""
     logger.info("Starting Gemini CLI execution with streaming")
@@ -288,6 +366,8 @@ async def execute_gemini_cli_streaming(
             logger.info("Attempting direct API call")
             result = await execute_gemini_api(prompt, model_name)
             if result["success"]:
+                # Process the result through markdown parser if enabled
+                result = _process_result_output(result, convert_markdown)
                 return result
             logger.warning("API call failed, falling back to CLI")
 
@@ -367,7 +447,10 @@ async def execute_gemini_cli_streaming(
 
         if process.returncode == 0:
             logger.info("Gemini CLI execution successful")
-            return {"success": True, "output": full_output}
+            result = {"success": True, "output": full_output}
+            # Process the result through markdown parser if enabled
+            result = _process_result_output(result, convert_markdown)
+            return result
         else:
             # Sanitize stderr to prevent sensitive information leakage
             import re
@@ -403,15 +486,17 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
 
             # Input validation and sanitization
             if not isinstance(query, str) or not query.strip():
+                print("Error: Query must be a non-empty string")
                 return [
                     TextContent(
-                        type="text", text="Error: Query must be a non-empty string"
+                        type="text", text="❌ Error: Query must be a non-empty string"
                     )
                 ]
 
             if not isinstance(context, str):
+                print("Error: Context must be a string")
                 return [
-                    TextContent(type="text", text="Error: Context must be a string")
+                    TextContent(type="text", text="❌ Error: Context must be a string")
                 ]
 
             # Sanitize inputs to prevent prompt injection
@@ -427,11 +512,17 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
             result = await execute_gemini_cli_streaming(prompt, "gemini_quick_query")
 
             if result["success"]:
+                print(f"\nQuery: {query}")
+                print("=" * 50)
+                print()
+                print(result["output"])
+                print()
+                print("=" * 50)
+                print("✅ Request completed")
                 return [TextContent(type="text", text=result["output"])]
             else:
-                return [
-                    TextContent(type="text", text=f"Query failed: {result['error']}")
-                ]
+                print(f"Error: {result['error']}")
+                return [TextContent(type="text", text=f"Error: {result['error']}")]
 
         elif name == "gemini_analyze_code":
             code_content = arguments.get("code_content", "")
@@ -439,10 +530,11 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
 
             # Input validation
             if not isinstance(code_content, str) or not code_content.strip():
+                print("Error: Code content must be a non-empty string")
                 return [
                     TextContent(
                         type="text",
-                        text="Error: Code content must be a non-empty string",
+                        text="❌ Error: Code content must be a non-empty string",
                     )
                 ]
 
@@ -452,22 +544,29 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
                 "performance",
                 "architecture",
             ]:
-                return [TextContent(type="text", text="Error: Invalid analysis type")]
+                print("Error: Invalid analysis type")
+                return [
+                    TextContent(type="text", text="❌ Error: Invalid analysis type")
+                ]
 
             if len(code_content) > MAX_FILE_SIZE:
+                print(
+                    f"Error: Code too large ({len(code_content)} bytes). Max: {MAX_FILE_SIZE} bytes"
+                )
                 return [
                     TextContent(
                         type="text",
-                        text=f"⚠️ Code too large ({len(code_content)} bytes). Max: {MAX_FILE_SIZE} bytes",
+                        text=f"❌ Error: Code too large ({len(code_content)} bytes). Max: {MAX_FILE_SIZE} bytes",
                     )
                 ]
 
             line_count = len(code_content.splitlines())
             if line_count > MAX_LINES:
+                print(f"Error: Too many lines ({line_count}). Max: {MAX_LINES} lines")
                 return [
                     TextContent(
                         type="text",
-                        text=f"⚠️ Too many lines ({line_count}). Max: {MAX_LINES} lines",
+                        text=f"❌ Error: Too many lines ({line_count}). Max: {MAX_LINES} lines",
                     )
                 ]
 
@@ -498,10 +597,21 @@ Write exactly like a plain text document. Use simple numbered points and paragra
             result = await execute_gemini_cli_streaming(prompt, "gemini_analyze_code")
 
             if result["success"]:
+                print(f"\nCode Analysis: {analysis_type}")
+                print(f"Lines: {line_count}")
+                print("=" * 50)
+                print()
+                print(result["output"])
+                print()
+                print("=" * 50)
+                print("✅ Request completed")
                 return [TextContent(type="text", text=result["output"])]
             else:
+                print(f"Error: Analysis failed: {result['error']}")
                 return [
-                    TextContent(type="text", text=f"Analysis failed: {result['error']}")
+                    TextContent(
+                        type="text", text=f"Error: Analysis failed: {result['error']}"
+                    )
                 ]
 
         elif name == "gemini_codebase_analysis":
@@ -510,10 +620,11 @@ Write exactly like a plain text document. Use simple numbered points and paragra
 
             # Input validation
             if not isinstance(directory_path, str) or not directory_path.strip():
+                print("Error: Directory path must be a non-empty string")
                 return [
                     TextContent(
                         type="text",
-                        text="Error: Directory path must be a non-empty string",
+                        text="❌ Error: Directory path must be a non-empty string",
                     )
                 ]
 
@@ -524,7 +635,10 @@ Write exactly like a plain text document. Use simple numbered points and paragra
                 "patterns",
                 "all",
             ]:
-                return [TextContent(type="text", text="Error: Invalid analysis scope")]
+                print("Error: Invalid analysis scope")
+                return [
+                    TextContent(type="text", text="❌ Error: Invalid analysis scope")
+                ]
 
             logger.info(
                 f"Initiating codebase analysis for directory: {directory_path} with scope: {analysis_scope}"
@@ -533,69 +647,95 @@ Write exactly like a plain text document. Use simple numbered points and paragra
             # Path security validation
             is_valid, error_msg, resolved_path = validate_path_security(directory_path)
             if not is_valid or resolved_path is None:
-                return [TextContent(type="text", text=f"❌ {error_msg}")]
+                print(f"Error: {error_msg}")
+                return [TextContent(type="text", text=f"❌ Error: {error_msg}")]
 
-            if not resolved_path.exists():
-                return [
-                    TextContent(
-                        type="text", text=f"❌ Directory not found: {directory_path}"
-                    )
+            try:
+                # Configure analysis based on scope
+                max_total_size = 500_000 if analysis_scope == "all" else 200_000
+                config = {
+                    "max_total_size": max_total_size,
+                    "skip_directories": [
+                        "node_modules",
+                        ".git",
+                        "__pycache__",
+                        ".venv",
+                        "venv",
+                    ],
+                    "include_hidden": [".github"],
+                    "skip_patterns": ["*.pyc", "*.log", "*.tmp"],
+                }
+
+                logger.info(f"Analyzing codebase with config: {config}")
+                result = analyze_codebase(
+                    str(resolved_path), max_total_size=max_total_size, config=config
+                )
+
+                if result.error:
+                    logger.error(f"Analysis failed: {result.error}")
+                    return [
+                        TextContent(
+                            type="text", text=f"❌ Analysis failed: {result.error}"
+                        )
+                    ]
+
+                # Generate comprehensive output using the analysis results
+                output_lines = [
+                    f"Codebase Analysis for {directory_path} (Scope: {analysis_scope})",
+                    "=" * 60,
+                    "",
+                    "PROJECT OVERVIEW:",
+                    f"Total Files: {result.stats.files_analyzed}",
+                    f"Total Lines: {result.structure.total_lines}",
+                    f"Analysis Time: {result.stats.total_time:.2f}s",
+                    f"Primary Language: {result.project_report['summary']['primary_language']}",
+                    "",
+                    "TECHNOLOGY STACK:",
                 ]
 
-            if not resolved_path.is_dir():
+                # Add technology stack information
+                for category, techs in result.tech_stack.items():
+                    if techs:
+                        output_lines.append(f"{category.title()}: {', '.join(techs)}")
+
+                output_lines.extend(
+                    [
+                        "",
+                        "DIRECTORY STRUCTURE:",
+                    ]
+                )
+
+                # Add directory structure (top level only)
+                for dir_name, dir_info in result.structure.directories.items():
+                    file_count = dir_info.get("file_count", 0)
+                    output_lines.append(f"  {dir_name}/ ({file_count} files)")
+
+                output_lines.extend(["", "=" * 60, "Analysis completed successfully"])
+
+                output = "\n".join(output_lines)
+                print(output)
+                print("✅ Request completed")
+                return [TextContent(type="text", text=output)]
+
+            except (ValueError, FileNotFoundError, NotADirectoryError) as e:
+                logger.error(f"Input validation failed: {e}")
                 return [
-                    TextContent(
-                        type="text",
-                        text=f"❌ Path is not a directory: {directory_path}",
-                    )
+                    TextContent(type="text", text=f"❌ Input validation failed: {e}")
                 ]
-
-            # Use sanitized directory name for prompt (just the name, not full path)
-            safe_dir_name = sanitize_for_prompt(resolved_path.name, max_length=100)
-
-            prompt = f"""Analyze this codebase in directory '{safe_dir_name}' (scope: {analysis_scope}):
-
-Provide comprehensive analysis including:
-1. Overall architecture and design patterns
-2. Code quality and maintainability assessment
-3. Security considerations and potential vulnerabilities
-4. Performance implications and bottlenecks
-5. Best practices adherence and improvement suggestions
-6. Dependencies and integration points
-7. Testing coverage and quality assurance
-8. Documentation and code clarity
-
-MANDATORY PLAIN TEXT FORMAT - NO EXCEPTIONS:
-Output must be 100% plain text. Do NOT use:
-### (pound signs) ** (asterisks) --- (dashes) * (stars)
-Do NOT create headers or bold text
-Do NOT use any special symbols for formatting
-Write like a simple text file with only:
-- Regular paragraphs
-- Numbered points (1. 2. 3.)
-- Line breaks between sections
-Terminal cannot display markdown - use only plain characters"""
-            logger.info(
-                f"Constructed prompt for Gemini CLI (length: {len(prompt)} chars)"
-            )
-
-            result = await execute_gemini_cli_streaming(
-                prompt, "gemini_codebase_analysis"
-            )
-
-            if result["success"]:
-                return [TextContent(type="text", text=result["output"])]
-            else:
+            except CodebaseAnalysisError as e:
+                logger.error(f"Codebase analysis failed: {e}")
                 return [
-                    TextContent(type="text", text=f"Analysis failed: {result['error']}")
+                    TextContent(type="text", text=f"❌ Codebase analysis failed: {e}")
                 ]
 
         else:
-            return [TextContent(type="text", text=f"Unknown tool: {name}")]
+            print(f"Error: Unknown tool: {name}")
+            return [TextContent(type="text", text=f"❌ Error: Unknown tool: {name}")]
 
     except Exception as e:
         logger.error(f"Error in tool {name}: {str(e)}")
-        return [TextContent(type="text", text=f"Error: {str(e)}")]
+        print(f"Error: {str(e)}")
+        return [TextContent(type="text", text=f"❌ Error: {str(e)}")]
 
 
 async def main() -> None:
