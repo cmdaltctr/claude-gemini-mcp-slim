@@ -303,6 +303,74 @@ git commit -m "Fix code formatting"
 git push origin your-branch-name
 ```
 
+## Using helpers.code_analyzer
+
+The `helpers.code_analyzer` module provides a clean API for comprehensive codebase analysis. Here are usage examples:
+
+### Basic Usage
+
+```python
+from helpers.code_analyzer import analyze_codebase
+
+# Analyze current project
+result = analyze_codebase(".")
+print(f"Total files: {result.structure.total_files}")
+print(f"Primary language: {result.structure.languages}")
+```
+
+### Advanced Configuration
+
+```python
+# Custom configuration for large projects
+config = {
+    'skip_directories': ['node_modules', '.git', 'venv'],
+    'max_file_size': 100_000,  # 100KB per file
+    'include_hidden': ['.github'],  # Include specific hidden dirs
+    'skip_patterns': [r'.*\.lock$', r'.*\.min\.js$']  # Skip lock and minified files
+}
+
+result = analyze_codebase("/path/to/project", max_total_size=500_000, config=config)
+```
+
+### Accessing Analysis Results
+
+```python
+result = analyze_codebase("/path/to/project")
+
+# Project structure information
+print(f"Languages: {result.structure.languages}")
+print(f"File extensions: {result.structure.file_extensions}")
+print(f"Directories: {result.structure.directories}")
+
+# Technology stack analysis
+print(f"Frameworks: {result.tech_stack.frameworks}")
+print(f"Dependencies: {result.tech_stack.dependencies}")
+
+# Architecture patterns
+print(f"Architecture patterns: {result.architecture.patterns}")
+print(f"Complexity score: {result.architecture.complexity_score}")
+
+# Performance statistics
+print(f"Analysis time: {result.stats.total_time:.2f}s")
+print(f"Files analyzed: {result.stats.files_analyzed}")
+print(f"Files truncated: {result.stats.truncated_files}")
+```
+
+### Error Handling
+
+```python
+from helpers.code_analyzer import analyze_codebase, CodebaseAnalysisError
+
+try:
+    result = analyze_codebase("/invalid/path")
+except FileNotFoundError as e:
+    print(f"Path not found: {e}")
+except CodebaseAnalysisError as e:
+    print(f"Analysis failed: {e}")
+except ValueError as e:
+    print(f"Invalid parameters: {e}")
+```
+
 ## Best Practices
 
 1. **Always run formatters before committing**: Use `./scripts/format_code.sh`

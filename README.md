@@ -181,6 +181,21 @@ Use gemini_analyze_code for:
 - Architecture review before major refactoring
 ```
 
+### Codebase Analysis with Code Analyzer
+
+```
+Use analyze_codebase from helpers.code_analyzer for:
+- Comprehensive project analysis
+- Structure and tech stack inspection
+- Architecture patterns and design insights
+
+Example:
+
+result = analyze_codebase('/path/to/project')
+print(f"Total files: {result.structure.total_files}")
+print(f"Primary language: {result.project_report['summary']['primary_language']}")
+```
+
 ### Full Project Analysis
 
 ```
@@ -188,6 +203,68 @@ Use gemini_codebase_analysis for:
 - Overall architecture assessment
 - Security vulnerability scanning
 - Performance bottleneck identification
+```
+
+### Hybrid Progress Streaming
+
+The system includes a sophisticated hybrid progress utility that provides visual feedback during operations:
+
+```python
+# Quick operations with spinner
+from hybrid_progress import create_spinner_progress
+
+progress = create_spinner_progress("🤖 Gemini Query")
+progress.start("Processing request")
+
+# Your operation here...
+time.sleep(2)
+
+# Stream response in chunks
+response_chunks = ["Here's", "your", "detailed", "response"]
+for chunk in response_chunks:
+    progress.stream_chunk(chunk + " ")
+    time.sleep(0.1)
+
+progress.complete("Query completed")
+```
+
+```python
+# Code analysis with pulse indicator
+from hybrid_progress import create_pulse_progress
+
+progress = create_pulse_progress("📊 Code Analysis")
+progress.start("Analyzing structure")
+
+# Analysis phases
+phases = ["Security scan", "Performance check", "Best practices"]
+for phase in phases:
+    progress.config.prefix = f"🔍 {phase} "
+    # Your analysis logic here
+    time.sleep(1)
+
+progress.stream_chunk("Analysis complete!\n")
+progress.complete("Code analysis finished")
+```
+
+```python
+# Long operations with progress bar
+from hybrid_progress import create_bar_progress
+
+progress = create_bar_progress("📈 Codebase Scan", width=30, show_elapsed=True)
+progress.start("Initializing scan")
+
+# Multi-phase operation
+for phase_name in ["Structure", "Security", "Performance", "Report"]:
+    progress.config.prefix = f"🔍 {phase_name} "
+    # Your processing here
+    time.sleep(1.5)
+
+# Stream final results
+for line in final_report.split('\n'):
+    progress.stream_chunk(line + "\n")
+    time.sleep(0.05)
+
+progress.complete("Comprehensive scan completed")
 ```
 
 ### Automated Hooks System
