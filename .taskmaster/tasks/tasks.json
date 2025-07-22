@@ -7,7 +7,7 @@
         "description": "Remove execute_gemini_api() and execute_gemini_cli_streaming() functions from gemini_mcp_server.py and move all AI API interaction logic to gemini_helper.py to enforce proper architectural separation.",
         "details": "This is a critical architectural refactoring to enforce the decoupled module pattern. Move the execute_gemini_api() and execute_gemini_cli_streaming() functions from gemini_mcp_server.py to gemini_helper.py. Update gemini_mcp_server.py to only orchestrate workflows by calling appropriate functions in gemini_helper.py. Ensure all AI API interactions, streaming logic, and response processing are handled in the AI Specialist module. Update function signatures and error handling to maintain compatibility. Refactor any MCP request handlers in the server that directly call AI APIs to use the helper functions instead. Maintain all existing functionality while enforcing proper separation of concerns. Update imports and module dependencies accordingly.",
         "testStrategy": "Unit tests to verify no AI API calls remain in server module, integration tests to ensure functionality is preserved after refactoring, architectural compliance tests to validate separation of concerns, end-to-end tests for all MCP endpoints to ensure they still work correctly, mock tests to verify server only calls helper functions",
-        "status": "pending",
+        "status": "done",
         "dependencies": [],
         "priority": "high",
         "subtasks": [
@@ -17,7 +17,7 @@
             "description": "Move `execute_gemini_api()` and `execute_gemini_cli_streaming()` functions from `gemini_mcp_server.py` to `gemini_helper.py` to centralize AI API interaction logic.",
             "dependencies": [],
             "details": "This involves cutting the function definitions from `gemini_mcp_server.py` and pasting them into `gemini_helper.py`. Ensure all internal dependencies and imports within these functions are correctly resolved in the new module.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -28,7 +28,7 @@
               "1.1"
             ],
             "details": "Replace direct AI API calls or the original function calls within `gemini_mcp_server.py` with calls to `gemini_helper.execute_gemini_api()` and `gemini_helper.execute_gemini_cli_streaming()`. This establishes the architectural separation.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -39,7 +39,7 @@
               "1.2"
             ],
             "details": "Examine each request handler in `gemini_mcp_server.py` that previously interacted with the AI API. Refactor these handlers to exclusively use the `gemini_helper` functions, ensuring all AI-related logic is delegated.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -52,7 +52,7 @@
               "1.3"
             ],
             "details": "Adjust import statements in both `gemini_mcp_server.py` and `gemini_helper.py`. Implement robust error handling for cross-module calls. Create or update unit, integration, and end-to-end tests to ensure no regressions and that the new architecture functions as expected.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           }
         ]
@@ -888,7 +888,7 @@
     ],
     "metadata": {
       "created": "2025-07-22T04:31:53.696Z",
-      "updated": "2025-07-22T05:09:05.637Z",
+      "updated": "2025-07-22T11:59:13.398Z",
       "description": "Tasks for master context"
     }
   }
