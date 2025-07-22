@@ -1,0 +1,43 @@
+# Task ID: 5
+# Title: Refactor gemini_analyze_code Tool for Structured Responses
+# Status: pending
+# Dependencies: 3, 4
+# Priority: high
+# Description: Update the gemini_analyze_code tool to return structured AgenticCodePatch objects instead of plain text
+# Details:
+Refactor the gemini_analyze_code function to use instructor-enforced structured responses. Update prompt engineering to request AgenticCodePatch format from Gemini. Implement logic to handle multiple code patches in a single response. Ensure backward compatibility and graceful degradation to text responses when structured parsing fails. Update function documentation and type hints.
+
+# Test Strategy:
+Unit tests with mock structured responses, integration tests with actual Gemini API, backward compatibility tests, response parsing validation
+
+# Subtasks:
+## 1. Define AgenticCodePatch Data Model [pending]
+### Dependencies: None
+### Description: Create the AgenticCodePatch Pydantic model that will structure the response from Gemini analyze_code operations
+### Details:
+Create a new Pydantic model in src/models/agentic_code_patch.py defining AgenticCodePatch with fields: action_type (enum: REPLACE, INSERT, NOTIFY), file_path, line_range (start/end), original_code, suggested_code, explanation, confidence_score. Include proper validation and type hints. Ensure the model can handle multiple patches in a single response via a wrapper model AgenticCodeResponse.
+
+## 2. Update Gemini Prompts for Structured Output [pending]
+### Dependencies: 5.1
+### Description: Modify the prompt engineering in gemini_analyze_code to request structured AgenticCodePatch responses
+### Details:
+Update the system prompt and user prompts in the gemini_analyze_code function to explicitly request responses in AgenticCodePatch format. Include JSON schema examples in prompts. Add clear instructions for when to use each action_type. Ensure prompts guide Gemini to provide confidence scores and detailed explanations for each suggested change.
+
+## 3. Integrate Instructor Library for Response Parsing [pending]
+### Dependencies: 5.1, 5.2
+### Description: Implement instructor-based structured response parsing in the gemini_analyze_code function
+### Details:
+Refactor gemini_analyze_code to use instructor.from_gemini() for enforcing structured responses. Wrap the existing Gemini client with instructor functionality. Implement proper error handling for when instructor parsing fails. Add retry logic with exponential backoff for parsing failures. Ensure the function can gracefully fall back to text responses when structured parsing consistently fails.
+
+## 4. Implement Backward Compatibility Layer [pending]
+### Dependencies: 5.3
+### Description: Create a compatibility layer that handles both structured and text responses to ensure existing functionality continues to work
+### Details:
+Add a response type detection mechanism that can identify whether the response is structured (AgenticCodePatch) or plain text. Implement a text-to-structure converter for legacy responses using regex parsing and heuristics. Add configuration options to control response format preferences. Ensure all existing MCP tools continue to function with both response types.
+
+## 5. Update Function Documentation and Type Hints [pending]
+### Dependencies: 5.4
+### Description: Update all documentation, type hints, and function signatures to reflect the new structured response capabilities
+### Details:
+Update function signature of gemini_analyze_code to return Union[AgenticCodeResponse, str]. Add comprehensive docstrings explaining the structured response format and fallback behavior. Update type hints throughout the codebase to handle the new return types. Create developer documentation explaining how to work with AgenticCodePatch objects. Update any existing usage examples in comments or documentation.
+

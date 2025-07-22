@@ -1,0 +1,66 @@
+{
+  "models": {
+    "nicknames": {
+      "flash": "gemini-2.5-flash",
+      "pro": "gemini-2.5-pro",
+      "flash-8b": "gemini-2.5-flash-8b",
+      "flash-exp": "gemini-2.5-flash-exp-0827",
+      "pro-exp": "gemini-2.5-pro-exp-0827"
+    },
+    "assignments": {
+      "quick_query": "flash",
+      "analyze_code": "pro",
+      "analyze_codebase": "pro",
+      "gemini_quick_query": "flash",
+      "gemini_analyze_code": "pro",
+      "gemini_codebase_analysis": "pro",
+      "pre_edit": "flash",
+      "pre_commit": "pro",
+      "session_summary": "flash",
+      
+      "_comment": "Pattern for new tools:",
+      "_comment_usage": "1. Add your_new_tool: 'flash' or 'pro' here",
+      "_comment_code": "2. Call register_tool_if_missing('your_new_tool', 'flash') in your code",
+      "_comment_get": "3. Use cfg.get_model('your_new_tool') to get the model",
+      
+      "example_new_tool": "flash",
+      "another_tool": "pro"
+    }
+  },
+  
+  "limits": {
+    "max_file_size": 81920,
+    "max_lines": 800,
+    "max_prompt_size": 1000000,
+    "max_codebase_size": 500000,
+    "max_context_window": 1048576,
+    "sanitization_max_length": 100000
+  },
+  
+  "timeouts": {
+    "cli_timeout": 60,
+    "api_timeout": 30,
+    "stream_timeout": 90,
+    "analysis_timeout": 300
+  },
+  
+  "security": {
+    "enable_sanitization": true,
+    "allow_path_traversal": false,
+    "allowed_extensions": [
+      ".py", ".js", ".ts", ".java", ".cpp", ".c", ".rs",
+      ".vue", ".html", ".css", ".scss", ".sass", ".jsx", ".tsx",
+      ".json", ".yaml", ".yml", ".toml", ".md", ".txt",
+      ".go", ".php", ".rb", ".swift", ".kt", ".scala",
+      ".sh", ".bat", ".ps1"
+    ]
+  },
+  
+  "execution": {
+    "prefer_api_over_cli": true,
+    "enable_progress_indicators": true,
+    "enable_markdown_conversion": true,
+    "enable_streaming": true,
+    "max_parallel_processes": 4
+  }
+}

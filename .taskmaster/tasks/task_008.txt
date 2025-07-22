@@ -1,0 +1,43 @@
+# Task ID: 8
+# Title: Update Configuration Management for Agentic Features
+# Status: pending
+# Dependencies: 2
+# Priority: medium
+# Description: Extend the configuration system to support agentic collaboration settings and preferences
+# Details:
+Extend config.py to include configuration options for agentic features. Add settings for structured response preferences, fallback behavior configuration, timeout settings for instructor operations, and user preferences for diff formatting. Ensure the configuration follows the existing hierarchical precedence (function args > env vars > config.json > defaults). Update configuration validation and documentation.
+
+# Test Strategy:
+Configuration loading tests, precedence validation tests, default value tests, environment variable override tests
+
+# Subtasks:
+## 1. Define Configuration Schema for Agentic Features [pending]
+### Dependencies: None
+### Description: Create comprehensive configuration schema definitions for all agentic collaboration settings
+### Details:
+Define configuration structure for structured response preferences (enable/disable, format options), fallback behavior configuration (retry attempts, graceful degradation), timeout settings for instructor operations (default, max, per-operation), and user preferences for diff formatting (style, verbosity, colors). Create TypedDict or dataclass definitions for type safety. Document each configuration option with descriptions, valid values, and default settings.
+
+## 2. Extend Configuration Loading Infrastructure [pending]
+### Dependencies: 8.1
+### Description: Modify config.py to support loading and parsing of new agentic configuration sections
+### Details:
+Extend the existing configuration loading mechanism to include agentic settings. Add new configuration sections to the JSON schema and environment variable mappings. Implement parsing logic for complex nested configurations like timeout hierarchies and preference objects. Ensure all new settings integrate with the existing precedence system (function args > env vars > config.json > defaults).
+
+## 3. Implement Configuration Validation and Sanitization [pending]
+### Dependencies: 8.2
+### Description: Add comprehensive validation for all agentic configuration options with appropriate error handling
+### Details:
+Implement validation functions for each configuration category: validate timeout values are positive integers, ensure preference options match allowed values, verify fallback behavior settings are valid. Add configuration sanitization to normalize values (e.g., timeout ranges, boolean conversions). Implement clear error messages for invalid configurations with suggestions for fixes.
+
+## 4. Add Environment Variable Support for Agentic Settings [pending]
+### Dependencies: 8.3
+### Description: Implement environment variable mappings for all new agentic configuration options
+### Details:
+Create environment variable mappings following the existing naming convention (e.g., GEMINI_AGENTIC_STRUCTURED_RESPONSES, GEMINI_INSTRUCTOR_TIMEOUT, GEMINI_FALLBACK_BEHAVIOR). Implement proper type conversion for complex settings (JSON parsing for nested objects, boolean conversion, integer validation). Add support for environment variable overrides at the granular level while maintaining hierarchical precedence.
+
+## 5. Update Configuration Documentation and Examples [pending]
+### Dependencies: 8.4
+### Description: Create comprehensive documentation for all new configuration options with practical examples
+### Details:
+Update configuration documentation to include all new agentic settings with detailed descriptions, valid value ranges, and impact explanations. Create example configuration files showing different use cases (development, production, high-performance). Document environment variable equivalents and precedence rules. Add troubleshooting section for common configuration issues and provide migration guidance from default settings.
+

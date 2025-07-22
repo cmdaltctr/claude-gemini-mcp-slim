@@ -1,0 +1,43 @@
+# Task ID: 4
+# Title: Integrate Instructor Library with Gemini Helper
+# Status: pending
+# Dependencies: 1, 3
+# Priority: high
+# Description: Modify gemini_helper.py to use instructor for enforcing structured JSON responses from Gemini API
+# Details:
+Integrate instructor library with the existing Gemini API client in gemini_helper.py. Create wrapper functions that use instructor to enforce AgenticCodePatch schema responses. Implement proper error handling and fallback mechanisms when structured responses fail. Ensure compatibility with both API and CLI fallback systems. Maintain existing prompt construction logic while adding structured response capabilities.
+
+# Test Strategy:
+Integration tests with live Gemini API, mock tests for API responses, fallback mechanism tests, error handling validation
+
+# Subtasks:
+## 1. Install and configure instructor library in gemini_helper.py [pending]
+### Dependencies: None
+### Description: Import and set up the instructor library within the existing gemini_helper.py module to prepare for structured response integration
+### Details:
+Add import statements for instructor library at the top of gemini_helper.py. Install instructor using pip if not already available. Verify compatibility with existing google-generativeai imports. Create basic configuration setup for instructor to work with Gemini API client. Test that all imports work correctly without breaking existing functionality.
+
+## 2. Create instructor-wrapped Gemini client initialization [pending]
+### Dependencies: 4.1
+### Description: Modify the Gemini API client initialization to use instructor's patching mechanism for structured responses
+### Details:
+Wrap the existing Gemini GenerativeModel client with instructor.from_gemini() to enable structured response capabilities. Update the client initialization logic in relevant functions to use the instructor-patched client. Maintain backward compatibility by keeping the original client as a fallback option. Ensure proper error handling during client initialization.
+
+## 3. Implement structured response wrapper functions [pending]
+### Dependencies: 4.2
+### Description: Create wrapper functions that use instructor to enforce AgenticCodePatch schema responses from Gemini API calls
+### Details:
+Create new wrapper functions like 'generate_structured_response()' that use the instructor-patched client to enforce AgenticCodePatch schema responses. Implement proper prompt engineering within these wrappers to request structured output from Gemini. Add type hints and return type annotations specifying AgenticCodePatch or List[AgenticCodePatch]. Include validation logic to ensure responses conform to expected schema.
+
+## 4. Implement error handling and fallback mechanisms [pending]
+### Dependencies: 4.3
+### Description: Add comprehensive error handling for structured response failures with fallback to plain text responses
+### Details:
+Implement try-catch blocks around instructor API calls to handle parsing failures, network errors, and schema validation errors. Create fallback logic that switches to the original unstructured Gemini API when instructor fails. Add logging for debugging structured response issues. Implement retry logic with exponential backoff for transient failures. Ensure graceful degradation maintains existing functionality.
+
+## 5. Update existing prompt construction for structured responses [pending]
+### Dependencies: 4.4
+### Description: Modify existing prompt construction logic to be compatible with instructor's structured response requirements while maintaining current functionality
+### Details:
+Update prompt templates and construction logic to work effectively with instructor's structured response system. Add schema-aware prompt engineering that explicitly requests AgenticCodePatch formatted responses. Maintain existing prompt patterns for backward compatibility. Add conditional logic to use different prompt styles based on whether structured responses are enabled. Test that prompts work effectively with both structured and unstructured response modes.
+

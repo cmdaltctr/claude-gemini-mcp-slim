@@ -1,0 +1,43 @@
+# Task ID: 3
+# Title: Implement AgenticCodePatch Pydantic Model
+# Status: pending
+# Dependencies: 1
+# Priority: high
+# Description: Define the structured data schema for agentic code suggestions using Pydantic models
+# Details:
+Implement the AgenticCodePatch Pydantic model in gemini_helper.py exactly as specified in Appendix A of the PRD. Include proper field validation, type hints, and documentation. Support action types: REPLACE, INSERT, NOTIFY. Include fields for file_path, start_line, end_line, new_code, and explanation. Add comprehensive validation rules and error handling for edge cases. Ensure the model can be serialized/deserialized correctly.
+
+# Test Strategy:
+Unit tests for model validation, serialization/deserialization tests, edge case testing with invalid data, schema validation tests
+
+# Subtasks:
+## 1. Define Core AgenticCodePatch Pydantic Model Structure [pending]
+### Dependencies: None
+### Description: Create the basic Pydantic model class with all required fields and action type enum
+### Details:
+Create an enum for action types (REPLACE, INSERT, NOTIFY) and define the AgenticCodePatch class with fields: file_path (str), start_line (Optional[int]), end_line (Optional[int]), new_code (Optional[str]), explanation (str), and action (ActionType). Add proper type hints and basic field definitions.
+
+## 2. Implement Field Validation Rules [pending]
+### Dependencies: 3.1
+### Description: Add comprehensive validation logic for all fields based on action types and business rules
+### Details:
+Implement Pydantic validators using @field_validator and @model_validator decorators. Validate that REPLACE actions have start_line, end_line, and new_code. INSERT actions have start_line and new_code. NOTIFY actions only require explanation. Ensure file_path is valid, line numbers are positive integers, and end_line >= start_line for REPLACE actions.
+
+## 3. Add Field Documentation and Docstrings [pending]
+### Dependencies: 3.2
+### Description: Provide comprehensive documentation for the model and all its fields
+### Details:
+Add detailed docstrings to the AgenticCodePatch class and Field() descriptions for each attribute. Document the purpose of each action type, expected data formats, and validation rules. Include usage examples in the class docstring showing how to create patches for different scenarios.
+
+## 4. Implement Serialization and Deserialization Methods [pending]
+### Dependencies: 3.3
+### Description: Add methods for converting the model to/from JSON and dictionary formats
+### Details:
+Implement custom serialization methods if needed beyond Pydantic's built-in .model_dump() and .model_validate(). Add methods for converting to/from JSON strings, handling optional fields correctly, and preserving all data integrity during round-trip operations. Ensure compatibility with instructor library requirements.
+
+## 5. Add Error Handling and Edge Case Management [pending]
+### Dependencies: 3.4
+### Description: Implement comprehensive error handling for invalid data and edge cases
+### Details:
+Add custom exception classes for specific validation failures. Implement error handling for malformed data, missing required fields, and invalid combinations of fields. Add methods to provide helpful error messages for common validation failures. Ensure the model gracefully handles edge cases like empty files, single-line files, and boundary conditions.
+

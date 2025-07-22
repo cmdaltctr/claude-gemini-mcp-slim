@@ -1,0 +1,116 @@
+# Claude Gemini MCP Integration - Product Requirements Document
+
+## Project Overview
+
+The Claude Gemini MCP Integration is a lightweight integration that brings Google's Gemini AI capabilities to Claude Code through MCP (Model Context Protocol). This project connects Claude Code (coding assistant) with Google's Gemini AI models, enabling developers to ask Gemini questions about their code, get security reviews, performance suggestions, and architectural advice without leaving their coding environment.
+
+The integration automatically chooses the right AI model for each task: fast responses for quick questions, deeper analysis for complex problems. It leverages Gemini's massive context window (1M+ tokens) to analyze large codebases.
+
+## Key Features
+
+1. **Quick Query** - Ask Gemini any development question instantly
+2. **Code Analysis** - Deep analysis with security, performance, and architecture insights
+3. **Codebase Analysis** - Full project analysis using Gemini's massive context window
+4. **Automated Hooks** - Pre-edit analysis, pre-commit review, and session summaries
+5. **20+ Slash Commands** - Simple shortcuts like `/g`, `/analyze`, `/security`
+6. **Smart Model Selection** - Flash for speed, Pro for depth, automatic fallback
+7. **Real-time Streaming** - Live output with progress indicators
+
+## Architecture
+
+The Gemini MCP server uses a shared architecture where one installation serves multiple AI clients and projects:
+
+```
+    Claude Desktop  │  Claude Code  │  Cursor IDE  │  VS Code + Extensions
+                    │              │             │
+                    └──────────────┼─────────────┘
+                                   │
+                      ┌─────────────────────────┐
+                      │     MCP Protocol        │
+                      │   (Tool Requests)       │
+                      └─────────────────────────┘
+                                   │
+                          ┌─────────────────┐
+                          │  Gemini MCP     │
+                          │    Server       │
+                          │ (Python/Shell)  │
+                          └─────────────────┘
+                                   │
+                    ┌───────────────┼───────────────┐
+                    │               │               │
+          ┌─────────────────┐  ┌─────────────────┐  │
+          │  Gemini API     │  │  Gemini CLI     │  │
+          │  (Direct HTTP)  │  │  (Shell Command)│  │
+          └─────────────────┘  └─────────────────┘  │
+                    │               │               │
+                    └───────────────┼───────────────┘
+                                   │
+                      ┌─────────────────────────┐
+                      │   Google Gemini AI      │
+                      │   (1M+ Token Context)   │
+                      └─────────────────────────┘
+```
+
+## Current Implementation
+
+The current implementation includes:
+
+1. **Core MCP Server** - `gemini_mcp_server.py` that handles MCP protocol communication
+2. **Gemini Helper** - `gemini_helper.py` that provides core functionality for interacting with Gemini models
+3. **Code Analysis Helpers** - Various helper modules for code and codebase analysis
+4. **Configuration** - Configuration handling for API keys, model selection, etc.
+
+## Enhancement Requirements
+
+We need to enhance the current implementation with the following features:
+
+1. **AI Agent Feedback Loop System** - Enable intelligent collaboration between Claude Code and Gemini AI, creating a continuous improvement cycle where both AI agents learn from each other's suggestions.
+
+2. **Improved Error Handling** - Enhance error handling and reporting for better user experience.
+
+3. **Performance Optimization** - Optimize the performance of code and codebase analysis.
+
+4. **Enhanced Security** - Strengthen security measures to protect sensitive information.
+
+5. **Better Documentation** - Improve documentation for users and developers.
+
+6. **Testing Improvements** - Enhance test coverage and reliability.
+
+## Technical Requirements
+
+1. Python 3.10+ compatibility
+2. MCP protocol compliance
+3. Google Generative AI API integration
+4. Secure handling of API keys and sensitive information
+5. Efficient processing of large codebases
+6. Real-time streaming of results
+7. Smart fallback mechanisms (API to CLI)
+
+## User Experience Requirements
+
+1. Seamless integration with Claude Code and other MCP-compatible clients
+2. Fast response times for quick queries
+3. Comprehensive analysis for complex queries
+4. Clear and helpful error messages
+5. Intuitive slash commands
+6. Progress indicators for long-running operations
+
+## Deliverables
+
+1. Enhanced MCP server implementation
+2. Improved helper modules
+3. AI Agent Feedback Loop System
+4. Comprehensive documentation
+5. Expanded test suite
+
+## Timeline
+
+The enhancements should be implemented in phases, with the AI Agent Feedback Loop System being the highest priority.
+
+## Success Criteria
+
+1. Successful integration with Claude Code and other MCP-compatible clients
+2. Improved performance and reliability
+3. Enhanced security
+4. Positive user feedback
+5. Comprehensive test coverage
