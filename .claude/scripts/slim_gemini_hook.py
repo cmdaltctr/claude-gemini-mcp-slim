@@ -24,7 +24,10 @@ except ImportError:
         # Try absolute import (when run from anywhere with config.py in Python path)
         from claude_gemini_mcp.config import get_config, register_tool_if_missing
     except ImportError:
-        print("❌ Error: config.py not found. Falling back to hardcoded defaults.", file=sys.stderr)
+        print(
+            "❌ Error: config.py not found. Falling back to hardcoded defaults.",
+            file=sys.stderr,
+        )
         # Fallback configuration (legacy mode)
         get_config = None
         register_tool_if_missing = None
@@ -32,10 +35,10 @@ except ImportError:
 # Initialize configuration with automatic tool registration
 if get_config and register_tool_if_missing:
     cfg = get_config()
-    
+
     # Register hook tools with defaults if they're missing from config
     register_tool_if_missing("pre_edit", "flash")
-    register_tool_if_missing("pre_commit", "pro") 
+    register_tool_if_missing("pre_commit", "pro")
     register_tool_if_missing("session_summary", "flash")
 else:
     cfg = None
@@ -48,7 +51,7 @@ LEGACY_CONFIG = {
     },
     "assignments": {
         "pre_edit": "flash",
-        "pre_commit": "pro", 
+        "pre_commit": "pro",
         "session_summary": "flash",
     },
     "limits": {
@@ -57,8 +60,20 @@ LEGACY_CONFIG = {
         "response_word_limit": 800,  # Maximum words in response
     },
     "supported_extensions": [
-        ".py", ".js", ".ts", ".java", ".cpp", ".c", ".rs",
-        ".vue", ".html", ".css", ".scss", ".sass", ".jsx", ".tsx",
+        ".py",
+        ".js",
+        ".ts",
+        ".java",
+        ".cpp",
+        ".c",
+        ".rs",
+        ".vue",
+        ".html",
+        ".css",
+        ".scss",
+        ".sass",
+        ".jsx",
+        ".tsx",
     ],
 }
 
@@ -67,48 +82,50 @@ LEGACY_CONFIG = {
 
 def should_analyze_file(file_path: str) -> tuple[bool, str]:
     """Determine if file should be analyzed based on configuration"""
-    
+
     try:
         path = Path(file_path)
-        
+
         # Check if file exists
         if not path.exists():
             return False, "File not found"
-        
+
         # Get configuration values (with fallback to legacy config)
         if cfg:
             max_file_size = cfg.get_limit("max_file_size")
             max_lines = cfg.get_limit("max_lines")
             # Get allowed extensions from security settings
             security_config = cfg._config.get("security", {})
-            supported_extensions = security_config.get("allowed_extensions", LEGACY_CONFIG["supported_extensions"])
+            supported_extensions = security_config.get(
+                "allowed_extensions", LEGACY_CONFIG["supported_extensions"]
+            )
         else:
             max_file_size = LEGACY_CONFIG["limits"]["max_file_size"]
-            max_lines = LEGACY_CONFIG["limits"]["max_lines"] 
+            max_lines = LEGACY_CONFIG["limits"]["max_lines"]
             supported_extensions = LEGACY_CONFIG["supported_extensions"]
-        
+
         # Check file extension
         if path.suffix.lower() not in supported_extensions:
             return False, "File type not supported"
-        
+
         # Check file size limit
         file_size = path.stat().st_size
         if file_size > max_file_size:
             return False, f"File too large ({file_size} bytes, limit: {max_file_size})"
-        
+
         # Check line count limit
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 line_count = sum(1 for _ in f)
-            
+
             if line_count > max_lines:
                 return False, f"Too many lines ({line_count}, limit: {max_lines})"
         except Exception:
             # If can't read file, skip analysis
             return False, "Cannot read file"
-        
+
         return True, "Ready for analysis"
-        
+
     except Exception as e:
         return False, f"Error: {str(e)}"
 
@@ -140,7 +157,7 @@ def execute_gemini_analysis(analysis_type: str, file_paths: str):
         # Fallback to legacy configuration
         model_type = LEGACY_CONFIG["assignments"].get(analysis_type, "flash")
         model_name = LEGACY_CONFIG["models"][model_type]
-    
+
     print(f"🤖 Using {model_name} for {analysis_type}", file=sys.stderr)
 
     # Create analysis prompt based on type
@@ -221,7 +238,7 @@ def execute_session_summary(directory_path: str):
         # Fallback to legacy configuration
         model_type = LEGACY_CONFIG["assignments"].get("session_summary", "flash")
         model_name = LEGACY_CONFIG["models"][model_type]
-    
+
     print(f"🤖 Using {model_name} for session summary", file=sys.stderr)
 
     prompt = create_session_summary_prompt(directory_path)

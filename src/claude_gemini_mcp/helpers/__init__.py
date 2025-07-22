@@ -11,6 +11,12 @@ from .codebase_analyzer import (
     discover_files,
 )
 from .markdown_utils import markdown_to_text
+from .security import (
+    sanitize_error_message,
+    sanitize_for_prompt,
+    validate_file_security,
+    validate_path_security,
+)
 
 __all__ = [
     "markdown_to_text",
@@ -23,4 +29,8 @@ __all__ = [
     "discover_files",
     "aggregate_contents",
     "build_project_report",
+    "sanitize_for_prompt",
+    "validate_path_security",
+    "validate_file_security",
+    "sanitize_error_message",
 ]

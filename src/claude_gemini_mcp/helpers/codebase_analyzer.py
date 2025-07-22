@@ -40,6 +40,7 @@ except ImportError:
 # Import configuration management
 try:
     from claude_gemini_mcp.config import get_config
+
     CONFIG_AVAILABLE = True
 except ImportError:
     CONFIG_AVAILABLE = False
@@ -510,8 +511,12 @@ class ContentAggregator:
         # Get global config instance for limits if available
         if CONFIG_AVAILABLE:
             _cfg = get_config()
-            self.max_total_size = config.get("max_total_size", _cfg.get_limit("max_codebase_size", 200_000))
-            self.max_file_size = config.get("max_file_size", _cfg.get_limit("max_file_size", 50_000))
+            self.max_total_size = config.get(
+                "max_total_size", _cfg.get_limit("max_codebase_size", 200_000)
+            )
+            self.max_file_size = config.get(
+                "max_file_size", _cfg.get_limit("max_file_size", 50_000)
+            )
         else:
             # Fallback to original behavior if config not available
             self.max_total_size = config.get("max_total_size", 200_000)  # 200KB default
@@ -1379,7 +1384,7 @@ def build_project_report(
     root_path: Union[str, Path],
     files: List[FileInfo],
     aggregated_content: Dict[str, Any],
-    **kwargs
+    **kwargs,
 ) -> Dict[str, Any]:
     """
     Build project structure report
@@ -1409,7 +1414,7 @@ def analyze_codebase(
     root_path: Union[str, Path],
     max_total_size: int = 200_000,
     config: Optional[Dict[str, Any]] = None,
-    **kwargs
+    **kwargs,
 ) -> CodebaseAnalysisResult:
     """
     Perform comprehensive codebase analysis

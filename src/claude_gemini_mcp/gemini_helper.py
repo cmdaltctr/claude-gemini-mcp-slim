@@ -4,6 +4,7 @@ Gemini CLI Helper - Simplified API discovery with timeout-protected CLI executio
 Usage: python gemini_helper.py [command] [args]
 """
 
+import asyncio
 import json
 import os
 import subprocess
@@ -14,31 +15,33 @@ from pathlib import Path
 from queue import Empty, Queue
 from typing import Any, Dict, Optional
 
+import google.generativeai as genai
+
 from claude_gemini_mcp.config import get_config
+from claude_gemini_mcp.helpers.code_analyzer import (
+    CodebaseAnalysisError,
+)
+from claude_gemini_mcp.helpers.code_analyzer import (
+    analyze_codebase as real_analyze_codebase,
+)
+from claude_gemini_mcp.helpers.markdown_utils import markdown_to_text
+from claude_gemini_mcp.helpers.security import (
+    sanitize_error_message,
+    sanitize_for_prompt,
+    validate_file_security,
+)
 
 # Import hybrid progress utility
 try:
-    from helpers.hybrid_progress import create_dots_progress, create_spinner_progress
+    from claude_gemini_mcp.helpers.hybrid_progress import (
+        create_dots_progress,
+        create_spinner_progress,
+    )
 
     PROGRESS_AVAILABLE = True
 except ImportError:
     PROGRESS_AVAILABLE = False
 
-# Import markdown utilities
-try:
-    from helpers.markdown_utils import markdown_to_text
-
-    MARKDOWN_UTILS_AVAILABLE = True
-except ImportError:
-    MARKDOWN_UTILS_AVAILABLE = False
-
-# Import codebase analyzer
-try:
-    from helpers.codebase_analyzer import analyze_codebase as real_analyze_codebase
-
-    CODEBASE_ANALYZER_AVAILABLE = True
-except ImportError:
-    CODEBASE_ANALYZER_AVAILABLE = False
 
 # Add the shared MCP environment path for Python packages (dynamic detection)
 def add_shared_mcp_path():
@@ -111,8 +114,20 @@ cfg = get_config()
 
 # Model configuration - backward compatibility with environment variables
 GEMINI_MODELS = {
-    "flash": os.getenv("GEMINI_FLASH_MODEL", cfg.get_raw_config().get("models", {}).get("nicknames", {}).get("flash", "gemini-2.5-flash")),
-    "pro": os.getenv("GEMINI_PRO_MODEL", cfg.get_raw_config().get("models", {}).get("nicknames", {}).get("pro", "gemini-2.5-pro")),
+    "flash": os.getenv(
+        "GEMINI_FLASH_MODEL",
+        cfg.get_raw_config()
+        .get("models", {})
+        .get("nicknames", {})
+        .get("flash", "gemini-2.5-flash"),
+    ),
+    "pro": os.getenv(
+        "GEMINI_PRO_MODEL",
+        cfg.get_raw_config()
+        .get("models", {})
+        .get("nicknames", {})
+        .get("pro", "gemini-2.5-pro"),
+    ),
 }
 
 # Model assignment - now handled by config.get_model() but kept for reference
@@ -125,14 +140,18 @@ MODEL_ASSIGNMENTS = {
 
 # Configuration - loaded from config with backward compatibility
 MAX_FILE_SIZE = cfg.get_limit("max_file_size", 81920)  # 80KB default
-MAX_LINES = cfg.get_limit("max_lines", 800)  # 800 lines default  
+MAX_LINES = cfg.get_limit("max_lines", 800)  # 800 lines default
 CLI_TIMEOUT = cfg.get_timeout("cli_timeout", 60)  # 60 seconds default
 
 # Constants for API key discovery
 MIN_API_KEY_LENGTH = 10
 CONFIG_PATHS = {
-    'claude_code': Path.home() / ".config" / "claude-code" / "mcp_config.json",
-    'claude_desktop': Path.home() / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
+    "claude_code": Path.home() / ".config" / "claude-code" / "mcp_config.json",
+    "claude_desktop": Path.home()
+    / "Library"
+    / "Application Support"
+    / "Claude"
+    / "claude_desktop_config.json",
 }
 
 
@@ -150,7 +169,12 @@ def _get_from_env_var() -> Optional[str]:
 
 def _extract_mcp_api_key(config: dict) -> Optional[str]:
     """Extract API key from MCP config structure"""
-    return config.get("mcpServers", {}).get("gemini-mcp", {}).get("env", {}).get("GOOGLE_API_KEY")
+    return (
+        config.get("mcpServers", {})
+        .get("gemini-mcp", {})
+        .get("env", {})
+        .get("GOOGLE_API_KEY")
+    )
 
 
 def _get_from_json_config(file_path: Path) -> Optional[str]:
@@ -185,16 +209,16 @@ def get_api_key() -> Optional[str]:
     # Define discovery strategies in priority order
     strategies = [
         _get_from_env_var,
-        lambda: _get_from_json_config(CONFIG_PATHS['claude_code']),
-        lambda: _get_from_json_config(CONFIG_PATHS['claude_desktop']),
-        _get_from_env_file
+        lambda: _get_from_json_config(CONFIG_PATHS["claude_code"]),
+        lambda: _get_from_json_config(CONFIG_PATHS["claude_desktop"]),
+        _get_from_env_file,
     ]
-    
+
     # Try each strategy until one succeeds
     for strategy in strategies:
         if api_key := strategy():
             return api_key
-    
+
     return None
 
 
@@ -223,207 +247,7 @@ def stream_subprocess_output(
         output_queue.put(("done", None))
 
 
-# Enhanced Security functions - prevent prompt injection and path traversal attacks
-def sanitize_for_prompt(text: str, max_length: int = None) -> str:
-    """Enhanced sanitize text input to prevent prompt injection attacks"""
-    if not isinstance(text, str):
-        return ""
-
-    # Get max length from config if not provided
-    if max_length is None:
-        max_length = cfg.get_limit("sanitization_max_length", 100000)
-    
-    # Truncate if too long
-    if len(text) > max_length:
-        text = text[:max_length]
-
-    # Unicode normalization to prevent homograph attacks
-    import unicodedata
-
-    text = unicodedata.normalize("NFC", text)
-
-    # Remove/escape potential prompt injection patterns
-    # Remove common prompt injection prefixes/suffixes
-    dangerous_patterns = [
-        "ignore all previous instructions",
-        "forget everything above",
-        "new instruction:",
-        "system:",
-        "assistant:",
-        "user:",
-        "###",
-        "---",
-        "```",
-        "<|",
-        "|>",
-        "[INST]",
-        "[/INST]",
-        # Additional enterprise security patterns
-        "javascript:",
-        "data:",
-        "vbscript:",
-        "file://",
-        "ftp://",
-        # SQL injection patterns
-        "' or 1=1--",
-        "'; drop table",
-        "union select",
-        "exec(",
-        "eval(",
-        # Script injection patterns
-        "<script",
-        "</script>",
-        "onload=",
-        "onerror=",
-        "onclick=",
-    ]
-
-    text_lower = text.lower()
-    for pattern in dangerous_patterns:
-        if pattern.lower() in text_lower:
-            # Replace with safe alternative (case-insensitive)
-            import re
-
-            # Create case-insensitive regex pattern
-            escaped_pattern = re.escape(pattern)
-            replacement = f"[filtered-content]"
-            text = re.sub(escaped_pattern, replacement, text, flags=re.IGNORECASE)
-
-    # Escape potential control characters
-    text = text.replace("\x00", "").replace("\x1b", "")
-
-    return text
-
-
-# Security validation functions
-def validate_file_security(file_path: str) -> tuple[bool, str, Optional[Path]]:
-    """Enhanced file security validation with additional checks"""
-    try:
-        if not isinstance(file_path, str) or not file_path.strip():
-            return False, "Invalid file path", None
-
-        # Resolve path and check for path traversal
-        resolved_path = Path(file_path).resolve()
-        current_dir = Path.cwd().resolve()
-
-        # Check if the resolved path is within current directory tree
-        try:
-            resolved_path.relative_to(current_dir)
-        except ValueError:
-            return (
-                False,
-                f"File access denied - path outside allowed directory: {file_path}",
-                None,
-            )
-
-        if not resolved_path.exists():
-            return False, f"File not found: {file_path}", None
-
-        if not resolved_path.is_file():
-            return False, f"Path is not a file: {file_path}", None
-
-        # Check for symbolic links to prevent symlink attacks
-        if resolved_path.is_symlink():
-            return False, "Symbolic links are not allowed for security reasons", None
-
-        # File extension validation - get from config with fallback
-        allowed_extensions = set(cfg.get_raw_config().get("security", {}).get("allowed_extensions", [
-            ".py",
-            ".js",
-            ".ts",
-            ".java",
-            ".cpp",
-            ".c",
-            ".rs",
-            ".vue",
-            ".html",
-            ".css",
-            ".scss",
-            ".sass",
-            ".jsx",
-            ".tsx",
-            ".json",
-            ".yaml",
-            ".yml",
-            ".toml",
-            ".md",
-            ".txt",
-            ".go",
-            ".php",
-            ".rb",
-            ".swift",
-            ".kt",
-            ".scala",
-            ".sh",
-            ".bat",
-            ".ps1",
-        ]))
-        if resolved_path.suffix.lower() not in allowed_extensions:
-            return False, f"File type not supported: {resolved_path.suffix}", None
-
-        # Check file size before processing
-        max_size = cfg.get_limit("max_file_size", MAX_FILE_SIZE)
-        file_stat = resolved_path.stat()
-        if file_stat.st_size > max_size * 2:  # Allow some buffer
-            return (
-                False,
-                f"File too large: {file_stat.st_size} bytes (max: {max_size * 2})",
-                None,
-            )
-
-        # Basic content validation - ensure it's not a binary file
-        try:
-            with open(resolved_path, "rb") as f:
-                chunk = f.read(1024)  # Read first 1KB
-                if b"\x00" in chunk:  # Contains null bytes, likely binary
-                    return False, "Binary files are not supported", None
-        except Exception:
-            return False, "Unable to read file for validation", None
-
-        return True, "File validation successful", resolved_path
-    except Exception as e:
-        return False, f"File validation error: {str(e)}", None
-
-
-def sanitize_error_message(error_message: str) -> str:
-    """Enhanced error message sanitization to prevent information disclosure"""
-    import re
-
-    # Remove API keys and tokens
-    error_message = re.sub(
-        r"AIzaSy[A-Za-z0-9_-]{25,}", "[API_KEY_REDACTED]", error_message
-    )
-    error_message = re.sub(
-        r"sk-[A-Za-z0-9_-]{32,}", "[API_KEY_REDACTED]", error_message
-    )
-    error_message = re.sub(
-        r"Bearer [A-Za-z0-9_.-]{10,}", "[TOKEN_REDACTED]", error_message
-    )
-
-    # Remove file paths that might expose system structure
-    error_message = re.sub(
-        r"/[a-zA-Z0-9_/.-]*\.(py|js|json|yaml|toml)",
-        "[FILE_PATH_REDACTED]",
-        error_message,
-    )
-    error_message = re.sub(
-        r"C:\\[a-zA-Z0-9_\\.-]*\.(py|js|json|yaml|toml)",
-        "[FILE_PATH_REDACTED]",
-        error_message,
-    )
-
-    # Remove potential user information
-    error_message = re.sub(r"/Users/[^/\s]+", "/Users/[USER]", error_message)
-    error_message = re.sub(r"/home/[^/\s]+", "/home/[USER]", error_message)
-    error_message = re.sub(r"C:\\Users\\[^\\\s]+", r"C:\\Users\\[USER]", error_message)
-
-    # Remove environment variables
-    error_message = re.sub(r"[A-Z_]{3,}=[^\s]*", "[ENV_VAR_REDACTED]", error_message)
-
-    return error_message
-
-
-def execute_gemini_api(
+async def execute_gemini_api(
     prompt: str, model_name: str, show_progress: bool = True
 ) -> dict:
     """Execute Gemini API directly with specified model - try this first before CLI fallback"""
@@ -433,8 +257,6 @@ def execute_gemini_api(
         if not api_key:
             return {"success": False, "error": "No API key found"}
 
-        import google.generativeai as genai
-
         if show_progress:
             print(f"🌟 Using API key: {api_key[:8]}...", file=sys.stderr)
             print(f"🌟 Making API call to {model_name}...", file=sys.stderr)
@@ -442,7 +264,7 @@ def execute_gemini_api(
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel(model_name)
 
-        response = model.generate_content(prompt)
+        response = await model.generate_content_async(prompt)
 
         if show_progress:
             print("✅ API call successful!", file=sys.stderr)
@@ -480,7 +302,7 @@ def execute_gemini_api(
         return {"success": False, "error": error_message}
 
 
-def execute_gemini_cli(
+async def execute_gemini_cli_streaming(
     prompt: str, model_name: Optional[str] = None, show_progress: bool = True
 ) -> Dict[str, Any]:
     """Execute Gemini CLI with timeout-protected real-time streaming output"""
@@ -495,7 +317,10 @@ def execute_gemini_cli(
         # Check prompt size limit from config
         max_prompt_size = cfg.get_limit("max_prompt_size", 1000000)
         if len(prompt) > max_prompt_size:
-            return {"success": False, "error": f"Prompt too large (max {max_prompt_size} bytes)"}
+            return {
+                "success": False,
+                "error": f"Prompt too large (max {max_prompt_size} bytes)",
+            }
 
         # Validate model name if provided
         if model_name is not None:
@@ -513,7 +338,7 @@ def execute_gemini_cli(
 
         # Get timeout from config
         timeout = cfg.get_timeout("cli_timeout", CLI_TIMEOUT)
-        
+
         if show_progress:
             print("🔍 Starting timeout-protected Gemini CLI...", file=sys.stderr)
             print(f"📝 Prompt length: {len(prompt)} characters", file=sys.stderr)
@@ -717,7 +542,7 @@ def _process_result_output(
     return result
 
 
-def execute_gemini_smart(
+async def execute_gemini_smart(
     prompt: str,
     task_type: str = "quick_query",
     show_progress: bool = True,
@@ -738,7 +563,7 @@ def execute_gemini_smart(
         # Fallback to old logic for backward compatibility
         model_type = MODEL_ASSIGNMENTS.get(task_type, "flash")
         model_name = GEMINI_MODELS[model_type]
-    
+
     # For backward compatibility, resolve nickname if it matches old pattern
     if model_name in GEMINI_MODELS:
         model_name = GEMINI_MODELS[model_name]
@@ -752,7 +577,7 @@ def execute_gemini_smart(
     if api_key:
         if show_progress:
             print("🚀 API key found, attempting API call...", file=sys.stderr)
-        result = execute_gemini_api(prompt, model_name, show_progress)
+        result = await execute_gemini_api(prompt, model_name, show_progress)
         if result["success"]:
             # Process the result through markdown parser if enabled
             result = _process_result_output(result, convert_markdown, show_progress)
@@ -767,7 +592,7 @@ def execute_gemini_smart(
             )
 
     # Fallback to CLI
-    result = execute_gemini_cli(prompt, model_name, show_progress)
+    result = await execute_gemini_cli_streaming(prompt, model_name, show_progress)
     # Process the result through markdown parser if enabled
     result = _process_result_output(result, convert_markdown, show_progress)
     return result
@@ -778,8 +603,12 @@ def quick_query(query: str, context: str = "") -> None:
     start_time = time.time()
 
     # Sanitize inputs to prevent prompt injection
-    sanitized_query = sanitize_for_prompt(query, max_length=cfg.get_limit("max_prompt_size", 10000) // 100)
-    sanitized_context = sanitize_for_prompt(context, max_length=cfg.get_limit("max_prompt_size", 50000) // 20)
+    sanitized_query = sanitize_for_prompt(
+        query, max_length=cfg.get_limit("max_prompt_size", 10000) // 100
+    )
+    sanitized_context = sanitize_for_prompt(
+        context, max_length=cfg.get_limit("max_prompt_size", 50000) // 20
+    )
 
     if sanitized_context:
         prompt = f"Context: {sanitized_context}\n\nQuestion: {sanitized_query}\n\nProvide a concise answer."
@@ -848,21 +677,7 @@ def analyze_code(file_path: str, analysis_type: str = "comprehensive") -> None:
         sanitized_content = sanitize_for_prompt(content, max_length=MAX_FILE_SIZE)
         # analysis_type is already validated above
 
-        prompt = f"""Perform a {analysis_type} analysis of this code:
-
-{sanitized_content}
-
-Provide comprehensive analysis including:
-1. Code structure and organization
-2. Logic flow and algorithm efficiency
-3. Security considerations and vulnerabilities
-4. Performance implications and optimizations
-5. Error handling and edge cases
-6. Code quality and maintainability
-7. Best practices compliance
-8. Specific recommendations for improvements
-
-Be thorough and provide actionable insights."""
+        prompt = f"""Perform a {analysis_type} analysis of this code:\n\n{sanitized_content}\n\nProvide comprehensive analysis including:\n1. Code structure and organization\n2. Logic flow and algorithm efficiency\n3. Security considerations and vulnerabilities\n4. Performance implications and optimizations\n5. Error handling and edge cases\n6. Code quality and maintainability\n7. Best practices compliance\n8. Specific recommendations for improvements\n\nBe thorough and provide actionable insights."""
 
         result = execute_gemini_smart(prompt, "analyze_code")
 
@@ -976,36 +791,10 @@ def analyze_codebase(directory_path: str, analysis_scope: str = "all") -> None:
         print("⏳ Step 2/3: Feeding to Gemini for AI analysis...", file=sys.stderr)
 
         # Step 2: Create analysis prompt based on scope
-        analysis_prompt = f"""You are a senior software architect and code reviewer. Analyze this codebase comprehensively.
-
-{prompt_payload}
-
-## Analysis Requirements
-
-Based on the scope '{analysis_scope}', provide detailed analysis covering:
-
-1. **Architecture & Design Patterns**: Overall system design, patterns used, architectural decisions
-2. **Code Quality & Maintainability**: Code organization, readability, documentation quality
-3. **Security Analysis**: Potential vulnerabilities, security best practices, risk assessment
-4. **Performance Considerations**: Bottlenecks, optimization opportunities, scalability issues
-5. **Best Practices Compliance**: Following language/framework conventions, industry standards
-6. **Dependencies & Integration**: External dependencies, integration points, potential risks
-7. **Testing & Quality Assurance**: Test coverage, testing strategies, quality metrics
-8. **Documentation & Developer Experience**: Code clarity, documentation completeness, onboarding ease
-
-## Output Format
-
-Provide a comprehensive report with:
-- **Executive Summary**: Key findings and overall assessment
-- **Detailed Analysis**: In-depth analysis for each area above
-- **Actionable Recommendations**: Specific, prioritized improvement suggestions
-- **Risk Assessment**: Potential issues and their impact levels
-- **Implementation Roadmap**: Step-by-step improvement plan
-
-Be thorough, specific, and provide actionable insights that a development team can implement."""
+        analysis_prompt = f"""You are a senior software architect and code reviewer. Analyze this codebase comprehensively.\n\n{prompt_payload}\n\n## Analysis Requirements\n\nBased on the scope '{analysis_scope}', provide detailed analysis covering:\n\n1. **Architecture & Design Patterns**: Overall system design, patterns used, architectural decisions\n2. **Code Quality & Maintainability**: Code organization, readability, documentation quality\n3. **Security Analysis**: Potential vulnerabilities, security best practices, risk assessment\n4. **Performance Considerations**: Bottlenecks, optimization opportunities, scalability issues\n5. **Best Practices Compliance**: Following language/framework conventions, industry standards\n6. **Dependencies & Integration**: External dependencies, integration points, potential risks\n7. **Testing & Quality Assurance**: Test coverage, testing strategies, quality metrics\n8. **Documentation & Developer Experience**: Code clarity, documentation completeness, onboarding ease\n\n## Output Format\n\nProvide a comprehensive report with:\n- **Executive Summary**: Key findings and overall assessment\n- **Detailed Analysis**: In-depth analysis for each area above\n- **Actionable Recommendations**: Specific, prioritized improvement suggestions\n- **Risk Assessment**: Potential issues and their impact levels\n- **Implementation Roadmap**: Step-by-step improvement plan\n\nBe thorough, specific, and provide actionable insights."""
 
         # Step 3: Feed to Gemini and stream results
-        result = execute_gemini_smart(analysis_prompt, "analyze_codebase")
+        result = await execute_gemini_smart(analysis_prompt, "analyze_codebase")
 
         elapsed_time = time.time() - start_time
 

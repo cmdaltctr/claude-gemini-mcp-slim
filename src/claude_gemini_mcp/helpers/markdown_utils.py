@@ -107,7 +107,7 @@ def _remove_code_blocks(text: str) -> str:
             # Preserve the exact content including indentation
             matches = re.finditer(pattern, text, flags=re.DOTALL)
             for match in reversed(list(matches)):
-                text = text[:match.start()] + match.group(1) + text[match.end():]
+                text = text[: match.start()] + match.group(1) + text[match.end() :]
 
     return text
 
