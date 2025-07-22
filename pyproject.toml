@@ -9,14 +9,13 @@ description = "Streamlined Gemini API & CLI MCP integration for Claude Code"
 authors = [
     {name = "Claude Gemini MCP Team"}
 ]
-license = {text = "MIT"}
+license = "MIT"
 readme = "README.md"
 requires-python = ">=3.10"
 keywords = ["mcp", "gemini", "claude", "ai", "development"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -28,6 +27,9 @@ dependencies = [
     "mcp>=1.0.0",
     "google-generativeai>=0.8.0",
 ]
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [project.optional-dependencies]
 dev = [
@@ -60,14 +62,8 @@ addopts = [
     "-q",
     "--strict-markers",
     "--strict-config",
-    "--timeout=30",           # 30 second timeout per test
-    "--timeout-method=thread", # Use thread-based timeout
     "--maxfail=5",            # Stop after 5 failures
     "--tb=short",             # Short traceback format
-    "--cov=.",
-    "--cov-report=html",
-    "--cov-report=term-missing",
-    "--cov-fail-under=0",
 ]
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
@@ -81,6 +77,7 @@ markers = [
     "unit: marks tests as unit tests",
     "security: marks tests as security-focused tests",
     "performance: marks tests as performance tests",
+    "stress: marks tests as stress tests (timing heavy tests)",
 ]
 filterwarnings = [
     "error",
