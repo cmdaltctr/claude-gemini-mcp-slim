@@ -1,43 +1,43 @@
 # Task ID: 7
-# Title: Enhance Testing Suite for Structured Response Features
+# Title: Integrate Instructor Library with Gemini Helper
 # Status: pending
-# Dependencies: 6
-# Priority: medium
-# Description: Add comprehensive tests covering the new agentic collaboration functionality
+# Dependencies: 4, 6
+# Priority: high
+# Description: Modify gemini_helper.py to use instructor for enforcing structured JSON responses from Gemini API
 # Details:
-Create test suites for all new structured response functionality. Add unit tests for AgenticCodePatch model validation, integration tests for instructor library usage, end-to-end tests for the complete agentic workflow. Include performance tests for structured response generation, security tests for the new security module, and compatibility tests across different Python versions (3.10, 3.11, 3.12).
+Integrate instructor library with the existing Gemini API client in gemini_helper.py. Create wrapper functions that use instructor to enforce AgenticCodePatch schema responses. Implement proper error handling and fallback mechanisms when structured responses fail. Ensure compatibility with both API and CLI fallback systems. Maintain existing prompt construction logic while adding structured response capabilities.
 
 # Test Strategy:
-Pytest-based test suite with asyncio support, code coverage validation targeting >70%, performance benchmarking, security penetration testing
+Integration tests with live Gemini API, mock tests for API responses, fallback mechanism tests, error handling validation
 
 # Subtasks:
-## 1. Create Unit Tests for AgenticCodePatch Model Validation [pending]
+## 1. Install and configure instructor library in gemini_helper.py [pending]
 ### Dependencies: None
-### Description: Implement comprehensive unit tests for the AgenticCodePatch Pydantic model to validate field constraints, type checking, and serialization behavior
+### Description: Import and set up the instructor library within the existing gemini_helper.py module to prepare for structured response integration
 ### Details:
-Create tests/unit/test_agentic_code_patch.py with test cases for: valid model instantiation with all field types, field validation (file_path format, line number ranges, action type enums), serialization to/from JSON, error handling for invalid data, edge cases like empty strings and negative line numbers. Use pytest fixtures for common test data patterns.
+Add import statements for instructor library at the top of gemini_helper.py. Install instructor using pip if not already available. Verify compatibility with existing google-generativeai imports. Create basic configuration setup for instructor to work with Gemini API client. Test that all imports work correctly without breaking existing functionality.
 
-## 2. Develop Integration Tests for Instructor Library Usage [pending]
-### Dependencies: 7.1
-### Description: Create integration tests that verify the instructor library works correctly with Gemini API calls and structured response generation
+## 2. Create instructor-wrapped Gemini client initialization [pending]
+### Dependencies: 7.4
+### Description: Modify the Gemini API client initialization to use instructor's patching mechanism for structured responses
 ### Details:
-Create tests/integration/test_instructor_integration.py with test cases for: instructor.from_gemini() configuration, structured response generation with real API calls (using test API keys), error handling when API returns malformed responses, retry logic and timeout handling, compatibility with different Gemini model versions. Mock Gemini API responses for consistent testing.
+Wrap the existing Gemini GenerativeModel client with instructor.from_gemini() to enable structured response capabilities. Update the client initialization logic in relevant functions to use the instructor-patched client. Maintain backward compatibility by keeping the original client as a fallback option. Ensure proper error handling during client initialization.
 
-## 3. Implement End-to-End Workflow Tests for Agentic Collaboration [pending]
-### Dependencies: 7.1, 7.2
-### Description: Create comprehensive end-to-end tests that validate the complete agentic workflow from code analysis request to structured patch generation
+## 3. Implement structured response wrapper functions [pending]
+### Dependencies: 7.5
+### Description: Create wrapper functions that use instructor to enforce AgenticCodePatch schema responses from Gemini API calls
 ### Details:
-Create tests/e2e/test_agentic_workflow.py with full workflow scenarios: analyze_code() with structured response enabled, code analysis to AgenticCodePatch generation, multi-file analysis workflows, error recovery and fallback mechanisms, integration with existing gemini_helper functions. Include test fixtures with sample codebases and expected outputs.
+Create new wrapper functions like 'generate_structured_response()' that use the instructor-patched client to enforce AgenticCodePatch schema responses. Implement proper prompt engineering within these wrappers to request structured output from Gemini. Add type hints and return type annotations specifying AgenticCodePatch or List[AgenticCodePatch]. Include validation logic to ensure responses conform to expected schema.
 
-## 4. Add Performance and Security Tests for New Features [pending]
-### Dependencies: 7.2, 7.3
-### Description: Implement performance benchmarking tests for structured response generation and security tests for the enhanced security module
+## 4. Implement error handling and fallback mechanisms [pending]
+### Dependencies: 7.6
+### Description: Add comprehensive error handling for structured response failures with fallback to plain text responses
 ### Details:
-Create tests/performance/test_structured_responses.py for response time benchmarking, memory usage profiling during large codebase analysis, concurrent request handling tests. Create tests/security/test_agentic_security.py for input validation security, prompt injection prevention, secure handling of code suggestions, dependency vulnerability scanning for new libraries.
+Implement try-catch blocks around instructor API calls to handle parsing failures, network errors, and schema validation errors. Create fallback logic that switches to the original unstructured Gemini API when instructor fails. Add logging for debugging structured response issues. Implement retry logic with exponential backoff for transient failures. Ensure graceful degradation maintains existing functionality.
 
-## 5. Ensure Multi-Python Version Compatibility Testing [pending]
-### Dependencies: 7.1, 7.2, 7.3, 7.4
-### Description: Create compatibility test suite and update CI configuration to validate functionality across Python 3.10, 3.11, and 3.12
+## 5. Update existing prompt construction for structured responses [pending]
+### Dependencies: 7.7
+### Description: Modify existing prompt construction logic to be compatible with instructor's structured response requirements while maintaining current functionality
 ### Details:
-Update tox.ini or create tests/compatibility/test_python_versions.py with version-specific test scenarios. Test async/await patterns, type hint compatibility, dependency version conflicts across Python versions. Update test matrix configuration, ensure all new pydantic and instructor features work consistently across versions. Add version-specific test markers.
+Update prompt templates and construction logic to work effectively with instructor's structured response system. Add schema-aware prompt engineering that explicitly requests AgenticCodePatch formatted responses. Maintain existing prompt patterns for backward compatibility. Add conditional logic to use different prompt styles based on whether structured responses are enabled. Test that prompts work effectively with both structured and unstructured response modes.
 

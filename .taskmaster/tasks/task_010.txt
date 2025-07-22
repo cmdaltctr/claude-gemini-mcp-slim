@@ -1,43 +1,43 @@
 # Task ID: 10
-# Title: Performance Optimization for Structured Response Processing
+# Title: Enhance Testing Suite for Structured Response Features
 # Status: pending
-# Dependencies: 7
+# Dependencies: 9
 # Priority: medium
-# Description: Optimize the performance of structured response generation and processing to meet NFR targets
+# Description: Add comprehensive tests covering the new agentic collaboration functionality
 # Details:
-Optimize structured response processing to meet the NFR target of 95% of quick queries completing within 10 seconds. Implement caching mechanisms for frequently requested code analysis patterns. Optimize prompt construction and response parsing. Add streaming progress indicators for complex analysis tasks. Profile and optimize memory usage during large codebase analysis.
+Create test suites for all new structured response functionality. Add unit tests for AgenticCodePatch model validation, integration tests for instructor library usage, end-to-end tests for the complete agentic workflow. Include performance tests for structured response generation, security tests for the new security module, and compatibility tests across different Python versions (3.10, 3.11, 3.12).
 
 # Test Strategy:
-Performance benchmarking tests, memory profiling, load testing, response time validation, streaming progress indicator testing
+Pytest-based test suite with asyncio support, code coverage validation targeting >70%, performance benchmarking, security penetration testing
 
 # Subtasks:
-## 1. Implement Performance Monitoring and Profiling Infrastructure [pending]
+## 1. Create Unit Tests for AgenticCodePatch Model Validation [pending]
 ### Dependencies: None
-### Description: Set up comprehensive performance monitoring and profiling tools to measure current response times and identify bottlenecks in structured response processing
+### Description: Implement comprehensive unit tests for the AgenticCodePatch Pydantic model to validate field constraints, type checking, and serialization behavior
 ### Details:
-Add performance timing decorators to key functions in gemini_helper.py. Implement memory profiling using memory_profiler or tracemalloc. Create performance logging that captures response generation time, prompt construction time, and parsing time. Set up baseline performance metrics collection for the current system. Add configuration options for enabling/disabling profiling in production.
+Create tests/unit/test_agentic_code_patch.py with test cases for: valid model instantiation with all field types, field validation (file_path format, line number ranges, action type enums), serialization to/from JSON, error handling for invalid data, edge cases like empty strings and negative line numbers. Use pytest fixtures for common test data patterns.
 
-## 2. Implement Caching Layer for Code Analysis Patterns [pending]
-### Dependencies: 10.1
-### Description: Create a caching mechanism to store frequently requested code analysis patterns and their results to reduce redundant API calls
+## 2. Develop Integration Tests for Instructor Library Usage [pending]
+### Dependencies: 10.4
+### Description: Create integration tests that verify the instructor library works correctly with Gemini API calls and structured response generation
 ### Details:
-Implement LRU cache using functools.lru_cache or custom cache implementation for frequently used prompt patterns. Create cache key generation based on code content hash and analysis type. Add cache persistence to disk for patterns that survive application restarts. Implement cache invalidation strategies based on code changes. Add cache hit/miss metrics to performance monitoring.
+Create tests/integration/test_instructor_integration.py with test cases for: instructor.from_gemini() configuration, structured response generation with real API calls (using test API keys), error handling when API returns malformed responses, retry logic and timeout handling, compatibility with different Gemini model versions. Mock Gemini API responses for consistent testing.
 
-## 3. Optimize Prompt Construction and Response Parsing [pending]
-### Dependencies: 10.1
-### Description: Streamline prompt generation and response parsing logic to reduce processing overhead and improve response times
+## 3. Implement End-to-End Workflow Tests for Agentic Collaboration [pending]
+### Dependencies: 10.4, 10.5
+### Description: Create comprehensive end-to-end tests that validate the complete agentic workflow from code analysis request to structured patch generation
 ### Details:
-Optimize prompt template construction by pre-compiling templates and reducing string concatenation operations. Implement efficient JSON parsing with optimized libraries like orjson. Reduce prompt token count while maintaining effectiveness. Optimize instructor library usage to minimize validation overhead. Implement lazy evaluation for complex prompt components that may not always be needed.
+Create tests/e2e/test_agentic_workflow.py with full workflow scenarios: analyze_code() with structured response enabled, code analysis to AgenticCodePatch generation, multi-file analysis workflows, error recovery and fallback mechanisms, integration with existing gemini_helper functions. Include test fixtures with sample codebases and expected outputs.
 
-## 4. Add Streaming Progress Indicators for Complex Analysis [pending]
-### Dependencies: 10.2, 10.3
-### Description: Implement streaming progress indicators to provide user feedback during long-running code analysis tasks
+## 4. Add Performance and Security Tests for New Features [pending]
+### Dependencies: 10.5, 10.6
+### Description: Implement performance benchmarking tests for structured response generation and security tests for the enhanced security module
 ### Details:
-Implement progress callback mechanisms in analysis functions. Add streaming response support using asyncio for non-blocking operations. Create progress indicators that show analysis stages (prompt construction, API call, response processing). Implement timeout handling with partial results. Add user cancellation support for long-running operations. Integrate with existing CLI and MCP interfaces.
+Create tests/performance/test_structured_responses.py for response time benchmarking, memory usage profiling during large codebase analysis, concurrent request handling tests. Create tests/security/test_agentic_security.py for input validation security, prompt injection prevention, secure handling of code suggestions, dependency vulnerability scanning for new libraries.
 
-## 5. Memory Usage Optimization and Response Time Validation [pending]
-### Dependencies: 10.1, 10.2, 10.3, 10.4
-### Description: Optimize memory usage during large codebase analysis and validate that performance meets the 95% of queries under 10 seconds NFR target
+## 5. Ensure Multi-Python Version Compatibility Testing [pending]
+### Dependencies: 10.4, 10.5, 10.6, 10.7
+### Description: Create compatibility test suite and update CI configuration to validate functionality across Python 3.10, 3.11, and 3.12
 ### Details:
-Implement memory-efficient processing for large codebases using generators and lazy loading. Optimize object lifecycle management to prevent memory leaks. Add memory usage limits and cleanup mechanisms. Implement chunked processing for very large analysis tasks. Run comprehensive performance validation tests to ensure 95% of quick queries complete within 10 seconds. Add performance regression testing to CI/CD pipeline.
+Update tox.ini or create tests/compatibility/test_python_versions.py with version-specific test scenarios. Test async/await patterns, type hint compatibility, dependency version conflicts across Python versions. Update test matrix configuration, ensure all new pydantic and instructor features work consistently across versions. Add version-specific test markers.
 

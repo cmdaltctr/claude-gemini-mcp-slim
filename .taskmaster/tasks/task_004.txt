@@ -1,43 +1,43 @@
 # Task ID: 4
-# Title: Integrate Instructor Library with Gemini Helper
+# Title: Add Required Dependencies for Structured Response Support
 # Status: pending
-# Dependencies: 1, 3
+# Dependencies: None
 # Priority: high
-# Description: Modify gemini_helper.py to use instructor for enforcing structured JSON responses from Gemini API
+# Description: Install and configure the instructor library and ensure all required dependencies are properly specified for the agentic collaboration phase
 # Details:
-Integrate instructor library with the existing Gemini API client in gemini_helper.py. Create wrapper functions that use instructor to enforce AgenticCodePatch schema responses. Implement proper error handling and fallback mechanisms when structured responses fail. Ensure compatibility with both API and CLI fallback systems. Maintain existing prompt construction logic while adding structured response capabilities.
+Add 'instructor' library to requirements.txt for enforcing structured JSON responses from Gemini. Ensure pydantic is properly versioned for compatibility. Update pyproject.toml with new dependencies. Verify compatibility with existing google-generativeai library. Test import statements and basic functionality of instructor library with the current codebase structure.
 
 # Test Strategy:
-Integration tests with live Gemini API, mock tests for API responses, fallback mechanism tests, error handling validation
+Unit tests to verify all dependencies import correctly, integration test to ensure instructor works with google-generativeai, dependency conflict detection tests
 
 # Subtasks:
-## 1. Install and configure instructor library in gemini_helper.py [pending]
+## 1. Install instructor library and verify core dependencies [pending]
 ### Dependencies: None
-### Description: Import and set up the instructor library within the existing gemini_helper.py module to prepare for structured response integration
+### Description: Add the instructor library to project dependencies and verify it can be imported successfully
 ### Details:
-Add import statements for instructor library at the top of gemini_helper.py. Install instructor using pip if not already available. Verify compatibility with existing google-generativeai imports. Create basic configuration setup for instructor to work with Gemini API client. Test that all imports work correctly without breaking existing functionality.
+Add 'instructor>=1.0.0' to requirements.txt or pyproject.toml dependencies section. Install the library using pip install instructor. Create a simple test script to verify the import works: 'import instructor' and ensure no ImportError occurs. Check that instructor's core functionality is accessible.
 
-## 2. Create instructor-wrapped Gemini client initialization [pending]
-### Dependencies: 4.1
-### Description: Modify the Gemini API client initialization to use instructor's patching mechanism for structured responses
-### Details:
-Wrap the existing Gemini GenerativeModel client with instructor.from_gemini() to enable structured response capabilities. Update the client initialization logic in relevant functions to use the instructor-patched client. Maintain backward compatibility by keeping the original client as a fallback option. Ensure proper error handling during client initialization.
-
-## 3. Implement structured response wrapper functions [pending]
-### Dependencies: 4.2
-### Description: Create wrapper functions that use instructor to enforce AgenticCodePatch schema responses from Gemini API calls
-### Details:
-Create new wrapper functions like 'generate_structured_response()' that use the instructor-patched client to enforce AgenticCodePatch schema responses. Implement proper prompt engineering within these wrappers to request structured output from Gemini. Add type hints and return type annotations specifying AgenticCodePatch or List[AgenticCodePatch]. Include validation logic to ensure responses conform to expected schema.
-
-## 4. Implement error handling and fallback mechanisms [pending]
-### Dependencies: 4.3
-### Description: Add comprehensive error handling for structured response failures with fallback to plain text responses
-### Details:
-Implement try-catch blocks around instructor API calls to handle parsing failures, network errors, and schema validation errors. Create fallback logic that switches to the original unstructured Gemini API when instructor fails. Add logging for debugging structured response issues. Implement retry logic with exponential backoff for transient failures. Ensure graceful degradation maintains existing functionality.
-
-## 5. Update existing prompt construction for structured responses [pending]
+## 2. Ensure pydantic compatibility and version constraints [pending]
 ### Dependencies: 4.4
-### Description: Modify existing prompt construction logic to be compatible with instructor's structured response requirements while maintaining current functionality
+### Description: Verify and configure pydantic version compatibility with instructor library
 ### Details:
-Update prompt templates and construction logic to work effectively with instructor's structured response system. Add schema-aware prompt engineering that explicitly requests AgenticCodePatch formatted responses. Maintain existing prompt patterns for backward compatibility. Add conditional logic to use different prompt styles based on whether structured responses are enabled. Test that prompts work effectively with both structured and unstructured response modes.
+Check instructor library's pydantic version requirements in its documentation or package metadata. Update pyproject.toml to specify compatible pydantic version (likely >=2.0.0). Resolve any version conflicts between instructor, pydantic, and existing dependencies. Test that existing pydantic models in the codebase still work correctly.
+
+## 3. Verify google-generativeai library compatibility [pending]
+### Dependencies: 4.5
+### Description: Ensure instructor library works correctly with the existing google-generativeai integration
+### Details:
+Test that instructor can be used alongside google-generativeai without conflicts. Check for any version incompatibilities between the two libraries. Create a simple test that imports both libraries and initializes basic functionality from each. Verify that instructor can work with Gemini models through google-generativeai.
+
+## 4. Update project configuration files [pending]
+### Dependencies: 4.6
+### Description: Update pyproject.toml and other configuration files with new dependency specifications
+### Details:
+Add instructor and any updated pydantic version constraints to pyproject.toml [project.dependencies] section. Update requirements.txt if being used for deployment. Ensure version constraints are properly specified to avoid future compatibility issues. Update any development dependencies if needed for testing the new functionality.
+
+## 5. Create basic instructor functionality test [pending]
+### Dependencies: 4.7
+### Description: Implement a simple test to verify instructor library works with the current codebase structure
+### Details:
+Create a test file that demonstrates instructor working with a simple Pydantic model and Gemini. Import instructor, create a basic model class, and test structured response generation. Verify that the instructor.from_gemini() or similar functionality works correctly. Ensure the test passes and demonstrates readiness for implementing AgenticCodePatch model.
 

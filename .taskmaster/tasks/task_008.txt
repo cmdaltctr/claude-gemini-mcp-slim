@@ -1,43 +1,43 @@
 # Task ID: 8
-# Title: Update Configuration Management for Agentic Features
+# Title: Refactor gemini_analyze_code Tool for Structured Responses
 # Status: pending
-# Dependencies: 2
-# Priority: medium
-# Description: Extend the configuration system to support agentic collaboration settings and preferences
+# Dependencies: 6, 7
+# Priority: high
+# Description: Update the gemini_analyze_code tool to return structured AgenticCodePatch objects instead of plain text
 # Details:
-Extend config.py to include configuration options for agentic features. Add settings for structured response preferences, fallback behavior configuration, timeout settings for instructor operations, and user preferences for diff formatting. Ensure the configuration follows the existing hierarchical precedence (function args > env vars > config.json > defaults). Update configuration validation and documentation.
+Refactor the gemini_analyze_code function to use instructor-enforced structured responses. Update prompt engineering to request AgenticCodePatch format from Gemini. Implement logic to handle multiple code patches in a single response. Ensure backward compatibility and graceful degradation to text responses when structured parsing fails. Update function documentation and type hints.
 
 # Test Strategy:
-Configuration loading tests, precedence validation tests, default value tests, environment variable override tests
+Unit tests with mock structured responses, integration tests with actual Gemini API, backward compatibility tests, response parsing validation
 
 # Subtasks:
-## 1. Define Configuration Schema for Agentic Features [pending]
+## 1. Define AgenticCodePatch Data Model [pending]
 ### Dependencies: None
-### Description: Create comprehensive configuration schema definitions for all agentic collaboration settings
+### Description: Create the AgenticCodePatch Pydantic model that will structure the response from Gemini analyze_code operations
 ### Details:
-Define configuration structure for structured response preferences (enable/disable, format options), fallback behavior configuration (retry attempts, graceful degradation), timeout settings for instructor operations (default, max, per-operation), and user preferences for diff formatting (style, verbosity, colors). Create TypedDict or dataclass definitions for type safety. Document each configuration option with descriptions, valid values, and default settings.
+Create a new Pydantic model in src/models/agentic_code_patch.py defining AgenticCodePatch with fields: action_type (enum: REPLACE, INSERT, NOTIFY), file_path, line_range (start/end), original_code, suggested_code, explanation, confidence_score. Include proper validation and type hints. Ensure the model can handle multiple patches in a single response via a wrapper model AgenticCodeResponse.
 
-## 2. Extend Configuration Loading Infrastructure [pending]
-### Dependencies: 8.1
-### Description: Modify config.py to support loading and parsing of new agentic configuration sections
-### Details:
-Extend the existing configuration loading mechanism to include agentic settings. Add new configuration sections to the JSON schema and environment variable mappings. Implement parsing logic for complex nested configurations like timeout hierarchies and preference objects. Ensure all new settings integrate with the existing precedence system (function args > env vars > config.json > defaults).
-
-## 3. Implement Configuration Validation and Sanitization [pending]
-### Dependencies: 8.2
-### Description: Add comprehensive validation for all agentic configuration options with appropriate error handling
-### Details:
-Implement validation functions for each configuration category: validate timeout values are positive integers, ensure preference options match allowed values, verify fallback behavior settings are valid. Add configuration sanitization to normalize values (e.g., timeout ranges, boolean conversions). Implement clear error messages for invalid configurations with suggestions for fixes.
-
-## 4. Add Environment Variable Support for Agentic Settings [pending]
-### Dependencies: 8.3
-### Description: Implement environment variable mappings for all new agentic configuration options
-### Details:
-Create environment variable mappings following the existing naming convention (e.g., GEMINI_AGENTIC_STRUCTURED_RESPONSES, GEMINI_INSTRUCTOR_TIMEOUT, GEMINI_FALLBACK_BEHAVIOR). Implement proper type conversion for complex settings (JSON parsing for nested objects, boolean conversion, integer validation). Add support for environment variable overrides at the granular level while maintaining hierarchical precedence.
-
-## 5. Update Configuration Documentation and Examples [pending]
+## 2. Update Gemini Prompts for Structured Output [pending]
 ### Dependencies: 8.4
-### Description: Create comprehensive documentation for all new configuration options with practical examples
+### Description: Modify the prompt engineering in gemini_analyze_code to request structured AgenticCodePatch responses
 ### Details:
-Update configuration documentation to include all new agentic settings with detailed descriptions, valid value ranges, and impact explanations. Create example configuration files showing different use cases (development, production, high-performance). Document environment variable equivalents and precedence rules. Add troubleshooting section for common configuration issues and provide migration guidance from default settings.
+Update the system prompt and user prompts in the gemini_analyze_code function to explicitly request responses in AgenticCodePatch format. Include JSON schema examples in prompts. Add clear instructions for when to use each action_type. Ensure prompts guide Gemini to provide confidence scores and detailed explanations for each suggested change.
+
+## 3. Integrate Instructor Library for Response Parsing [pending]
+### Dependencies: 8.4, 8.5
+### Description: Implement instructor-based structured response parsing in the gemini_analyze_code function
+### Details:
+Refactor gemini_analyze_code to use instructor.from_gemini() for enforcing structured responses. Wrap the existing Gemini client with instructor functionality. Implement proper error handling for when instructor parsing fails. Add retry logic with exponential backoff for parsing failures. Ensure the function can gracefully fall back to text responses when structured parsing consistently fails.
+
+## 4. Implement Backward Compatibility Layer [pending]
+### Dependencies: 8.6
+### Description: Create a compatibility layer that handles both structured and text responses to ensure existing functionality continues to work
+### Details:
+Add a response type detection mechanism that can identify whether the response is structured (AgenticCodePatch) or plain text. Implement a text-to-structure converter for legacy responses using regex parsing and heuristics. Add configuration options to control response format preferences. Ensure all existing MCP tools continue to function with both response types.
+
+## 5. Update Function Documentation and Type Hints [pending]
+### Dependencies: 8.7
+### Description: Update all documentation, type hints, and function signatures to reflect the new structured response capabilities
+### Details:
+Update function signature of gemini_analyze_code to return Union[AgenticCodeResponse, str]. Add comprehensive docstrings explaining the structured response format and fallback behavior. Update type hints throughout the codebase to handle the new return types. Create developer documentation explaining how to work with AgenticCodePatch objects. Update any existing usage examples in comments or documentation.
 

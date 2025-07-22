@@ -1,43 +1,43 @@
 # Task ID: 11
-# Title: Update CI/CD Pipeline for Enhanced Quality Assurance
+# Title: Update Configuration Management for Agentic Features
 # Status: pending
-# Dependencies: 7
+# Dependencies: 5
 # Priority: medium
-# Description: Enhance the GitHub Actions workflow to include comprehensive testing and security scanning for agentic features
+# Description: Extend the configuration system to support agentic collaboration settings and preferences
 # Details:
-Update .github/workflows/test.yml to include testing of new agentic features. Add security scanning with bandit and pip-audit for the new dependencies. Include performance regression testing, code coverage reporting with the new modules, and integration testing with structured responses. Consider adding uv for faster dependency resolution in CI. Ensure all tests pass across Python 3.10, 3.11, and 3.12.
+Extend config.py to include configuration options for agentic features. Add settings for structured response preferences, fallback behavior configuration, timeout settings for instructor operations, and user preferences for diff formatting. Ensure the configuration follows the existing hierarchical precedence (function args > env vars > config.json > defaults). Update configuration validation and documentation.
 
 # Test Strategy:
-CI pipeline validation, security scan verification, performance regression detection, multi-version Python compatibility testing
+Configuration loading tests, precedence validation tests, default value tests, environment variable override tests
 
 # Subtasks:
-## 1. Integrate uv Package Manager for Faster CI Dependencies [pending]
+## 1. Define Configuration Schema for Agentic Features [pending]
 ### Dependencies: None
-### Description: Replace pip with uv in the GitHub Actions workflow to accelerate dependency installation and improve CI performance
+### Description: Create comprehensive configuration schema definitions for all agentic collaboration settings
 ### Details:
-Update .github/workflows/test.yml to install and use uv package manager. Replace pip install commands with uv pip install. Add uv cache configuration to speed up subsequent builds. Configure uv to work with existing Python matrix (3.10, 3.11, 3.12). Test that all existing dependencies install correctly with uv.
+Define configuration structure for structured response preferences (enable/disable, format options), fallback behavior configuration (retry attempts, graceful degradation), timeout settings for instructor operations (default, max, per-operation), and user preferences for diff formatting (style, verbosity, colors). Create TypedDict or dataclass definitions for type safety. Document each configuration option with descriptions, valid values, and default settings.
 
-## 2. Add Security Scanning with Bandit and Pip-audit [pending]
-### Dependencies: 11.1
-### Description: Implement comprehensive security scanning in the CI pipeline to detect vulnerabilities in code and dependencies
-### Details:
-Add bandit security linting step to scan Python code for common security issues. Integrate pip-audit to check for known vulnerabilities in dependencies. Configure both tools to fail the build on high-severity issues but allow warnings. Add exclusion rules for false positives if needed. Create separate job steps for security scanning with appropriate error handling.
-
-## 3. Enhance Code Coverage for Agentic Features [pending]
-### Dependencies: 11.1
-### Description: Update code coverage reporting to include the new agentic modules and structured response features
-### Details:
-Configure pytest-cov to include coverage for AgenticCodePatch, structured response parsing, and instructor integration modules. Update coverage thresholds to account for new code. Add coverage reporting for integration tests with agentic features. Ensure coverage data is properly collected from all Python versions in the matrix. Update coverage badge and reporting format.
-
-## 4. Implement Performance Regression Testing [pending]
-### Dependencies: 11.2, 11.3
-### Description: Add performance benchmarking to detect regressions in response parsing and API interaction performance
-### Details:
-Create performance benchmark tests for structured response parsing with instructor. Add timing tests for AgenticCodePatch creation and validation. Implement baseline performance metrics storage and comparison logic. Configure performance tests to fail if response times degrade beyond acceptable thresholds. Add memory usage monitoring for large structured responses.
-
-## 5. Add Integration Testing for Structured Response Features [pending]
+## 2. Extend Configuration Loading Infrastructure [pending]
 ### Dependencies: 11.4
-### Description: Create comprehensive integration tests for agentic features including structured response handling and error scenarios
+### Description: Modify config.py to support loading and parsing of new agentic configuration sections
 ### Details:
-Add integration tests for AgenticCodePatch parsing with real Gemini API responses. Test fallback behavior when structured parsing fails. Create tests for instructor integration with various response formats. Add tests for configuration loading and precedence with agentic settings. Ensure integration tests work across all supported Python versions and handle API rate limiting gracefully.
+Extend the existing configuration loading mechanism to include agentic settings. Add new configuration sections to the JSON schema and environment variable mappings. Implement parsing logic for complex nested configurations like timeout hierarchies and preference objects. Ensure all new settings integrate with the existing precedence system (function args > env vars > config.json > defaults).
+
+## 3. Implement Configuration Validation and Sanitization [pending]
+### Dependencies: 11.5
+### Description: Add comprehensive validation for all agentic configuration options with appropriate error handling
+### Details:
+Implement validation functions for each configuration category: validate timeout values are positive integers, ensure preference options match allowed values, verify fallback behavior settings are valid. Add configuration sanitization to normalize values (e.g., timeout ranges, boolean conversions). Implement clear error messages for invalid configurations with suggestions for fixes.
+
+## 4. Add Environment Variable Support for Agentic Settings [pending]
+### Dependencies: 11.6
+### Description: Implement environment variable mappings for all new agentic configuration options
+### Details:
+Create environment variable mappings following the existing naming convention (e.g., GEMINI_AGENTIC_STRUCTURED_RESPONSES, GEMINI_INSTRUCTOR_TIMEOUT, GEMINI_FALLBACK_BEHAVIOR). Implement proper type conversion for complex settings (JSON parsing for nested objects, boolean conversion, integer validation). Add support for environment variable overrides at the granular level while maintaining hierarchical precedence.
+
+## 5. Update Configuration Documentation and Examples [pending]
+### Dependencies: 11.7
+### Description: Create comprehensive documentation for all new configuration options with practical examples
+### Details:
+Update configuration documentation to include all new agentic settings with detailed descriptions, valid value ranges, and impact explanations. Create example configuration files showing different use cases (development, production, high-performance). Document environment variable equivalents and precedence rules. Add troubleshooting section for common configuration issues and provide migration guidance from default settings.
 

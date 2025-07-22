@@ -1,0 +1,125 @@
+{
+	"meta": {
+		"generatedAt": "2025-07-22T07:58:41.326Z",
+		"tasksAnalyzed": 14,
+		"totalTasks": 14,
+		"analysisCount": 14,
+		"thresholdScore": 5,
+		"projectName": "Taskmaster",
+		"usedResearch": true
+	},
+	"complexityAnalysis": [
+		{
+			"taskId": 1,
+			"taskTitle": "Refactor AI API Logic from Server to Helper Module",
+			"complexityScore": 7,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Break down the refactoring into subtasks: (1) Extract execute_gemini_api() and execute_gemini_cli_streaming() functions to gemini_helper.py; (2) Update gemini_mcp_server.py to orchestrate workflows via helper functions; (3) Refactor MCP request handlers to use helper functions; (4) Update imports, error handling, and test coverage to ensure architectural separation and functionality preservation.",
+			"reasoning": "This task involves critical architectural refactoring enforcing separation of concerns, requiring careful function extraction, interface updates, and comprehensive testing to maintain existing functionality. The complexity arises from ensuring no regressions and proper module decoupling."
+		},
+		{
+			"taskId": 3,
+			"taskTitle": "Fix Configuration Violations by Removing Direct os.getenv() Calls",
+			"complexityScore": 6,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Divide the task into subtasks: (1) Identify and replace all direct os.getenv() calls with config.py accessor functions; (2) Replace hardcoded configuration values with config calls; (3) Update error handling for configuration validation; (4) Add linting rules to prevent future direct os.getenv() usage and validate environment variable overrides.",
+			"reasoning": "While conceptually straightforward, this task requires thorough code scanning, consistent replacement, and validation of configuration precedence and error handling, plus adding preventive linting, making it moderately complex."
+		},
+		{
+			"taskId": 4,
+			"taskTitle": "Add Required Dependencies for Structured Response Support",
+			"complexityScore": 4,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Expand into subtasks: (1) Install instructor library and verify imports; (2) Ensure pydantic version compatibility; (3) Verify compatibility with google-generativeai; (4) Update project configuration files (pyproject.toml, requirements.txt); (5) Create basic functionality tests for instructor integration.",
+			"reasoning": "This task mainly involves dependency management and compatibility verification, which is relatively low complexity but requires careful version control and testing to avoid conflicts."
+		},
+		{
+			"taskId": 5,
+			"taskTitle": "Create Dedicated Security Helper Module",
+			"complexityScore": 7,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Expand into subtasks: (1) Create security.py module structure; (2) Extract and move sanitize_for_prompt function; (3) Extract and move validate_path_security function; (4) Implement additional security validation functions (e.g., validate_user_code, secure path resolution); (5) Update imports and ensure compatibility across codebase.",
+			"reasoning": "This task requires careful extraction and enhancement of security functions following OWASP practices, with comprehensive testing for security vulnerabilities, making it moderately complex and critical."
+		},
+		{
+			"taskId": 6,
+			"taskTitle": "Implement AgenticCodePatch Pydantic Model",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Divide into subtasks: (1) Define core Pydantic model and action type enum; (2) Implement field validation rules; (3) Add detailed documentation and docstrings; (4) Implement serialization/deserialization methods; (5) Add error handling and edge case management.",
+			"reasoning": "Defining a robust data model with comprehensive validation, serialization, and error handling requires moderate complexity, especially to ensure correctness and maintainability."
+		},
+		{
+			"taskId": 7,
+			"taskTitle": "Integrate Instructor Library with Gemini Helper",
+			"complexityScore": 7,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Expand into subtasks: (1) Install and configure instructor library in gemini_helper.py; (2) Create instructor-wrapped Gemini client initialization; (3) Implement structured response wrapper functions; (4) Add error handling and fallback mechanisms; (5) Update prompt construction for structured responses.",
+			"reasoning": "Integration involves modifying client initialization, wrapping API calls, adding robust error handling with fallbacks, and updating prompt logic, which requires careful coordination and testing."
+		},
+		{
+			"taskId": 8,
+			"taskTitle": "Refactor gemini_analyze_code Tool for Structured Responses",
+			"complexityScore": 8,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Break down into subtasks: (1) Define AgenticCodePatch data model; (2) Update Gemini prompts for structured output; (3) Integrate instructor library for response parsing; (4) Implement backward compatibility layer for text responses; (5) Update function documentation and type hints.",
+			"reasoning": "This task involves significant refactoring of core analysis logic to support structured responses with fallback, requiring complex prompt engineering, parsing, and backward compatibility handling."
+		},
+		{
+			"taskId": 9,
+			"taskTitle": "Implement Diff View Formatting in MCP Server",
+			"complexityScore": 7,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Expand into subtasks: (1) Create AgenticCodePatch parser and validator; (2) Implement diff generation engine for REPLACE actions; (3) Create markdown formatting system for all action types; (4) Build MCP client compatibility layer for output formatting; (5) Integrate formatted output into MCP server response system.",
+			"reasoning": "Formatting structured patches into human-readable diffs with markdown and client compatibility involves multiple layers of parsing, formatting, and integration, making it moderately complex."
+		},
+		{
+			"taskId": 10,
+			"taskTitle": "Enhance Testing Suite for Structured Response Features",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Divide into subtasks: (1) Create unit tests for AgenticCodePatch model validation; (2) Develop integration tests for instructor library usage; (3) Implement end-to-end workflow tests for agentic collaboration; (4) Add performance and security tests; (5) Ensure multi-Python version compatibility testing.",
+			"reasoning": "Comprehensive testing across unit, integration, end-to-end, performance, security, and compatibility dimensions requires careful planning but follows standard testing practices."
+		},
+		{
+			"taskId": 11,
+			"taskTitle": "Update Configuration Management for Agentic Features",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Expand into subtasks: (1) Define configuration schema for agentic features; (2) Extend configuration loading infrastructure; (3) Implement configuration validation and sanitization; (4) Add environment variable support; (5) Update configuration documentation and examples.",
+			"reasoning": "Extending configuration management with new hierarchical settings and validation is moderately complex, requiring careful integration and documentation."
+		},
+		{
+			"taskId": 12,
+			"taskTitle": "Improve Error Handling and Logging for Agentic Workflows",
+			"complexityScore": 7,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Divide into subtasks: (1) Implement structured logging framework; (2) Add error classification and exception hierarchy; (3) Implement graceful degradation mechanism; (4) Add comprehensive error handling to agentic workflow functions; (5) Implement monitoring and alerting for production readiness.",
+			"reasoning": "Robust error handling and logging with classification, fallback, and monitoring requires careful design and integration, increasing complexity."
+		},
+		{
+			"taskId": 13,
+			"taskTitle": "Performance Optimization for Structured Response Processing",
+			"complexityScore": 7,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Break down into subtasks: (1) Implement performance monitoring and profiling infrastructure; (2) Implement caching layer for code analysis patterns; (3) Optimize prompt construction and response parsing; (4) Add streaming progress indicators; (5) Optimize memory usage and validate response time targets.",
+			"reasoning": "Performance optimization involves profiling, caching, code optimization, streaming support, and memory management, which are technically challenging and require thorough testing."
+		},
+		{
+			"taskId": 14,
+			"taskTitle": "Update CI/CD Pipeline for Enhanced Quality Assurance",
+			"complexityScore": 5,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Expand into subtasks: (1) Integrate uv package manager for faster CI dependencies; (2) Add security scanning with bandit and pip-audit; (3) Enhance code coverage for agentic features; (4) Implement performance regression testing; (5) Add integration testing for structured response features.",
+			"reasoning": "Updating CI/CD pipelines with additional testing, security scanning, and performance checks is moderately complex but follows established DevOps practices."
+		},
+		{
+			"taskId": 15,
+			"taskTitle": "Documentation and User Guide Updates",
+			"complexityScore": 3,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Expand documentation updates into subtasks: (1) Update README.md and API docs with agentic features; (2) Create migration guide for structured responses; (3) Update troubleshooting and FAQ sections with new usage patterns.",
+			"reasoning": "Documentation updates are lower complexity tasks focused on clarity and completeness, essential for user adoption but less technically challenging."
+		}
+	]
+}

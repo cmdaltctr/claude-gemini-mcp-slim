@@ -1,43 +1,43 @@
 # Task ID: 9
-# Title: Improve Error Handling and Logging for Agentic Workflows
+# Title: Implement Diff View Formatting in MCP Server
 # Status: pending
-# Dependencies: 6
-# Priority: medium
-# Description: Implement comprehensive error handling and logging for the new structured response functionality
+# Dependencies: 8
+# Priority: high
+# Description: Update the MCP server to format AgenticCodePatch objects into human-readable suggestions with diff views
 # Details:
-Add robust error handling throughout the agentic workflow. Implement proper logging for structured response parsing failures, instructor library errors, and fallback mechanism activation. Ensure no sensitive data is logged. Add structured logging for better debugging and monitoring. Implement graceful degradation when structured responses fail, falling back to plain text responses.
+Modify gemini_mcp_server.py to receive AgenticCodePatch objects and format them into clear, actionable suggestions. Implement diff view generation showing before/after code changes. Create markdown formatting for different action types (REPLACE, INSERT, NOTIFY). Ensure the formatted output is compatible with various MCP clients (IDEs, terminals, CLIs). Add proper error handling for malformed structured responses.
 
 # Test Strategy:
-Error simulation tests, logging validation tests, fallback mechanism tests, sensitive data leak prevention tests
+Unit tests for formatting functions, visual diff validation tests, MCP client compatibility tests, error handling tests
 
 # Subtasks:
-## 1. Implement Structured Logging Framework [pending]
+## 1. Create AgenticCodePatch Parser and Validator [pending]
 ### Dependencies: None
-### Description: Set up a comprehensive structured logging system with configurable log levels and secure handling
+### Description: Implement functions to parse and validate AgenticCodePatch objects received by the MCP server
 ### Details:
-Create a centralized logging configuration in src/core/logging.py using Python's logging module with structured formatters (JSON). Implement log level configuration via environment variables. Add context managers for request tracing. Ensure sensitive data (API keys, user data) is filtered from logs using custom filters. Configure separate log files for different components (api, parsing, fallback).
+Create parser functions in gemini_mcp_server.py to deserialize AgenticCodePatch objects from JSON responses. Implement validation logic to ensure all required fields are present and properly formatted. Add error handling for malformed patch objects with descriptive error messages. Create helper functions to validate action types (REPLACE, INSERT, NOTIFY) and ensure file paths are safe.
 
-## 2. Add Error Classification and Exception Hierarchy [pending]
-### Dependencies: 9.1
-### Description: Create a comprehensive exception hierarchy for different types of structured response failures
-### Details:
-Define custom exception classes in src/core/exceptions.py: StructuredResponseError, InstructorParsingError, GeminiAPIError, FallbackActivatedError. Each exception should include structured metadata (error_code, context, recovery_suggestions). Implement error classification logic to categorize failures. Add error context preservation for debugging while maintaining security.
-
-## 3. Implement Graceful Degradation Mechanism [pending]
-### Dependencies: 9.2
-### Description: Create fallback logic that gracefully degrades from structured to plain text responses
-### Details:
-Implement fallback decorator in src/core/fallback.py that wraps structured response functions. On StructuredResponseError, automatically retry with plain text prompts. Maintain response quality metrics and fallback frequency tracking. Implement configurable retry strategies (immediate, exponential backoff). Log fallback activations with context for monitoring.
-
-## 4. Add Comprehensive Error Handling to Agentic Workflow Functions [pending]
-### Dependencies: 9.3
-### Description: Integrate error handling and logging into all agentic workflow functions including gemini_analyze_code
-### Details:
-Wrap all agentic functions (gemini_analyze_code, gemini_codebase_analysis, gemini_quick_query) with try-catch blocks using the new exception hierarchy. Add pre-processing validation for inputs. Implement timeout handling for long-running operations. Add progress logging for multi-step operations. Ensure all errors are logged with appropriate context and severity levels.
-
-## 5. Implement Monitoring and Alerting for Production Readiness [pending]
+## 2. Implement Diff Generation Engine [pending]
 ### Dependencies: 9.4
-### Description: Add monitoring capabilities and alerting for error rates and fallback frequency
+### Description: Create functions to generate unified diff format from AgenticCodePatch REPLACE actions
 ### Details:
-Create monitoring dashboard data collection in src/core/monitoring.py. Track key metrics: structured response success rate, fallback activation frequency, average response times, error distribution. Implement configurable alerting thresholds. Add health check endpoints for system monitoring. Create log aggregation utilities for debugging complex failures. Export metrics in standard formats (Prometheus, JSON).
+Implement diff generation logic that reads the original file content and compares it with the proposed new_code from REPLACE actions. Use Python's difflib module to generate unified diff format. Handle line number ranges using start_line and end_line fields. Create functions to colorize diff output for terminal display and escape sequences for different MCP clients.
+
+## 3. Create Markdown Formatting System [pending]
+### Dependencies: 9.4, 9.5
+### Description: Implement markdown formatters for different AgenticCodePatch action types
+### Details:
+Create separate formatting functions for each action type: format_replace_action() using diff blocks, format_insert_action() showing insertion point and new code, format_notify_action() for informational messages. Use consistent markdown syntax with code blocks, file path headers, and clear action indicators. Implement proper escaping for special characters in code content.
+
+## 4. Build MCP Client Compatibility Layer [pending]
+### Dependencies: 9.6
+### Description: Implement client-specific formatting and output optimization for different MCP clients
+### Details:
+Create client detection logic and format responses accordingly for IDEs (rich formatting), terminals (ANSI colors), and CLIs (plain text). Implement adaptive line length and color scheme selection. Add configuration options for output preferences. Create fallback formatting for unknown clients. Ensure proper unicode handling across different environments.
+
+## 5. Integrate Formatted Output into MCP Server Response System [pending]
+### Dependencies: 9.7
+### Description: Modify the main MCP server response functions to use the new formatting system
+### Details:
+Update the main tool response functions in gemini_mcp_server.py to use the new formatting pipeline. Replace existing plain text responses with formatted diff views. Implement error handling that gracefully falls back to original response format if formatting fails. Add configuration toggles to enable/disable diff formatting. Ensure backward compatibility with existing MCP clients.
 

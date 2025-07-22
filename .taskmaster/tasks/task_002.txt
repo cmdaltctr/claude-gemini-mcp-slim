@@ -1,43 +1,11 @@
 # Task ID: 2
-# Title: Create Dedicated Security Helper Module
+# Title: Create Centralized Security Module and Eliminate Code Duplication
 # Status: pending
-# Dependencies: 1
+# Dependencies: 5
 # Priority: high
-# Description: Extract security functions into a dedicated security.py helper module following single responsibility principle
+# Description: Extract and consolidate duplicated security functions (sanitize_for_prompt and validate_path_security) from gemini_mcp_server.py and gemini_helper.py into a centralized helpers/security.py module to eliminate code duplication and security inconsistencies.
 # Details:
-Create src/claude_gemini_mcp/helpers/security.py module. Move sanitize_for_prompt and validate_path_security functions from existing modules. Implement additional security validations for file path traversal protection, input sanitization for AI prompts, and secure handling of user-provided code. Follow OWASP secure coding practices. Ensure the module is properly importable and maintains all existing functionality.
+This is a critical security refactoring task that addresses the violation of single responsibility principle and potential security risks from inconsistent implementations. Create src/claude_gemini_mcp/helpers/security.py module and move the duplicated sanitize_for_prompt() and validate_path_security() functions from both gemini_mcp_server.py and gemini_helper.py. Ensure the consolidated functions maintain all existing functionality while providing a single, consistent implementation. Update imports in both source files to reference the centralized security module. Implement additional security validations including enhanced path traversal protection, comprehensive input sanitization for AI prompts, secure handling of user-provided code snippets, and protection against injection attacks. Follow OWASP secure coding practices throughout the implementation. Add proper error handling and logging for security events. Ensure the security module is properly exposed in helpers/__init__.py and maintains backward compatibility with existing function signatures. The consolidation should result in identical security behavior across all modules while reducing maintenance burden and eliminating potential inconsistencies that could create security vulnerabilities.
 
 # Test Strategy:
-Unit tests for all security functions, penetration tests for path traversal attempts, input validation tests with malicious payloads, security scanning with bandit
-
-# Subtasks:
-## 1. Create Security Helper Module Structure [pending]
-### Dependencies: None
-### Description: Set up the basic security.py module file and directory structure with proper imports and documentation
-### Details:
-Create src/claude_gemini_mcp/helpers/security.py file. Add module-level docstring explaining the security functions. Import necessary libraries (os, pathlib, re, logging). Set up basic module structure with proper type hints and error handling framework. Ensure the helpers directory has proper __init__.py imports.
-
-## 2. Extract and Move sanitize_for_prompt Function [pending]
-### Dependencies: 2.1
-### Description: Locate, extract, and move the sanitize_for_prompt function to the new security module
-### Details:
-Find sanitize_for_prompt function in existing codebase. Move it to security.py with proper docstring and type hints. Implement comprehensive input sanitization including removal of potentially dangerous patterns, encoding issues, and prompt injection attempts. Update all existing imports to reference the new location. Ensure no functionality is lost during the move.
-
-## 3. Extract and Move validate_path_security Function [pending]
-### Dependencies: 2.1
-### Description: Locate, extract, and move the validate_path_security function to the new security module
-### Details:
-Find validate_path_security function in existing codebase. Move it to security.py with enhanced path traversal protection. Implement additional checks for symlink attacks, absolute path validation, and directory traversal attempts using techniques like '../' patterns. Add proper error messages and logging. Update all existing imports to reference the new location.
-
-## 4. Implement Additional Security Validation Functions [pending]
-### Dependencies: 2.2, 2.3
-### Description: Add new security functions for comprehensive input validation and secure code handling
-### Details:
-Implement validate_user_code function for scanning user-provided code for dangerous patterns. Add validate_file_access function with OWASP-compliant file access controls. Create sanitize_user_input function for general input validation. Implement secure_path_resolution function using pathlib for robust path handling. Add logging and monitoring capabilities for security events. Follow OWASP secure coding practices throughout.
-
-## 5. Update Module Imports and Ensure Compatibility [pending]
-### Dependencies: 2.4
-### Description: Update all existing code to use the new security module and verify full functionality
-### Details:
-Update imports in gemini_helper.py, gemini_mcp_server.py, and any other modules that previously used the security functions. Ensure the helpers/__init__.py properly exports the security module. Add backward compatibility checks and error handling for import failures. Run comprehensive tests to verify no existing functionality is broken. Update documentation and type hints throughout the codebase to reflect the new module structure.
-
+Create comprehensive unit tests for all security functions including edge cases and malicious inputs. Implement penetration tests specifically targeting path traversal attempts and directory escape scenarios. Add input validation tests using various malicious payload types including SQL injection, command injection, and prompt injection attempts. Run security scanning with bandit, pip-audit, and safety tools to verify no new vulnerabilities are introduced. Create integration tests to verify that both gemini_mcp_server.py and gemini_helper.py modules function correctly after importing from the centralized security module. Add regression tests to ensure existing functionality is preserved during the refactoring. Include performance tests to verify the centralized approach doesn't introduce performance degradation. Implement code coverage validation to ensure all security function paths are tested. Add architectural compliance tests to verify the proper separation of security concerns.

@@ -1,43 +1,43 @@
 # Task ID: 6
-# Title: Implement Diff View Formatting in MCP Server
+# Title: Implement AgenticCodePatch Pydantic Model
 # Status: pending
-# Dependencies: 5
+# Dependencies: 4
 # Priority: high
-# Description: Update the MCP server to format AgenticCodePatch objects into human-readable suggestions with diff views
+# Description: Define the structured data schema for agentic code suggestions using Pydantic models
 # Details:
-Modify gemini_mcp_server.py to receive AgenticCodePatch objects and format them into clear, actionable suggestions. Implement diff view generation showing before/after code changes. Create markdown formatting for different action types (REPLACE, INSERT, NOTIFY). Ensure the formatted output is compatible with various MCP clients (IDEs, terminals, CLIs). Add proper error handling for malformed structured responses.
+Implement the AgenticCodePatch Pydantic model in gemini_helper.py exactly as specified in Appendix A of the PRD. Include proper field validation, type hints, and documentation. Support action types: REPLACE, INSERT, NOTIFY. Include fields for file_path, start_line, end_line, new_code, and explanation. Add comprehensive validation rules and error handling for edge cases. Ensure the model can be serialized/deserialized correctly.
 
 # Test Strategy:
-Unit tests for formatting functions, visual diff validation tests, MCP client compatibility tests, error handling tests
+Unit tests for model validation, serialization/deserialization tests, edge case testing with invalid data, schema validation tests
 
 # Subtasks:
-## 1. Create AgenticCodePatch Parser and Validator [pending]
+## 1. Define Core AgenticCodePatch Pydantic Model Structure [pending]
 ### Dependencies: None
-### Description: Implement functions to parse and validate AgenticCodePatch objects received by the MCP server
+### Description: Create the basic Pydantic model class with all required fields and action type enum
 ### Details:
-Create parser functions in gemini_mcp_server.py to deserialize AgenticCodePatch objects from JSON responses. Implement validation logic to ensure all required fields are present and properly formatted. Add error handling for malformed patch objects with descriptive error messages. Create helper functions to validate action types (REPLACE, INSERT, NOTIFY) and ensure file paths are safe.
+Create an enum for action types (REPLACE, INSERT, NOTIFY) and define the AgenticCodePatch class with fields: file_path (str), start_line (Optional[int]), end_line (Optional[int]), new_code (Optional[str]), explanation (str), and action (ActionType). Add proper type hints and basic field definitions.
 
-## 2. Implement Diff Generation Engine [pending]
-### Dependencies: 6.1
-### Description: Create functions to generate unified diff format from AgenticCodePatch REPLACE actions
-### Details:
-Implement diff generation logic that reads the original file content and compares it with the proposed new_code from REPLACE actions. Use Python's difflib module to generate unified diff format. Handle line number ranges using start_line and end_line fields. Create functions to colorize diff output for terminal display and escape sequences for different MCP clients.
-
-## 3. Create Markdown Formatting System [pending]
-### Dependencies: 6.1, 6.2
-### Description: Implement markdown formatters for different AgenticCodePatch action types
-### Details:
-Create separate formatting functions for each action type: format_replace_action() using diff blocks, format_insert_action() showing insertion point and new code, format_notify_action() for informational messages. Use consistent markdown syntax with code blocks, file path headers, and clear action indicators. Implement proper escaping for special characters in code content.
-
-## 4. Build MCP Client Compatibility Layer [pending]
-### Dependencies: 6.3
-### Description: Implement client-specific formatting and output optimization for different MCP clients
-### Details:
-Create client detection logic and format responses accordingly for IDEs (rich formatting), terminals (ANSI colors), and CLIs (plain text). Implement adaptive line length and color scheme selection. Add configuration options for output preferences. Create fallback formatting for unknown clients. Ensure proper unicode handling across different environments.
-
-## 5. Integrate Formatted Output into MCP Server Response System [pending]
+## 2. Implement Field Validation Rules [pending]
 ### Dependencies: 6.4
-### Description: Modify the main MCP server response functions to use the new formatting system
+### Description: Add comprehensive validation logic for all fields based on action types and business rules
 ### Details:
-Update the main tool response functions in gemini_mcp_server.py to use the new formatting pipeline. Replace existing plain text responses with formatted diff views. Implement error handling that gracefully falls back to original response format if formatting fails. Add configuration toggles to enable/disable diff formatting. Ensure backward compatibility with existing MCP clients.
+Implement Pydantic validators using @field_validator and @model_validator decorators. Validate that REPLACE actions have start_line, end_line, and new_code. INSERT actions have start_line and new_code. NOTIFY actions only require explanation. Ensure file_path is valid, line numbers are positive integers, and end_line >= start_line for REPLACE actions.
+
+## 3. Add Field Documentation and Docstrings [pending]
+### Dependencies: 6.5
+### Description: Provide comprehensive documentation for the model and all its fields
+### Details:
+Add detailed docstrings to the AgenticCodePatch class and Field() descriptions for each attribute. Document the purpose of each action type, expected data formats, and validation rules. Include usage examples in the class docstring showing how to create patches for different scenarios.
+
+## 4. Implement Serialization and Deserialization Methods [pending]
+### Dependencies: 6.6
+### Description: Add methods for converting the model to/from JSON and dictionary formats
+### Details:
+Implement custom serialization methods if needed beyond Pydantic's built-in .model_dump() and .model_validate(). Add methods for converting to/from JSON strings, handling optional fields correctly, and preserving all data integrity during round-trip operations. Ensure compatibility with instructor library requirements.
+
+## 5. Add Error Handling and Edge Case Management [pending]
+### Dependencies: 6.7
+### Description: Implement comprehensive error handling for invalid data and edge cases
+### Details:
+Add custom exception classes for specific validation failures. Implement error handling for malformed data, missing required fields, and invalid combinations of fields. Add methods to provide helpful error messages for common validation failures. Ensure the model gracefully handles edge cases like empty files, single-line files, and boundary conditions.
 
