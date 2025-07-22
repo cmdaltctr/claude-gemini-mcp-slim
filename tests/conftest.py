@@ -6,13 +6,66 @@ Provides proper test isolation and resource management.
 
 import asyncio
 import os
+import random
+import string
 import tempfile
 from pathlib import Path
 from typing import Any, Callable, Dict, Generator, List
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from mcp.types import TextContent
+
+# Handle optional MCP import
+try:
+    from mcp.types import TextContent
+except ImportError:
+    # Create a mock TextContent for testing when MCP is not available
+    class TextContent:
+        def __init__(self, type: str, text: str):
+            self.type = type
+            self.text = text
+
+# Import config reload function
+try:
+    from claude_gemini_mcp.config import reload_config
+except ImportError:
+    def reload_config():
+        pass
+
+
+@pytest.fixture
+def temp_large_file(tmp_path) -> Generator[Path, None, None]:
+    """
+    Fixture for creating a temporary large file.
+    """
+    file_path = tmp_path / "large_file.txt"
+    with open(file_path, 'wb') as f:
+        f.write(b'0' * (1024 * 1024 * 100))  # 100MB file
+    yield file_path
+
+
+@pytest.fixture
+def random_text() -> Callable[[int, int], str]:
+    """
+    Helper to generate random text of a given size.
+    """
+    def _random_text(byte_size: int, line_count: int) -> str:
+        lines = ["".join(random.choices(string.ascii_letters, k=byte_size // line_count))
+                 for _ in range(line_count)]
+        return "\n".join(lines)
+
+    return _random_text
+
+
+@pytest.fixture(autouse=True)
+def snapshot_environment(monkeypatch) -> Generator[None, None, None]:
+    """
+    Snapshot and restore os.environ.
+    """
+    original_env = os.environ.copy()
+    yield
+    monkeypatch.setattr(os, 'environ', original_env)
+    reload_config()
 
 
 @pytest.fixture(scope="session")

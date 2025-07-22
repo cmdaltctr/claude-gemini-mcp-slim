@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, Mock, mock_open, patch
 import pytest
 
 # Import functions to test
-from gemini_helper import (
+from claude_gemini_mcp.gemini_helper import (
     CLI_TIMEOUT,
     GEMINI_MODELS,
     MAX_FILE_SIZE,
@@ -104,7 +104,7 @@ class TestSanitizeForPrompt(unittest.TestCase):
 class TestExecuteGeminiApi(unittest.TestCase):
     """Test cases for execute_gemini_api function"""
 
-    @patch("gemini_helper.get_api_key")
+    @patch("claude_gemini_mcp.gemini_helper.get_api_key")
     def test_execute_gemini_api_missing_api_key(self, mock_get_api_key):
         """Test handling of missing API key"""
         mock_get_api_key.return_value = None
@@ -112,7 +112,7 @@ class TestExecuteGeminiApi(unittest.TestCase):
         self.assertFalse(result["success"])
         self.assertIn("No API key found", result["error"])
 
-    @patch("gemini_helper.get_api_key")
+    @patch("claude_gemini_mcp.gemini_helper.get_api_key")
     def test_execute_gemini_api_import_error(self, mock_get_api_key):
         """Test handling of missing google-generativeai library"""
         mock_get_api_key.return_value = "valid_key_123456789"
@@ -123,7 +123,7 @@ class TestExecuteGeminiApi(unittest.TestCase):
             self.assertFalse(result["success"])
             self.assertIn("API library not available", result["error"])
 
-    @patch("gemini_helper.get_api_key")
+    @patch("claude_gemini_mcp.gemini_helper.get_api_key")
     def test_execute_gemini_api_success(self, mock_get_api_key):
         """Test successful API call"""
         mock_get_api_key.return_value = "valid_key_123456789"
@@ -143,7 +143,7 @@ class TestExecuteGeminiApi(unittest.TestCase):
             self.assertTrue(result["success"])
             self.assertEqual(result["output"], "Test response")
 
-    @patch("gemini_helper.get_api_key")
+    @patch("claude_gemini_mcp.gemini_helper.get_api_key")
     def test_execute_gemini_api_exception_handling(self, mock_get_api_key):
         """Test exception handling and error sanitization"""
         mock_get_api_key.return_value = "valid_key_123456789"
@@ -181,7 +181,7 @@ class TestExecuteGeminiCli(unittest.TestCase):
         large_prompt = "A" * 1000001  # 1MB + 1 byte
         result = execute_gemini_cli(large_prompt, show_progress=False)
         self.assertFalse(result["success"])
-        self.assertIn("Prompt too large (max 1MB)", result["error"])
+        self.assertIn("Prompt too large", result["error"])
 
     def test_execute_gemini_cli_invalid_model_name(self):
         """Test handling of invalid model name"""
@@ -440,8 +440,8 @@ class TestErrorSanitization(unittest.TestCase):
 class TestSmartExecution(unittest.TestCase):
     """Test cases for execute_gemini_smart function"""
 
-    @patch("gemini_helper.get_api_key")
-    @patch("gemini_helper.execute_gemini_api")
+    @patch("claude_gemini_mcp.gemini_helper.get_api_key")
+    @patch("claude_gemini_mcp.gemini_helper.execute_gemini_api")
     def test_execute_gemini_smart_api_success(self, mock_api, mock_get_key):
         """Test smart execution with successful API call"""
         mock_get_key.return_value = "valid_api_key"
@@ -453,9 +453,9 @@ class TestSmartExecution(unittest.TestCase):
         self.assertEqual(result["output"], "API response")
         mock_api.assert_called_once()
 
-    @patch("gemini_helper.get_api_key")
-    @patch("gemini_helper.execute_gemini_api")
-    @patch("gemini_helper.execute_gemini_cli")
+    @patch("claude_gemini_mcp.gemini_helper.get_api_key")
+    @patch("claude_gemini_mcp.gemini_helper.execute_gemini_api")
+    @patch("claude_gemini_mcp.gemini_helper.execute_gemini_cli")
     def test_execute_gemini_smart_api_fallback_to_cli(
         self, mock_cli, mock_api, mock_get_key
     ):
@@ -471,8 +471,8 @@ class TestSmartExecution(unittest.TestCase):
         mock_api.assert_called_once()
         mock_cli.assert_called_once()
 
-    @patch("gemini_helper.get_api_key")
-    @patch("gemini_helper.execute_gemini_cli")
+    @patch("claude_gemini_mcp.gemini_helper.get_api_key")
+    @patch("claude_gemini_mcp.gemini_helper.execute_gemini_cli")
     def test_execute_gemini_smart_no_api_key_direct_cli(self, mock_cli, mock_get_key):
         """Test smart execution going directly to CLI when no API key"""
         mock_get_key.return_value = None
@@ -486,8 +486,8 @@ class TestSmartExecution(unittest.TestCase):
 
     def test_execute_gemini_smart_model_selection(self):
         """Test that correct models are selected for different task types"""
-        with patch("gemini_helper.get_api_key", return_value=None):
-            with patch("gemini_helper.execute_gemini_cli") as mock_cli:
+        with patch("claude_gemini_mcp.gemini_helper.get_api_key", return_value=None):
+            with patch("claude_gemini_mcp.gemini_helper.execute_gemini_cli") as mock_cli:
                 mock_cli.return_value = {"success": True, "output": "response"}
 
                 # Test different task types

@@ -22,7 +22,7 @@ from hybrid_progress import (
 )
 
 # Import existing MCP functionality
-from gemini_helper import (
+from claude_gemini_mcp.gemini_helper import (
     execute_gemini_api,
     execute_gemini_cli,
     execute_gemini_smart,

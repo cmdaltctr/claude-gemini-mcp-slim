@@ -12,6 +12,9 @@ Desktop.ini
 # VS Code
 .vscode/
 *.code-workspace
+# Other IDEs
+.windsurf/
+.trae/
 
 # JetBrains IDEs
 .idea/
@@ -51,20 +54,15 @@ node_modules/
 .claude/mcp_servers.json
 claude.md
 
+# Gemini CLI
+gemini.md
+
 # Allow shared Claude configurations
 !.claude/
 !.claude/slash-commands.json
 !.claude/scripts/
 !.claude/hooks.json
 !.claude/README-SLASH-COMMANDS.md
-
-# Taskmaster
-tasks.json
-tasks/
-.taskmaster/
-
-# Project specific
-.windsurf/
 
 # Testing and CI/CD
 #################
@@ -167,3 +165,24 @@ migrations/versions/
 # Development Plans
 dev-plans/
 docs/dev-docs/
+
+logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dev-debug.log
+# Dependency directories
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+# OS specific
+
+
+# Task files
+# tasks.json
+# tasks/ 

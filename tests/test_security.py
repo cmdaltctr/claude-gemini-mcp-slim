@@ -17,7 +17,7 @@ import pytest
 root_dir = Path(__file__).resolve().parent.parent  # repo root
 sys.path.insert(0, str(root_dir))
 
-from gemini_mcp_server import sanitize_for_prompt, validate_path_security
+from claude_gemini_mcp.gemini_mcp_server import sanitize_for_prompt, validate_path_security
 
 
 class TestSecurityFunctions:
@@ -141,11 +141,11 @@ class TestSecurityIntegration:
     def test_no_shell_true_usage(self) -> None:
         """Verify that shell=True is not used anywhere in the codebase"""  # noqa: B602
         # Read the main server file
-        with open("gemini_mcp_server.py", "r") as f:
+        with open("src/claude_gemini_mcp/gemini_mcp_server.py", "r") as f:
             server_content = f.read()
 
         # Read the helper file
-        with open("gemini_helper.py", "r") as f:
+        with open("src/claude_gemini_mcp/gemini_helper.py", "r") as f:
             helper_content = f.read()
 
         # Check that shell=True is not used (except in comments/documentation)  # noqa: B602
@@ -163,8 +163,8 @@ class TestSecurityIntegration:
 
     def test_security_functions_present(self) -> None:
         """Verify that all required security functions are present"""
-        from gemini_helper import sanitize_for_prompt as helper_sanitize
-        from gemini_mcp_server import sanitize_for_prompt, validate_path_security
+        from claude_gemini_mcp.gemini_helper import sanitize_for_prompt as helper_sanitize
+        from claude_gemini_mcp.gemini_mcp_server import sanitize_for_prompt, validate_path_security
 
         # Test that functions are callable
         assert callable(sanitize_for_prompt)

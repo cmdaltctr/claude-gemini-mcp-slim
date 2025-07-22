@@ -3,7 +3,7 @@
 Demo script to test the streaming progress functionality
 """
 
-from gemini_helper import execute_gemini_smart_with_progress
+from claude_gemini_mcp.gemini_helper import execute_gemini_smart_with_progress
 
 
 def test_streaming_demo():

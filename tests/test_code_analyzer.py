@@ -5,38 +5,25 @@ These tests focus on discovery, aggregation, truncation, and analysis outputs
 of the code analyzer functionality.
 """
 
-import os
-import sys
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-# Add current directory to Python path for imports
-sys.path.insert(0, os.path.abspath("."))
-
-# Import functions and classes to test
-try:
-    from helpers.code_analyzer import (
-        CodeAnalyzerAPI,
-        analyze_codebase,
-    )
-    from helpers.codebase_analyzer import (
-        ArchitectureInfo,
-        CodebaseAnalysisError,
-        CodebaseAnalysisResult,
-        CodebaseStats,
-        FileDiscoveryError,
-        FileFilter,
-        ProjectStructure,
-        TechStackInfo,
-    )
-
-    IMPORTS_SUCCESSFUL = True
-except ImportError as e:
-    print(f"Import error: {e}")
-    print("Please run tests from project root directory")
-    IMPORTS_SUCCESSFUL = False
+from claude_gemini_mcp.helpers.code_analyzer import (
+    CodeAnalyzerAPI,
+    analyze_codebase,
+)
+from claude_gemini_mcp.helpers.codebase_analyzer import (
+    ArchitectureInfo,
+    CodebaseAnalysisError,
+    CodebaseAnalysisResult,
+    CodebaseStats,
+    FileDiscoveryError,
+    FileFilter,
+    ProjectStructure,
+    TechStackInfo,
+)
 
 
 class TestFileFilter(unittest.TestCase):
@@ -45,7 +32,7 @@ class TestFileFilter(unittest.TestCase):
     These tests focus on file discovery and filtering functionality.
     """
 
-    @unittest.skipUnless(IMPORTS_SUCCESSFUL, "Imports failed")
+    
     def test_should_analyze_file_unsupported_extension(self):
         """Test that unsupported file extensions are rejected"""
         test_file = Path("/test/file.unknown")
@@ -53,7 +40,7 @@ class TestFileFilter(unittest.TestCase):
         result = FileFilter.should_analyze_file(test_file, config)
         self.assertFalse(result)
 
-    @unittest.skipUnless(IMPORTS_SUCCESSFUL, "Imports failed")
+    
     def test_should_skip_directory_default_skips(self):
         """Test that default skip directories are properly skipped"""
         skip_dirs = ["node_modules", ".git", "__pycache__", "venv"]
@@ -63,7 +50,7 @@ class TestFileFilter(unittest.TestCase):
                 result = FileFilter.should_skip_directory(test_dir, {})
                 self.assertTrue(result, f"Should skip {skip_dir}")
 
-    @unittest.skipUnless(IMPORTS_SUCCESSFUL, "Imports failed")
+    
     def test_should_skip_directory_custom_skips(self):
         """Test that custom skip directories are properly skipped"""
         test_dir = Path("/test/custom_skip")
@@ -169,13 +156,13 @@ class TestAnalyzeCodebase(unittest.TestCase):
 
         shutil.rmtree(self.temp_dir)
 
-    @unittest.skipUnless(IMPORTS_SUCCESSFUL, "Imports failed")
+    
     def test_analyze_codebase_invalid_path(self):
         """Test error handling with invalid path"""
         with self.assertRaises(FileNotFoundError):
             analyze_codebase("/nonexistent/path")
 
-    @unittest.skipUnless(IMPORTS_SUCCESSFUL, "Imports failed")
+    
     def test_analyze_codebase_invalid_parameters(self):
         """Test error handling with invalid parameters"""
         with self.assertRaises(ValueError):

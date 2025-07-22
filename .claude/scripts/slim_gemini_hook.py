@@ -2,6 +2,11 @@
 """
 Slim Gemini CLI Hook System - Token-Efficient Automation
 Optimized for Claude Code token savings with essential analysis only
+
+Now integrated with config.py for centralized configuration management:
+- Model assignments through cfg.get_model(tool_name)
+- File limits through cfg.get_limit(limit_name)
+- Automatic registration of new tools with defaults
 """
 
 import os
@@ -9,41 +14,51 @@ import subprocess
 import sys
 from pathlib import Path
 
-# Model configuration with environment variable support
-GEMINI_MODELS = {
-    "flash": os.getenv("GEMINI_FLASH_MODEL", "gemini-2.5-flash"),
-    "pro": os.getenv("GEMINI_PRO_MODEL", "gemini-2.5-pro"),
-}
+# Import centralized configuration system
+try:
+    # Try relative import first (when run from project root)
+    sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+    from claude_gemini_mcp.config import get_config, register_tool_if_missing
+except ImportError:
+    try:
+        # Try absolute import (when run from anywhere with config.py in Python path)
+        from claude_gemini_mcp.config import get_config, register_tool_if_missing
+    except ImportError:
+        print("❌ Error: config.py not found. Falling back to hardcoded defaults.", file=sys.stderr)
+        # Fallback configuration (legacy mode)
+        get_config = None
+        register_tool_if_missing = None
 
-# Model assignment for hook tasks
-HOOK_MODEL_ASSIGNMENTS = {
-    "pre-edit": "flash",  # Quick context analysis
-    "pre-commit": "pro",  # Thorough review
-    "session-summary": "flash",  # Lightweight overview
-}
+# Initialize configuration with automatic tool registration
+if get_config and register_tool_if_missing:
+    cfg = get_config()
+    
+    # Register hook tools with defaults if they're missing from config
+    register_tool_if_missing("pre_edit", "flash")
+    register_tool_if_missing("pre_commit", "pro") 
+    register_tool_if_missing("session_summary", "flash")
+else:
+    cfg = None
 
-# Configuration
-
-# File analysis configuration optimized for token efficiency
-SLIM_CONFIG = {
-    "max_file_size": 81920,  # 80 KB
-    "max_lines": 800,  # Maximum lines per file
-    "response_word_limit": 800,  # Maximum words in response
+# Legacy fallback configuration when config.py is unavailable
+LEGACY_CONFIG = {
+    "models": {
+        "flash": os.getenv("GEMINI_FLASH_MODEL", "gemini-2.5-flash"),
+        "pro": os.getenv("GEMINI_PRO_MODEL", "gemini-2.5-pro"),
+    },
+    "assignments": {
+        "pre_edit": "flash",
+        "pre_commit": "pro", 
+        "session_summary": "flash",
+    },
+    "limits": {
+        "max_file_size": 81920,  # 80 KB
+        "max_lines": 800,  # Maximum lines per file
+        "response_word_limit": 800,  # Maximum words in response
+    },
     "supported_extensions": [
-        ".py",
-        ".js",
-        ".ts",
-        ".java",
-        ".cpp",
-        ".c",
-        ".rs",  # Programming languages
-        ".vue",
-        ".html",
-        ".css",
-        ".scss",
-        ".sass",
-        ".jsx",
-        ".tsx",  # Frontend files
+        ".py", ".js", ".ts", ".java", ".cpp", ".c", ".rs",
+        ".vue", ".html", ".css", ".scss", ".sass", ".jsx", ".tsx",
     ],
 }
 
@@ -51,37 +66,49 @@ SLIM_CONFIG = {
 
 
 def should_analyze_file(file_path: str) -> tuple[bool, str]:
-    """Determine if file should be analyzed based on slim configuration"""
-
+    """Determine if file should be analyzed based on configuration"""
+    
     try:
         path = Path(file_path)
-
+        
         # Check if file exists
         if not path.exists():
             return False, "File not found"
-
+        
+        # Get configuration values (with fallback to legacy config)
+        if cfg:
+            max_file_size = cfg.get_limit("max_file_size")
+            max_lines = cfg.get_limit("max_lines")
+            # Get allowed extensions from security settings
+            security_config = cfg._config.get("security", {})
+            supported_extensions = security_config.get("allowed_extensions", LEGACY_CONFIG["supported_extensions"])
+        else:
+            max_file_size = LEGACY_CONFIG["limits"]["max_file_size"]
+            max_lines = LEGACY_CONFIG["limits"]["max_lines"] 
+            supported_extensions = LEGACY_CONFIG["supported_extensions"]
+        
         # Check file extension
-        if path.suffix.lower() not in SLIM_CONFIG["supported_extensions"]:
+        if path.suffix.lower() not in supported_extensions:
             return False, "File type not supported"
-
-        # Check file size (80KB limit)
+        
+        # Check file size limit
         file_size = path.stat().st_size
-        if file_size > SLIM_CONFIG["max_file_size"]:
-            return False, f"File too large ({file_size} bytes)"
-
-        # Check line count (800 line limit)
+        if file_size > max_file_size:
+            return False, f"File too large ({file_size} bytes, limit: {max_file_size})"
+        
+        # Check line count limit
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 line_count = sum(1 for _ in f)
-
-            if line_count > SLIM_CONFIG["max_lines"]:
-                return False, f"Too many lines ({line_count})"
+            
+            if line_count > max_lines:
+                return False, f"Too many lines ({line_count}, limit: {max_lines})"
         except Exception:
             # If can't read file, skip analysis
             return False, "Cannot read file"
-
+        
         return True, "Ready for analysis"
-
+        
     except Exception as e:
         return False, f"Error: {str(e)}"
 
@@ -105,9 +132,15 @@ def execute_gemini_analysis(analysis_type: str, file_paths: str):
         print("📝 No valid files to analyze", file=sys.stderr)
         return
 
-    # Select appropriate model
-    model_type = HOOK_MODEL_ASSIGNMENTS.get(analysis_type, "flash")
-    model_name = GEMINI_MODELS[model_type]
+    # Select appropriate model using centralized configuration
+    if cfg:
+        # Use centralized config - cfg.get_model() handles all the model resolution
+        model_name = cfg.get_model(analysis_type)
+    else:
+        # Fallback to legacy configuration
+        model_type = LEGACY_CONFIG["assignments"].get(analysis_type, "flash")
+        model_name = LEGACY_CONFIG["models"][model_type]
+    
     print(f"🤖 Using {model_name} for {analysis_type}", file=sys.stderr)
 
     # Create analysis prompt based on type
@@ -180,9 +213,15 @@ def execute_session_summary(directory_path: str):
 
     print("📋 Generating session summary...", file=sys.stderr)
 
-    # Select model for session summary
-    model_type = HOOK_MODEL_ASSIGNMENTS.get("session-summary", "flash")
-    model_name = GEMINI_MODELS[model_type]
+    # Select model for session summary using centralized configuration
+    if cfg:
+        # Use centralized config - handle both "session-summary" and "session_summary" formats
+        model_name = cfg.get_model("session_summary")
+    else:
+        # Fallback to legacy configuration
+        model_type = LEGACY_CONFIG["assignments"].get("session_summary", "flash")
+        model_name = LEGACY_CONFIG["models"][model_type]
+    
     print(f"🤖 Using {model_name} for session summary", file=sys.stderr)
 
     prompt = create_session_summary_prompt(directory_path)

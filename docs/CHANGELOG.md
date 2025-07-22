@@ -81,7 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Testing
 
 * add test file for hook testing ([65948f7](https://github.com/cmdaltctr/claude-gemini-mcp-slim/commit/65948f7aaa351b4a24dab014a7e223a548c3f9ba))
-
+* add comprehensive stress tests for limit enforcement and large input handling ([5906cce](https://github.com/cmdaltctr/claude-gemini-mcp-slim/commit/5906cce903d678b04872ba03ac637894e6340a0c))
 
 ### CI/CD
 

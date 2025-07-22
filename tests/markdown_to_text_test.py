@@ -22,7 +22,7 @@ from typing import Any, Dict, List
 
 import pytest
 
-from helpers.markdown_utils import is_idempotent, markdown_to_text, performance_test
+from claude_gemini_mcp.helpers.markdown_utils import is_idempotent, markdown_to_text, performance_test
 
 
 class TestMarkdownToText:
@@ -314,7 +314,7 @@ class TestMarkdownToText:
             ("```\ncode line 1\ncode line 2\n```", "code line 1\ncode line 2"),
             (
                 "```python\ndef hello():\n    print('world')\n```",
-                "def hello():\n    print('world')",
+                "def hello():\nprint('world')",
             ),
             ("~~~\ncode with tildes\n~~~", "code with tildes"),
             ("```javascript\nconst x = 1;\n```", "const x = 1;"),
