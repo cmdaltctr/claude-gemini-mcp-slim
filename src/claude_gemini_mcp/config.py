@@ -10,7 +10,6 @@ This module provides a comprehensive configuration management system with:
 - Validation with logging warnings and safe fallbacks
 - Thread-safe configuration caching
 
-Author: Claude AI Assistant
 Date: 2025-01-21
 Architecture: Configuration Management Pattern
 """
@@ -138,7 +137,7 @@ class GeminiConfig:
             "max_parallel_processes": 4,
         },
     }
-
+    # Hard-coded defaults (lowest priority)
     def __init__(self):
         """Initialize configuration with load precedence"""
         self._config: Dict[str, Any] = {}
@@ -146,6 +145,7 @@ class GeminiConfig:
         self._load_timestamp: float = 0
         self._reload()
 
+    # Private method to reload configuration
     def _reload(self) -> None:
         """Reload configuration from all sources with proper precedence"""
         try:
@@ -182,6 +182,7 @@ class GeminiConfig:
             self._config = self._deep_copy_dict(self.DEFAULT_CONFIG)
             raise ConfigurationError(f"Failed to load configuration: {e}")
 
+    # Private method to find configuration file
     def _find_config_file(self) -> Optional[Path]:
         """Find configuration file in standard locations"""
         possible_locations = [
@@ -200,6 +201,7 @@ class GeminiConfig:
 
         return None
 
+    # Private method to load configuration file
     def _load_config_file(self, config_path: Path) -> Dict[str, Any]:
         """Load configuration from JSON file"""
         try:
@@ -209,6 +211,7 @@ class GeminiConfig:
             logger.warning(f"Failed to load config file {config_path}: {e}")
             return {}
 
+    # Private method to load environment variables
     def _load_env_config(self) -> Dict[str, Any]:
         """Load configuration from environment variables"""
         env_config: Dict[str, Any] = {}
@@ -321,6 +324,7 @@ class GeminiConfig:
 
         return env_config
 
+    # Private method to merge configuration dictionaries
     def _merge_config(self, base: Dict[str, Any], override: Dict[str, Any]) -> None:
         """Deep merge configuration dictionaries"""
         for key, value in override.items():
@@ -329,6 +333,7 @@ class GeminiConfig:
             else:
                 base[key] = value
 
+    # Private method to create a deep copy of a dictionary
     def _deep_copy_dict(self, d: Dict[str, Any]) -> Dict[str, Any]:
         """Create a deep copy of a dictionary"""
         result = {}
@@ -341,6 +346,7 @@ class GeminiConfig:
                 result[key] = value
         return result
 
+    # Private method to validate and normalize configuration values
     def _validate_and_normalize(self) -> None:
         """Validate configuration values and apply normalization"""
         # Validate timeout values
@@ -383,6 +389,7 @@ class GeminiConfig:
                 )
                 assignments[tool_name] = "flash"
 
+    # Private method to apply FORCE_MODEL environment variable override
     def _apply_force_model_override(self) -> None:
         """Apply FORCE_MODEL environment variable override"""
         force_model = os.getenv("FORCE_MODEL")
@@ -415,7 +422,6 @@ class GeminiConfig:
                 return
 
     # Typed accessor methods (main public API)
-
     def get_model(self, tool_name: str, explicit_model: Optional[str] = None) -> str:
         """
         Get model name for a specific tool with load precedence
@@ -457,6 +463,7 @@ class GeminiConfig:
 
         return model_name
 
+    # Typed accessor methods for limits
     def get_limit(self, limit_name: str, explicit_limit: Optional[int] = None) -> int:
         """
         Get configuration limit with load precedence
@@ -493,6 +500,7 @@ class GeminiConfig:
         )
         return default_value
 
+    # Typed accessor methods for timeouts
     def get_timeout(
         self, timeout_name: str, explicit_timeout: Optional[int] = None
     ) -> int:
@@ -531,6 +539,7 @@ class GeminiConfig:
         )
         return default_value
 
+    # Typed accessor methods for security settings
     def get_security_setting(
         self, setting_name: str, explicit_value: Optional[bool] = None
     ) -> bool:
@@ -550,6 +559,7 @@ class GeminiConfig:
 
         return bool(default_value)
 
+    # Typed accessor methods for execution settings
     def get_execution_setting(
         self, setting_name: str, explicit_value: Optional[bool] = None
     ) -> bool:
@@ -570,7 +580,6 @@ class GeminiConfig:
         return bool(default_value)
 
     # Utility methods
-
     def reload_config(self) -> None:
         """Force reload configuration from all sources"""
         logger.info("Reloading configuration...")
@@ -594,7 +603,7 @@ class GeminiConfig:
             raise ConfigurationError(
                 f"Failed to save configuration to {config_path}: {e}"
             )
-
+    # Utility methods
     def validate_model_name(self, model_name: str) -> bool:
         """Validate that a model name is acceptable"""
         if not isinstance(model_name, str) or not model_name.strip():
@@ -613,8 +622,6 @@ class GeminiConfig:
 
 
 # Module-level singleton access functions
-
-
 def get_config() -> GeminiConfig:
     """Get the global configuration instance (thread-safe singleton)"""
     global _config_instance
@@ -627,7 +634,7 @@ def get_config() -> GeminiConfig:
 
     return _config_instance
 
-
+# Utility functions
 def register_tool_if_missing(tool_name: str, default_model_nickname: str) -> None:
     """
     Register a new tool with default model assignment if it's missing from config.
@@ -664,7 +671,7 @@ def register_tool_if_missing(tool_name: str, default_model_nickname: str) -> Non
             f"Tool '{tool_name}' already registered with model '{assignments[tool_name]}'"
         )
 
-
+# Utility functions
 def reload_config() -> None:
     """Force reload the global configuration"""
     global _config_instance
@@ -677,23 +684,22 @@ def reload_config() -> None:
 
 
 # Convenience functions for common operations
-
-
 def get_model(tool_name: str, explicit_model: Optional[str] = None) -> str:
     """Get model name for a tool (convenience function)"""
     return get_config().get_model(tool_name, explicit_model)
 
-
+# Typed accessor methods for limits
 def get_limit(limit_name: str, explicit_limit: Optional[int] = None) -> int:
     """Get configuration limit (convenience function)"""
     return get_config().get_limit(limit_name, explicit_limit)
 
 
+# Typed accessor methods for timeouts
 def get_timeout(timeout_name: str, explicit_timeout: Optional[int] = None) -> int:
     """Get timeout configuration (convenience function)"""
     return get_config().get_timeout(timeout_name, explicit_timeout)
 
-
+# Typed accessor methods for security settings
 def is_security_enabled(
     setting_name: str, explicit_value: Optional[bool] = None
 ) -> bool:
@@ -709,8 +715,6 @@ def is_execution_enabled(
 
 
 # Context manager for temporary configuration override
-
-
 class ConfigOverride:
     """Context manager for temporary configuration overrides"""
 

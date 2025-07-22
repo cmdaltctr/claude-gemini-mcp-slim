@@ -11,6 +11,7 @@ from typing import Any, Dict
 from unittest.mock import MagicMock, patch
 
 import pytest
+
 from claude_gemini_mcp.helpers.hybrid_progress import (
     HybridStreamingProgress,
     ProgressState,

@@ -19,18 +19,20 @@ sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
-from claude_gemini_mcp.gemini_mcp_server import (
-    call_tool,
-    execute_gemini_api,
-    execute_gemini_cli_streaming,
-    list_tools,
-    sanitize_for_prompt,
-    server,
-    validate_path_security,
-)
 from claude_gemini_mcp.gemini_helper import (
     GEMINI_MODELS,
     MODEL_ASSIGNMENTS,
+    execute_gemini_api,
+    execute_gemini_cli_streaming,
+    get_api_key,
+)
+from claude_gemini_mcp.gemini_mcp_server import (
+    call_tool,
+    list_tools,
+)
+from claude_gemini_mcp.helpers.security import (
+    sanitize_for_prompt,
+    validate_path_security,
 )
 
 
@@ -89,7 +91,9 @@ class TestMCPServerIntegration:
         ]
 
         for dangerous_query in dangerous_queries:
-            with patch("claude_gemini_mcp.gemini_mcp_server.execute_gemini_cli_streaming") as mock_exec:
+            with patch(
+                "claude_gemini_mcp.gemini_mcp_server.execute_gemini_smart"
+            ) as mock_exec:
                 mock_exec.return_value = {"success": True, "output": "Safe response"}
 
                 result = await call_tool(
@@ -115,7 +119,9 @@ class TestMCPServerIntegration:
         assert "Unknown tool" in result[0].text
 
         # Test tool execution failure
-        with patch("claude_gemini_mcp.gemini_mcp_server.execute_gemini_cli_streaming") as mock_exec:
+        with patch(
+            "claude_gemini_mcp.gemini_mcp_server.execute_gemini_smart"
+        ) as mock_exec:
             mock_exec.return_value = {"success": False, "error": "API failed"}
 
             result = await call_tool("gemini_quick_query", {"query": "test"})
@@ -127,7 +133,9 @@ class TestMCPServerIntegration:
         """Test that async operations work correctly in integration"""
 
         # Test that multiple concurrent tool calls work
-        with patch("claude_gemini_mcp.gemini_mcp_server.execute_gemini_cli_streaming") as mock_exec:
+        with patch(
+            "claude_gemini_mcp.gemini_mcp_server.execute_gemini_smart"
+        ) as mock_exec:
             mock_exec.return_value = {"success": True, "output": "Test response"}
 
             # Make multiple concurrent calls
@@ -172,7 +180,9 @@ class TestMCPToolFlows:
     async def test_gemini_quick_query_flow(self) -> None:
         """Test complete gemini_quick_query execution flow"""
 
-        with patch("claude_gemini_mcp.gemini_mcp_server.execute_gemini_cli_streaming") as mock_exec:
+        with patch(
+            "claude_gemini_mcp.gemini_mcp_server.execute_gemini_smart"
+        ) as mock_exec:
             mock_exec.return_value = {"success": True, "output": "Helpful response"}
 
             result = await call_tool(
@@ -198,7 +208,9 @@ def hello_world():
     return True
 """
 
-        with patch("claude_gemini_mcp.gemini_mcp_server.execute_gemini_cli_streaming") as mock_exec:
+        with patch(
+            "claude_gemini_mcp.gemini_mcp_server.execute_gemini_smart"
+        ) as mock_exec:
             mock_exec.return_value = {
                 "success": True,
                 "output": "Code analysis complete",
@@ -222,35 +234,46 @@ def hello_world():
         """Test codebase analysis with path security validation"""
 
         # Test valid path
-        with patch("claude_gemini_mcp.gemini_mcp_server.validate_path_security") as mock_validate:
-            with patch("claude_gemini_mcp.gemini_mcp_server.execute_gemini_cli_streaming") as mock_exec:
-                with patch("claude_gemini_mcp.gemini_mcp_server.analyze_codebase") as mock_analyze:
+        with patch(
+            "claude_gemini_mcp.gemini_mcp_server.validate_path_security"
+        ) as mock_validate:
+            with patch(
+                "claude_gemini_mcp.gemini_mcp_server.execute_gemini_smart"
+            ) as mock_exec:
+                with patch(
+                    "claude_gemini_mcp.gemini_mcp_server.analyze_codebase"
+                ) as mock_analyze:
                     # Mock successful validation
                     mock_validate.return_value = (True, "Valid path", "./src")
-                    
+
                     # Mock successful execution
                     mock_exec.return_value = {
                         "success": True,
                         "output": "Analysis complete",
                     }
-                    
+
                     # Create a more complete mock result object
                     mock_result = MagicMock()
                     mock_result.error = None
                     mock_result.summary = "Analysis complete"
-                    
+
                     # Add required attributes with proper structure
                     mock_result.stats = MagicMock()
                     mock_result.stats.files_analyzed = 10
                     mock_result.stats.total_time = 1.5
-                    
+
                     mock_result.structure = MagicMock()
                     mock_result.structure.total_lines = 1000
                     mock_result.structure.directories = {"src": {"file_count": 5}}
-                    
-                    mock_result.project_report = {"summary": {"primary_language": "Python"}}
-                    mock_result.tech_stack = {"languages": ["Python"], "frameworks": ["Flask"]}
-                    
+
+                    mock_result.project_report = {
+                        "summary": {"primary_language": "Python"}
+                    }
+                    mock_result.tech_stack = {
+                        "languages": ["Python"],
+                        "frameworks": ["Flask"],
+                    }
+
                     # Return the mock result
                     mock_analyze.return_value = mock_result
 
@@ -259,14 +282,19 @@ def hello_world():
                         with patch("pathlib.Path.is_dir", return_value=True):
                             result = await call_tool(
                                 "gemini_codebase_analysis",
-                                {"directory_path": "./src", "analysis_scope": "security"},
+                                {
+                                    "directory_path": "./src",
+                                    "analysis_scope": "security",
+                                },
                             )
 
                             assert len(result) == 1
                             assert "Analysis complete" in result[0].text
 
         # Test invalid path (outside directory)
-        with patch("claude_gemini_mcp.gemini_mcp_server.validate_path_security") as mock_validate:
+        with patch(
+            "claude_gemini_mcp.gemini_mcp_server.validate_path_security"
+        ) as mock_validate:
             mock_validate.return_value = (False, "Path outside allowed directory", None)
 
             result = await call_tool(
@@ -285,9 +313,12 @@ class TestMCPServerAsyncExecution:
     async def test_execute_gemini_api_integration(self) -> None:
         """Test API execution integration with async"""
 
-        with patch("claude_gemini_mcp.gemini_mcp_server.GOOGLE_API_KEY", "test_api_key_123456789"):
-            with patch("google.generativeai.configure") as mock_configure:
-                with patch("google.generativeai.GenerativeModel") as mock_model_class:
+        with patch(
+            "claude_gemini_mcp.gemini_helper.get_api_key",
+            return_value="test_api_key_123456789",
+        ):
+            with patch("claude_gemini_mcp.gemini_helper.genai.configure") as mock_configure:
+                with patch("claude_gemini_mcp.gemini_helper.genai.GenerativeModel") as mock_model_class:
                     mock_model = MagicMock()
                     mock_response = MagicMock()
                     mock_response.text = "Test API response"
@@ -308,19 +339,25 @@ class TestMCPServerAsyncExecution:
     async def test_execute_gemini_cli_streaming_integration(self) -> None:
         """Test CLI streaming execution integration"""
 
-        with patch("asyncio.create_subprocess_exec") as mock_subprocess:
-            # Mock process
-            mock_process = MagicMock()
-            mock_process.pid = 12345
-            mock_process.returncode = 0
-            mock_process.stdout.readline = AsyncMock(
-                side_effect=[b"Test output\n", b""]
-            )
-            mock_process.communicate = AsyncMock(return_value=(b"Final output", b""))
-            mock_subprocess.return_value = mock_process
+        with patch("subprocess.Popen") as mock_popen:
+            with patch("claude_gemini_mcp.gemini_helper.stream_subprocess_output") as mock_stream:
+                # Mock process
+                mock_process = MagicMock()
+                mock_process.pid = 12345
+                mock_process.returncode = 0
+                mock_process.poll.return_value = 0
+                mock_process.stderr = MagicMock()
+                mock_process.stderr.read.return_value = ""
+                mock_popen.return_value = mock_process
+
+                # Mock the streaming function
+                def mock_stream_func(process, queue, stop_event):
+                    queue.put(("stdout", "Test output"))
+                    queue.put(("done", None))
+                mock_stream.side_effect = mock_stream_func
 
             result = await execute_gemini_cli_streaming(
-                "test prompt", "gemini_quick_query"
+                "test prompt", model_name="gemini-2.5-flash"
             )
 
             assert result["success"] is True
@@ -345,8 +382,10 @@ class TestMCPServerAsyncExecution:
     async def test_api_fallback_to_cli_integration(self) -> None:
         """Test API fallback to CLI functionality"""
 
-        with patch("claude_gemini_mcp.gemini_mcp_server.GOOGLE_API_KEY", "test_key"):
-            with patch("claude_gemini_mcp.gemini_mcp_server.execute_gemini_api") as mock_api:
+        with patch("claude_gemini_mcp.gemini_helper.get_api_key", return_value="test_key"):
+            with patch(
+                "claude_gemini_mcp.gemini_helper.execute_gemini_api"
+            ) as mock_api:
                 with patch("asyncio.create_subprocess_exec") as mock_subprocess:
                     # Mock API failure
                     mock_api.return_value = {"success": False, "error": "API failed"}
@@ -404,7 +443,9 @@ class TestMCPSecurityIntegration:
     async def test_error_handling_with_sanitized_errors(self) -> None:
         """Test that MCP server handles errors gracefully"""
 
-        with patch("claude_gemini_mcp.gemini_mcp_server.execute_gemini_cli_streaming") as mock_exec:
+        with patch(
+            "claude_gemini_mcp.gemini_mcp_server.execute_gemini_smart"
+        ) as mock_exec:
             # Mock error response
             mock_exec.return_value = {"success": False, "error": "Connection failed"}
 
@@ -422,7 +463,9 @@ class TestMCPPerformanceIntegration:
     async def test_concurrent_requests_performance(self) -> None:
         """Test handling of concurrent requests"""
 
-        with patch("claude_gemini_mcp.gemini_mcp_server.execute_gemini_cli_streaming") as mock_exec:
+        with patch(
+            "claude_gemini_mcp.gemini_mcp_server.execute_gemini_smart"
+        ) as mock_exec:
             mock_exec.return_value = {"success": True, "output": "Response"}
 
             # Create many concurrent requests
@@ -453,7 +496,9 @@ class TestMCPPerformanceIntegration:
         # Create a large response (1MB)
         large_response = "A" * 1000000
 
-        with patch("claude_gemini_mcp.gemini_mcp_server.execute_gemini_cli_streaming") as mock_exec:
+        with patch(
+            "claude_gemini_mcp.gemini_mcp_server.execute_gemini_smart"
+        ) as mock_exec:
             mock_exec.return_value = {"success": True, "output": large_response}
 
             result = await call_tool(
@@ -469,7 +514,9 @@ class TestMCPPerformanceIntegration:
         """Test timeout handling in streaming execution"""
 
         # Instead of testing actual timeout, test error handling for timeout scenario
-        with patch("claude_gemini_mcp.gemini_mcp_server.execute_gemini_cli_streaming") as mock_exec:
+        with patch(
+            "claude_gemini_mcp.gemini_mcp_server.execute_gemini_smart"
+        ) as mock_exec:
             # Mock a timeout error response
             mock_exec.return_value = {
                 "success": False,

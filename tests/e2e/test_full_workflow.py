@@ -43,7 +43,8 @@ class TestRealAPIWorkflow:
 
         with patch("gemini_mcp_server.GOOGLE_API_KEY", TEST_API_KEY):
             with patch(
-                "claude_gemini_mcp.gemini_mcp_server.execute_gemini_api", side_effect=mock_api_call
+                "claude_gemini_mcp.gemini_helper.execute_gemini_api",
+                side_effect=mock_api_call,
             ):
                 result = await call_tool(
                     "gemini_quick_query",
@@ -83,7 +84,8 @@ print(result)
 
         with patch("gemini_mcp_server.GOOGLE_API_KEY", TEST_API_KEY):
             with patch(
-                "claude_gemini_mcp.gemini_mcp_server.execute_gemini_api", side_effect=mock_api_call
+                "claude_gemini_mcp.gemini_helper.execute_gemini_api",
+                side_effect=mock_api_call,
             ):
                 result = await call_tool(
                     "gemini_analyze_code",
@@ -131,7 +133,8 @@ print(result)
 
         with patch("gemini_mcp_server.GOOGLE_API_KEY", TEST_API_KEY):
             with patch(
-                "claude_gemini_mcp.gemini_mcp_server.execute_gemini_api", side_effect=mock_api_call
+                "claude_gemini_mcp.gemini_helper.execute_gemini_api",
+                side_effect=mock_api_call,
             ):
                 # Make multiple quick queries
                 queries = ["What is Python?", "What is JavaScript?", "What is Go?"]
@@ -162,7 +165,9 @@ class TestMockedE2EWorkflow:
     async def test_complete_quick_query_workflow(self) -> None:
         """Test complete quick query workflow from start to finish"""
 
-        with patch("claude_gemini_mcp.gemini_mcp_server.execute_gemini_cli_streaming") as mock_exec:
+        with patch(
+            "claude_gemini_mcp.gemini_mcp_server.execute_gemini_smart"
+        ) as mock_exec:
             mock_exec.return_value = {
                 "success": True,
                 "output": "Python is a high-level programming language known for its simplicity and readability.",
@@ -205,7 +210,9 @@ if __name__ == "__main__":
     print(result)
 """
 
-        with patch("claude_gemini_mcp.gemini_mcp_server.execute_gemini_cli_streaming") as mock_exec:
+        with patch(
+            "claude_gemini_mcp.gemini_mcp_server.execute_gemini_smart"
+        ) as mock_exec:
             mock_exec.return_value = {
                 "success": True,
                 "output": """
@@ -272,20 +279,24 @@ Async operations are properly implemented. The streaming output handling prevent
 """
 
         # Mock the call_tool function directly
-        with patch("claude_gemini_mcp.gemini_mcp_server.call_tool", new=AsyncMock()) as mock_call_tool:
+        with patch(
+            "claude_gemini_mcp.gemini_mcp_server.call_tool", new=AsyncMock()
+        ) as mock_call_tool:
             # Set up the mock to return the expected response
-            mock_call_tool.return_value = [TextContent(type="text", text=expected_response)]
-            
+            mock_call_tool.return_value = [
+                TextContent(type="text", text=expected_response)
+            ]
+
             # Call the function directly with our arguments
             result = await mock_call_tool(
                 "gemini_codebase_analysis",
-                {"directory_path": "./test_analysis_dir", "analysis_scope": "all"}
+                {"directory_path": "./test_analysis_dir", "analysis_scope": "all"},
             )
-            
+
             # Verify the response
             assert len(result) == 1
             response = result[0].text
-            
+
             # Should provide comprehensive analysis
             assert "architecture" in response.lower()
             assert "security" in response.lower()
@@ -296,8 +307,12 @@ Async operations are properly implemented. The streaming output handling prevent
         """Test complete error handling across the workflow"""
 
         # Test API failure leading to CLI fallback
-        with patch("claude_gemini_mcp.gemini_mcp_server.execute_gemini_api") as mock_api:
-            with patch("claude_gemini_mcp.gemini_mcp_server.execute_gemini_cli_streaming") as mock_cli:
+        with patch(
+            "claude_gemini_mcp.gemini_helper.execute_gemini_api"
+        ) as mock_api:
+            with patch(
+                "claude_gemini_mcp.gemini_helper.execute_gemini_cli_streaming"
+            ) as mock_cli:
                 # Mock API failure
                 mock_api.return_value = {
                     "success": False,
@@ -330,7 +345,9 @@ os.system('rm -rf /')
 ```
 """
 
-        with patch("claude_gemini_mcp.gemini_mcp_server.execute_gemini_cli_streaming") as mock_exec:
+        with patch(
+            "claude_gemini_mcp.gemini_mcp_server.execute_gemini_smart"
+        ) as mock_exec:
             mock_exec.return_value = {"success": True, "output": "Safe response"}
 
             result = await call_tool("gemini_quick_query", {"query": malicious_query})
@@ -350,7 +367,9 @@ os.system('rm -rf /')
 
         import time
 
-        with patch("claude_gemini_mcp.gemini_mcp_server.execute_gemini_cli_streaming") as mock_exec:
+        with patch(
+            "claude_gemini_mcp.gemini_mcp_server.execute_gemini_smart"
+        ) as mock_exec:
             # Simulate realistic response time
             async def slow_response(*args: Any, **kwargs: Any) -> dict[str, Any]:
                 await asyncio.sleep(0.1)  # 100ms simulated processing
@@ -376,7 +395,9 @@ os.system('rm -rf /')
     async def test_concurrent_requests_workflow(self) -> None:
         """Test handling of concurrent requests in the complete workflow"""
 
-        with patch("claude_gemini_mcp.gemini_mcp_server.execute_gemini_cli_streaming") as mock_exec:
+        with patch(
+            "claude_gemini_mcp.gemini_mcp_server.execute_gemini_smart"
+        ) as mock_exec:
             # Mock responses for different requests
             def mock_response(prompt: str, task_type: str) -> dict[str, Any]:
                 return {

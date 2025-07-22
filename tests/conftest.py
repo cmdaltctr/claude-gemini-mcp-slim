@@ -25,10 +25,12 @@ except ImportError:
             self.type = type
             self.text = text
 
+
 # Import config reload function
 try:
     from claude_gemini_mcp.config import reload_config
 except ImportError:
+
     def reload_config():
         pass
 
@@ -39,8 +41,8 @@ def temp_large_file(tmp_path) -> Generator[Path, None, None]:
     Fixture for creating a temporary large file.
     """
     file_path = tmp_path / "large_file.txt"
-    with open(file_path, 'wb') as f:
-        f.write(b'0' * (1024 * 1024 * 100))  # 100MB file
+    with open(file_path, "wb") as f:
+        f.write(b"0" * (1024 * 1024 * 100))  # 100MB file
     yield file_path
 
 
@@ -49,9 +51,12 @@ def random_text() -> Callable[[int, int], str]:
     """
     Helper to generate random text of a given size.
     """
+
     def _random_text(byte_size: int, line_count: int) -> str:
-        lines = ["".join(random.choices(string.ascii_letters, k=byte_size // line_count))
-                 for _ in range(line_count)]
+        lines = [
+            "".join(random.choices(string.ascii_letters, k=byte_size // line_count))
+            for _ in range(line_count)
+        ]
         return "\n".join(lines)
 
     return _random_text
@@ -64,7 +69,7 @@ def snapshot_environment(monkeypatch) -> Generator[None, None, None]:
     """
     original_env = os.environ.copy()
     yield
-    monkeypatch.setattr(os, 'environ', original_env)
+    monkeypatch.setattr(os, "environ", original_env)
     reload_config()
 
 
@@ -161,6 +166,14 @@ def fake_api_key() -> str:
     This key is non-secret and safe for use in tests.
     """
     return "test-api-key-1234567890"
+
+
+@pytest.fixture
+def mock_google_api_key(monkeypatch: Any) -> str:
+    """Mock the GOOGLE_API_KEY environment variable for tests."""
+    api_key = "mock-api-key-for-testing"
+    monkeypatch.setenv("GOOGLE_API_KEY", api_key)
+    return api_key
 
 
 @pytest.fixture

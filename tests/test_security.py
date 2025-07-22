@@ -17,7 +17,10 @@ import pytest
 root_dir = Path(__file__).resolve().parent.parent  # repo root
 sys.path.insert(0, str(root_dir))
 
-from claude_gemini_mcp.gemini_mcp_server import sanitize_for_prompt, validate_path_security
+from claude_gemini_mcp.gemini_mcp_server import (
+    sanitize_for_prompt,
+    validate_path_security,
+)
 
 
 class TestSecurityFunctions:
@@ -163,8 +166,13 @@ class TestSecurityIntegration:
 
     def test_security_functions_present(self) -> None:
         """Verify that all required security functions are present"""
-        from claude_gemini_mcp.gemini_helper import sanitize_for_prompt as helper_sanitize
-        from claude_gemini_mcp.gemini_mcp_server import sanitize_for_prompt, validate_path_security
+        from claude_gemini_mcp.gemini_helper import (
+            sanitize_for_prompt as helper_sanitize,
+        )
+        from claude_gemini_mcp.gemini_mcp_server import (
+            sanitize_for_prompt,
+            validate_path_security,
+        )
 
         # Test that functions are callable
         assert callable(sanitize_for_prompt)

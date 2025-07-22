@@ -22,7 +22,11 @@ from typing import Any, Dict, List
 
 import pytest
 
-from claude_gemini_mcp.helpers.markdown_utils import is_idempotent, markdown_to_text, performance_test
+from claude_gemini_mcp.helpers.markdown_utils import (
+    is_idempotent,
+    markdown_to_text,
+    performance_test,
+)
 
 
 class TestMarkdownToText:

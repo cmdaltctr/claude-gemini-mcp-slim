@@ -15,7 +15,11 @@ Tests cover all specified requirements:
 import time
 import unittest
 
-from claude_gemini_mcp.helpers.markdown_utils import is_idempotent, markdown_to_text, performance_test
+from claude_gemini_mcp.helpers.markdown_utils import (
+    is_idempotent,
+    markdown_to_text,
+    performance_test,
+)
 
 
 class TestMarkdownToText(unittest.TestCase):

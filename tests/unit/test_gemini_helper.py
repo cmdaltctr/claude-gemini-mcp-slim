@@ -19,7 +19,7 @@ from claude_gemini_mcp.gemini_helper import (
     MODEL_ASSIGNMENTS,
     add_shared_mcp_path,
     execute_gemini_api,
-    execute_gemini_cli,
+    execute_gemini_cli_streaming,
     execute_gemini_smart,
     get_api_key,
     sanitize_error_message,
@@ -162,36 +162,38 @@ class TestExecuteGeminiApi(unittest.TestCase):
 
 
 class TestExecuteGeminiCli(unittest.TestCase):
-    """Test cases for execute_gemini_cli function"""
+    """Test cases for execute_gemini_cli_streaming function"""
 
     def test_execute_gemini_cli_invalid_prompt_empty(self):
         """Test handling of empty prompt"""
-        result = execute_gemini_cli("", show_progress=False)
+        result = execute_gemini_cli_streaming("", show_progress=False)
         self.assertFalse(result["success"])
         self.assertIn("Invalid prompt: must be non-empty string", result["error"])
 
     def test_execute_gemini_cli_invalid_prompt_non_string(self):
         """Test handling of non-string prompt"""
-        result = execute_gemini_cli(123, show_progress=False)
+        result = execute_gemini_cli_streaming(123, show_progress=False)
         self.assertFalse(result["success"])
         self.assertIn("Invalid prompt: must be non-empty string", result["error"])
 
     def test_execute_gemini_cli_prompt_too_large(self):
         """Test handling of oversized prompt"""
         large_prompt = "A" * 1000001  # 1MB + 1 byte
-        result = execute_gemini_cli(large_prompt, show_progress=False)
+        result = execute_gemini_cli_streaming(large_prompt, show_progress=False)
         self.assertFalse(result["success"])
         self.assertIn("Prompt too large", result["error"])
 
     def test_execute_gemini_cli_invalid_model_name(self):
         """Test handling of invalid model name"""
-        result = execute_gemini_cli("test prompt", model_name="", show_progress=False)
+        result = execute_gemini_cli_streaming(
+            "test prompt", model_name="", show_progress=False
+        )
         self.assertFalse(result["success"])
         self.assertIn("Invalid model name", result["error"])
 
     def test_execute_gemini_cli_invalid_model_name_characters(self):
         """Test handling of model name with invalid characters"""
-        result = execute_gemini_cli(
+        result = execute_gemini_cli_streaming(
             "test prompt", model_name="model$name", show_progress=False
         )
         self.assertFalse(result["success"])
@@ -208,7 +210,7 @@ class TestExecuteGeminiCli(unittest.TestCase):
                 mock_process.communicate.return_value = ("success", "")
                 mock_popen.return_value = mock_process
 
-                result = execute_gemini_cli(
+                result = execute_gemini_cli_streaming(
                     "test prompt", model_name=model_name, show_progress=False
                 )
                 # Should not fail on model name validation
@@ -455,7 +457,7 @@ class TestSmartExecution(unittest.TestCase):
 
     @patch("claude_gemini_mcp.gemini_helper.get_api_key")
     @patch("claude_gemini_mcp.gemini_helper.execute_gemini_api")
-    @patch("claude_gemini_mcp.gemini_helper.execute_gemini_cli")
+    @patch("claude_gemini_mcp.gemini_helper.execute_gemini_cli_streaming")
     def test_execute_gemini_smart_api_fallback_to_cli(
         self, mock_cli, mock_api, mock_get_key
     ):
@@ -472,7 +474,7 @@ class TestSmartExecution(unittest.TestCase):
         mock_cli.assert_called_once()
 
     @patch("claude_gemini_mcp.gemini_helper.get_api_key")
-    @patch("claude_gemini_mcp.gemini_helper.execute_gemini_cli")
+    @patch("claude_gemini_mcp.gemini_helper.execute_gemini_cli_streaming")
     def test_execute_gemini_smart_no_api_key_direct_cli(self, mock_cli, mock_get_key):
         """Test smart execution going directly to CLI when no API key"""
         mock_get_key.return_value = None
@@ -487,7 +489,9 @@ class TestSmartExecution(unittest.TestCase):
     def test_execute_gemini_smart_model_selection(self):
         """Test that correct models are selected for different task types"""
         with patch("claude_gemini_mcp.gemini_helper.get_api_key", return_value=None):
-            with patch("claude_gemini_mcp.gemini_helper.execute_gemini_cli") as mock_cli:
+            with patch(
+                "claude_gemini_mcp.gemini_helper.execute_gemini_cli_streaming"
+            ) as mock_cli:
                 mock_cli.return_value = {"success": True, "output": "response"}
 
                 # Test different task types

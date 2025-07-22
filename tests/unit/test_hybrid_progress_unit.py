@@ -10,6 +10,7 @@ from typing import Any, Dict
 from unittest.mock import patch
 
 import pytest
+
 from claude_gemini_mcp.helpers.hybrid_progress import (
     HybridStreamingProgress,
     ProgressConfig,
