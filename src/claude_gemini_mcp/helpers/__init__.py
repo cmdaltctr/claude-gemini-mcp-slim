@@ -17,6 +17,11 @@ from .security import (
     validate_file_security,
     validate_path_security,
 )
+from .execution_orchestrator import (
+    execute_gemini_smart,
+    execute_gemini_smart_with_progress,
+    split_into_chunks,
+)
 
 __all__ = [
     "markdown_to_text",
@@ -33,4 +38,7 @@ __all__ = [
     "validate_path_security",
     "validate_file_security",
     "sanitize_error_message",
+    "execute_gemini_smart",
+    "execute_gemini_smart_with_progress",
+    "split_into_chunks",
 ]

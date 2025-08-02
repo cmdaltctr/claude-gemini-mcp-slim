@@ -1,8 +1,44 @@
+#!/usr/bin/env python3
+"""
+Security Helper Module - Centralized input sanitization and validation.
+
+This module provides essential security functions for the Claude-Gemini MCP project,
+implementing comprehensive input sanitization, path validation, and file security
+checks. It serves as the centralized security engine that all other modules should
+use to validate untrusted external input.
+
+Core Security Principles:
+1. Defense in Depth: Multiple layers of validation and sanitization
+2. Fail-Safe Defaults: Reject by default, allow only explicitly safe content
+3. Input Sanitization: Comprehensive filtering of prompt injection patterns
+4. Path Validation: Prevent directory traversal and unauthorized file access
+5. File Security: Extension validation, binary detection, and symlink protection
+
+Key Security Functions:
+- Input Sanitization: sanitize_for_prompt() - Prevents prompt injection attacks
+- Path Validation: validate_path_security() - Prevents path traversal attacks
+- File Security: validate_file_security() - Comprehensive file access validation
+- Error Sanitization: sanitize_error_message() - Removes sensitive information
+
+Security Features:
+- Prompt Injection Protection: Filters dangerous instruction patterns
+- Path Traversal Prevention: Validates paths stay within allowed directories
+- File Type Validation: Configurable allow-list of safe file extensions
+- Binary File Detection: Prevents processing of potentially dangerous binary files
+- Symlink Protection: Blocks symbolic link traversal attacks
+- Unicode Normalization: Prevents homograph attacks
+- Control Character Filtering: Removes potentially dangerous control sequences
+
+This module follows OWASP secure coding practices and implements defense-in-depth
+security principles. All external input should be processed through these functions
+before being used elsewhere in the application.
+"""
+
 import os
 import re
 import unicodedata
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 from claude_gemini_mcp.config import get_config
 

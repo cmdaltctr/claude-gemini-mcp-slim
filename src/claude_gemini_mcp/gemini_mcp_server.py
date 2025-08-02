@@ -13,7 +13,7 @@ from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
 
 from claude_gemini_mcp.config import get_config
-from claude_gemini_mcp.gemini_helper import execute_gemini_smart
+from claude_gemini_mcp.helpers.execution_orchestrator import execute_gemini_smart
 from claude_gemini_mcp.helpers.code_analyzer import (
     CodebaseAnalysisError,
     analyze_codebase,
