@@ -1,3 +1,36 @@
+# 003-Markdown-Utilities-Implementation
+Date: 2025-07-21  
+Decision Maker: Dr Muhammad Aizat Hawari  
+Status: Accepted  
+
+## Context
+To maintain consistency and performance across various tools that consume markdown content, a deterministic markdown stripping utility is essential. This ensures consistent text parsing, which is vital for downstream processing, such as analysis, transformation, and display.
+
+## Decision
+The decision was made to implement `markdown_utils.py` as a shared helper to handle markdown to text conversion. This utility is now part of our centralized helpers directory.
+
+## Consequences
+- **Deterministic Regex Order**: Ensures consistent results across tool executions.
+- **Full Markdown Coverage**: Supports headers, emphasis, lists, tables, code blocks, links, images, blockquotes, and horizontal rules.
+- **Edge-Case Handling**: Robust against nested elements and complex structures.
+- **Idempotency**: Multiple conversions yield identical results, enhancing reliability.
+- **High Performance**: Efficient processing suitable for large text inputs.
+
+## Details of Provided Functions
+- **`markdown_to_text(markdown: str, preserve_line_breaks: bool = True) -> str`**: Converts markdown to plain text, maintaining readability.
+- **`performance_test(text: str, iterations: int = 100) -> dict`**: Tests performance metrics of the markdown conversion function.
+- **`is_idempotent(markdown: str, max_iterations: int = 3) -> bool`**: Tests if the markdown conversion is idempotent, ensuring that running it multiple times returns the same result.
+
+## Architectural Alignment
+The utility aligns with our decoupled module pattern, acting as a cross-tool utility housed within the helpers directory. This follows the project's architectural philosophy by ensuring dedicated, cohesive functionality.
+
+## Reference
+Originating Commit: 8955cb1 - Mon Jul 21 01:56:11 2025 +0800
+
+The comprehensive integration of `markdown_utils.py` underscores our commitment to maintainability and consistency across tools in the Claude-Gemini MCP project.
+
+---
+
 # Markdown to Text Utility
 
 A robust, deterministic markdown-to-text converter designed for high-performance processing with comprehensive edge case handling.

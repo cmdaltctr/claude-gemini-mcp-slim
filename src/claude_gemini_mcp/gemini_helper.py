@@ -192,7 +192,9 @@ def analyze_codebase(directory_path: str, analysis_scope: str = "all") -> None:
         )
 
         # Step 1: Call the real analyze_codebase function
-        analysis_result = real_analyze_codebase(resolved_path, max_total_size=300_000)
+        analysis_result = real_analyze_codebase(
+            str(resolved_path), max_total_size=300_000
+        )
 
         if analysis_result.error:
             print(f"Error during codebase analysis: {analysis_result.error}")

@@ -10,8 +10,9 @@ This module provides a robust, deterministic markdown-to-text converter that:
 - Performs well on large texts (>10k characters)
 - Maintains readability while removing markdown syntax
 
-Author: Dr Muhammad Aizat Hawari
-Date: 2025-01-20
+Architecture: See ADR 003 - Markdown Utilities Implementation
+             (../../../PRD/ADR/003-Markdown-Utilities-Implementation.md)
+             for design decisions and architectural rationale.
 """
 
 import re

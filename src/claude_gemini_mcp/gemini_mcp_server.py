@@ -299,16 +299,32 @@ async def _handle_codebase_analysis(arguments: Dict[str, Any]) -> List[TextConte
         ]
 
         # Add technology stack details
-        for category, techs in result.tech_stack.items():
+        tech_stack_data = [
+            ("frameworks", result.tech_stack.frameworks),
+            ("databases", result.tech_stack.databases),
+            ("testing_frameworks", result.tech_stack.testing_frameworks),
+            ("build_tools", result.tech_stack.build_tools),
+            ("deployment_tools", result.tech_stack.deployment_tools),
+            ("languages", result.tech_stack.languages),
+            ("dependencies", result.tech_stack.dependencies),
+            ("dev_dependencies", result.tech_stack.dev_dependencies),
+        ]
+
+        for category, techs in tech_stack_data:
             if techs:
-                output_lines.append(f"{category.title()}: {', '.join(techs)}")
+                if isinstance(techs, dict):
+                    tech_list = [f"{k} ({v})" if v else k for k, v in techs.items()]
+                else:
+                    tech_list = list(techs)
+                output_lines.append(
+                    f"{category.replace('_', ' ').title()}: {', '.join(tech_list)}"
+                )
 
         output_lines.extend(["", "DIRECTORY STRUCTURE:"])
 
         # Add directory structure summary
-        for dir_name, dir_info in result.structure.directories.items():
-            file_count = dir_info.get("file_count", 0)
-            output_lines.append(f"  {dir_name}/ ({file_count} files)")
+        for dir_name in result.structure.directories:
+            output_lines.append(f"  {dir_name}/")
 
         output_lines.extend(["", "=" * 60, "Analysis completed successfully"])
 
