@@ -9,3 +9,29 @@ This task addresses critical architectural violations where both gemini_mcp_serv
 
 # Test Strategy:
 Create unit tests to verify no direct os.getenv() calls remain in either file by scanning for os.getenv patterns. Test that all configuration values are properly retrieved through config.py accessor functions. Validate that environment variable overrides still work correctly through the centralized system. Test error handling when configuration values are missing or invalid. Run integration tests to ensure functionality is preserved after refactoring. Add linting rules to prevent future direct os.getenv() usage. Verify that all existing configuration scenarios (default values, environment overrides, config file settings) continue to work as expected.
+
+# Subtasks:
+## 1. Replace Direct os.getenv() Calls [pending]
+### Dependencies: None
+### Description: Identify and replace all direct `os.getenv()` calls in `gemini_mcp_server.py` and `gemini_helper.py` with appropriate `config.py` accessor functions (e.g., `cfg.get_model()`, `cfg.get_limit()`, `cfg.get_timeout()`).
+### Details:
+Specifically refactor lines 152-155 in `gemini_mcp_server.py` and lines 113-116 in `gemini_helper.py`.
+
+## 2. Replace Hardcoded Configuration Values [pending]
+### Dependencies: None
+### Description: Scan `gemini_mcp_server.py` and `gemini_helper.py` for any hardcoded configuration values and replace them with calls to the centralized `config.py` system.
+### Details:
+Ensure all configuration values are properly retrieved through `config.py` accessor functions.
+
+## 3. Update Configuration Validation Error Handling [pending]
+### Dependencies: None
+### Description: Review and update existing error handling mechanisms for configuration validation to ensure robust behavior when configuration values are missing or invalid, aligning with the centralized `config.py` system.
+### Details:
+Focus on error paths related to configuration loading and access.
+
+## 4. Add Linting Rules for Configuration Compliance [pending]
+### Dependencies: None
+### Description: Implement new linting rules to prevent future direct `os.getenv()` usage and to validate that environment variable overrides are correctly handled via the `config.py` system.
+### Details:
+This is a preventative measure to enforce Rule 2.2 compliance going forward.
+

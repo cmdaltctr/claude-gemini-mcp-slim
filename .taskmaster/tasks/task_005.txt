@@ -18,25 +18,25 @@ Unit tests for all security functions, penetration tests for path traversal atte
 Create src/claude_gemini_mcp/helpers/security.py file. Add module-level docstring explaining the security functions. Import necessary libraries (os, pathlib, re, logging). Set up basic module structure with proper type hints and error handling framework. Ensure the helpers directory has proper __init__.py imports.
 
 ## 2. Extract and Move sanitize_for_prompt Function [pending]
-### Dependencies: 5.4
+### Dependencies: 5.5.1
 ### Description: Locate, extract, and move the sanitize_for_prompt function to the new security module
 ### Details:
 Find sanitize_for_prompt function in existing codebase. Move it to security.py with proper docstring and type hints. Implement comprehensive input sanitization including removal of potentially dangerous patterns, encoding issues, and prompt injection attempts. Update all existing imports to reference the new location. Ensure no functionality is lost during the move.
 
 ## 3. Extract and Move validate_path_security Function [pending]
-### Dependencies: 5.4
+### Dependencies: 5.5.2
 ### Description: Locate, extract, and move the validate_path_security function to the new security module
 ### Details:
 Find validate_path_security function in existing codebase. Move it to security.py with enhanced path traversal protection. Implement additional checks for symlink attacks, absolute path validation, and directory traversal attempts using techniques like '../' patterns. Add proper error messages and logging. Update all existing imports to reference the new location.
 
 ## 4. Implement Additional Security Validation Functions [pending]
-### Dependencies: 5.5, 5.6
+### Dependencies: 5.5.3
 ### Description: Add new security functions for comprehensive input validation and secure code handling
 ### Details:
 Implement validate_user_code function for scanning user-provided code for dangerous patterns. Add validate_file_access function with OWASP-compliant file access controls. Create sanitize_user_input function for general input validation. Implement secure_path_resolution function using pathlib for robust path handling. Add logging and monitoring capabilities for security events. Follow OWASP secure coding practices throughout.
 
 ## 5. Update Module Imports and Ensure Compatibility [pending]
-### Dependencies: 5.7
+### Dependencies: 5.5.4
 ### Description: Update all existing code to use the new security module and verify full functionality
 ### Details:
 Update imports in gemini_helper.py, gemini_mcp_server.py, and any other modules that previously used the security functions. Ensure the helpers/__init__.py properly exports the security module. Add backward compatibility checks and error handling for import failures. Run comprehensive tests to verify no existing functionality is broken. Update documentation and type hints throughout the codebase to reflect the new module structure.

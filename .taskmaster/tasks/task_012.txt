@@ -18,25 +18,25 @@ Error simulation tests, logging validation tests, fallback mechanism tests, sens
 Create a centralized logging configuration in src/core/logging.py using Python's logging module with structured formatters (JSON). Implement log level configuration via environment variables. Add context managers for request tracing. Ensure sensitive data (API keys, user data) is filtered from logs using custom filters. Configure separate log files for different components (api, parsing, fallback).
 
 ## 2. Add Error Classification and Exception Hierarchy [pending]
-### Dependencies: 12.4
+### Dependencies: 12.12.1
 ### Description: Create a comprehensive exception hierarchy for different types of structured response failures
 ### Details:
 Define custom exception classes in src/core/exceptions.py: StructuredResponseError, InstructorParsingError, GeminiAPIError, FallbackActivatedError. Each exception should include structured metadata (error_code, context, recovery_suggestions). Implement error classification logic to categorize failures. Add error context preservation for debugging while maintaining security.
 
 ## 3. Implement Graceful Degradation Mechanism [pending]
-### Dependencies: 12.5
+### Dependencies: 12.12.2
 ### Description: Create fallback logic that gracefully degrades from structured to plain text responses
 ### Details:
 Implement fallback decorator in src/core/fallback.py that wraps structured response functions. On StructuredResponseError, automatically retry with plain text prompts. Maintain response quality metrics and fallback frequency tracking. Implement configurable retry strategies (immediate, exponential backoff). Log fallback activations with context for monitoring.
 
 ## 4. Add Comprehensive Error Handling to Agentic Workflow Functions [pending]
-### Dependencies: 12.6
+### Dependencies: 12.12.3
 ### Description: Integrate error handling and logging into all agentic workflow functions including gemini_analyze_code
 ### Details:
 Wrap all agentic functions (gemini_analyze_code, gemini_codebase_analysis, gemini_quick_query) with try-catch blocks using the new exception hierarchy. Add pre-processing validation for inputs. Implement timeout handling for long-running operations. Add progress logging for multi-step operations. Ensure all errors are logged with appropriate context and severity levels.
 
 ## 5. Implement Monitoring and Alerting for Production Readiness [pending]
-### Dependencies: 12.7
+### Dependencies: 12.12.4
 ### Description: Add monitoring capabilities and alerting for error rates and fallback frequency
 ### Details:
 Create monitoring dashboard data collection in src/core/monitoring.py. Track key metrics: structured response success rate, fallback activation frequency, average response times, error distribution. Implement configurable alerting thresholds. Add health check endpoints for system monitoring. Create log aggregation utilities for debugging complex failures. Export metrics in standard formats (Prometheus, JSON).

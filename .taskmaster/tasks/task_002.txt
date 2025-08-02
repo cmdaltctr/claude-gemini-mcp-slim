@@ -1,11 +1,11 @@
 # Task ID: 2
-# Title: Create Centralized Security Module and Eliminate Code Duplication
+# Title: Refactor Test Files for Correct Import Paths and Mocking
 # Status: pending
-# Dependencies: 5
-# Priority: high
-# Description: Extract and consolidate duplicated security functions (sanitize_for_prompt and validate_path_security) from gemini_mcp_server.py and gemini_helper.py into a centralized helpers/security.py module to eliminate code duplication and security inconsistencies.
+# Dependencies: None
+# Priority: medium
+# Description: Corrected import paths in test files (e.g., test_gemini_api_mocked.py, test_execute_gemini_cli_streaming_limits.py, test_gemini_helper.py, test_cli_fallback.py, test_mcp_server_integration.py, test_full_workflow.py) to point to the correct modules (gemini_helper.py instead of gemini_mcp_server.py). Standardized function names and introduced mock_google_api_key fixture and patched API/CLI calls to ensure tests are isolated and reliable.
 # Details:
-This is a critical security refactoring task that addresses the violation of single responsibility principle and potential security risks from inconsistent implementations. Create src/claude_gemini_mcp/helpers/security.py module and move the duplicated sanitize_for_prompt() and validate_path_security() functions from both gemini_mcp_server.py and gemini_helper.py. Ensure the consolidated functions maintain all existing functionality while providing a single, consistent implementation. Update imports in both source files to reference the centralized security module. Implement additional security validations including enhanced path traversal protection, comprehensive input sanitization for AI prompts, secure handling of user-provided code snippets, and protection against injection attacks. Follow OWASP secure coding practices throughout the implementation. Add proper error handling and logging for security events. Ensure the security module is properly exposed in helpers/__init__.py and maintains backward compatibility with existing function signatures. The consolidation should result in identical security behavior across all modules while reducing maintenance burden and eliminating potential inconsistencies that could create security vulnerabilities.
+
 
 # Test Strategy:
-Create comprehensive unit tests for all security functions including edge cases and malicious inputs. Implement penetration tests specifically targeting path traversal attempts and directory escape scenarios. Add input validation tests using various malicious payload types including SQL injection, command injection, and prompt injection attempts. Run security scanning with bandit, pip-audit, and safety tools to verify no new vulnerabilities are introduced. Create integration tests to verify that both gemini_mcp_server.py and gemini_helper.py modules function correctly after importing from the centralized security module. Add regression tests to ensure existing functionality is preserved during the refactoring. Include performance tests to verify the centralized approach doesn't introduce performance degradation. Implement code coverage validation to ensure all security function paths are tested. Add architectural compliance tests to verify the proper separation of security concerns.
+

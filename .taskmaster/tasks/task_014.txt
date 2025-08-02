@@ -18,25 +18,25 @@ CI pipeline validation, security scan verification, performance regression detec
 Update .github/workflows/test.yml to install and use uv package manager. Replace pip install commands with uv pip install. Add uv cache configuration to speed up subsequent builds. Configure uv to work with existing Python matrix (3.10, 3.11, 3.12). Test that all existing dependencies install correctly with uv.
 
 ## 2. Add Security Scanning with Bandit and Pip-audit [pending]
-### Dependencies: 14.4
+### Dependencies: 14.14.1
 ### Description: Implement comprehensive security scanning in the CI pipeline to detect vulnerabilities in code and dependencies
 ### Details:
 Add bandit security linting step to scan Python code for common security issues. Integrate pip-audit to check for known vulnerabilities in dependencies. Configure both tools to fail the build on high-severity issues but allow warnings. Add exclusion rules for false positives if needed. Create separate job steps for security scanning with appropriate error handling.
 
 ## 3. Enhance Code Coverage for Agentic Features [pending]
-### Dependencies: 14.4
+### Dependencies: 14.14.2
 ### Description: Update code coverage reporting to include the new agentic modules and structured response features
 ### Details:
 Configure pytest-cov to include coverage for AgenticCodePatch, structured response parsing, and instructor integration modules. Update coverage thresholds to account for new code. Add coverage reporting for integration tests with agentic features. Ensure coverage data is properly collected from all Python versions in the matrix. Update coverage badge and reporting format.
 
 ## 4. Implement Performance Regression Testing [pending]
-### Dependencies: 14.5, 14.6
+### Dependencies: 14.14.3
 ### Description: Add performance benchmarking to detect regressions in response parsing and API interaction performance
 ### Details:
 Create performance benchmark tests for structured response parsing with instructor. Add timing tests for AgenticCodePatch creation and validation. Implement baseline performance metrics storage and comparison logic. Configure performance tests to fail if response times degrade beyond acceptable thresholds. Add memory usage monitoring for large structured responses.
 
 ## 5. Add Integration Testing for Structured Response Features [pending]
-### Dependencies: 14.7
+### Dependencies: 14.14.4
 ### Description: Create comprehensive integration tests for agentic features including structured response handling and error scenarios
 ### Details:
 Add integration tests for AgenticCodePatch parsing with real Gemini API responses. Test fallback behavior when structured parsing fails. Create tests for instructor integration with various response formats. Add tests for configuration loading and precedence with agentic settings. Ensure integration tests work across all supported Python versions and handle API rate limiting gracefully.

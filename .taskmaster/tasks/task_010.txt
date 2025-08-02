@@ -18,25 +18,25 @@ Pytest-based test suite with asyncio support, code coverage validation targeting
 Create tests/unit/test_agentic_code_patch.py with test cases for: valid model instantiation with all field types, field validation (file_path format, line number ranges, action type enums), serialization to/from JSON, error handling for invalid data, edge cases like empty strings and negative line numbers. Use pytest fixtures for common test data patterns.
 
 ## 2. Develop Integration Tests for Instructor Library Usage [pending]
-### Dependencies: 10.4
+### Dependencies: 10.10.1
 ### Description: Create integration tests that verify the instructor library works correctly with Gemini API calls and structured response generation
 ### Details:
 Create tests/integration/test_instructor_integration.py with test cases for: instructor.from_gemini() configuration, structured response generation with real API calls (using test API keys), error handling when API returns malformed responses, retry logic and timeout handling, compatibility with different Gemini model versions. Mock Gemini API responses for consistent testing.
 
 ## 3. Implement End-to-End Workflow Tests for Agentic Collaboration [pending]
-### Dependencies: 10.4, 10.5
+### Dependencies: 10.10.2
 ### Description: Create comprehensive end-to-end tests that validate the complete agentic workflow from code analysis request to structured patch generation
 ### Details:
 Create tests/e2e/test_agentic_workflow.py with full workflow scenarios: analyze_code() with structured response enabled, code analysis to AgenticCodePatch generation, multi-file analysis workflows, error recovery and fallback mechanisms, integration with existing gemini_helper functions. Include test fixtures with sample codebases and expected outputs.
 
 ## 4. Add Performance and Security Tests for New Features [pending]
-### Dependencies: 10.5, 10.6
+### Dependencies: 10.10.3
 ### Description: Implement performance benchmarking tests for structured response generation and security tests for the enhanced security module
 ### Details:
 Create tests/performance/test_structured_responses.py for response time benchmarking, memory usage profiling during large codebase analysis, concurrent request handling tests. Create tests/security/test_agentic_security.py for input validation security, prompt injection prevention, secure handling of code suggestions, dependency vulnerability scanning for new libraries.
 
 ## 5. Ensure Multi-Python Version Compatibility Testing [pending]
-### Dependencies: 10.4, 10.5, 10.6, 10.7
+### Dependencies: 10.10.4
 ### Description: Create compatibility test suite and update CI configuration to validate functionality across Python 3.10, 3.11, and 3.12
 ### Details:
 Update tox.ini or create tests/compatibility/test_python_versions.py with version-specific test scenarios. Test async/await patterns, type hint compatibility, dependency version conflicts across Python versions. Update test matrix configuration, ensure all new pydantic and instructor features work consistently across versions. Add version-specific test markers.

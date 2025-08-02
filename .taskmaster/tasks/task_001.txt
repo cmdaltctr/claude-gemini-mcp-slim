@@ -1,7 +1,7 @@
 # Task ID: 1
 # Title: Refactor AI API Logic from Server to Helper Module
 # Status: pending
-# Dependencies: 5
+# Dependencies: None
 # Priority: high
 # Description: Remove execute_gemini_api() and execute_gemini_cli_streaming() functions from gemini_mcp_server.py and move all AI API interaction logic to gemini_helper.py to enforce proper architectural separation.
 # Details:
@@ -9,3 +9,65 @@ This is a critical architectural refactoring to enforce the decoupled module pat
 
 # Test Strategy:
 Unit tests to verify no AI API calls remain in server module, integration tests to ensure functionality is preserved after refactoring, architectural compliance tests to validate separation of concerns, end-to-end tests for all MCP endpoints to ensure they still work correctly, mock tests to verify server only calls helper functions
+
+# Subtasks:
+## 1. Extract AI API Interaction Functions to Helper Module [done]
+### Dependencies: None
+### Description: Move `execute_gemini_api()` and `execute_gemini_cli_streaming()` functions from `gemini_mcp_server.py` to `gemini_helper.py` to centralize AI API interaction logic.
+### Details:
+This involves cutting the function definitions from `gemini_mcp_server.py` and pasting them into `gemini_helper.py`. Ensure all internal dependencies and imports within these functions are correctly resolved in the new module.
+
+## 2. Update Server to Orchestrate Workflows via Helper Functions [done]
+### Dependencies: 1.1
+### Description: Modify `gemini_mcp_server.py` to call the newly extracted functions in `gemini_helper.py` for all AI API interactions, ensuring the server acts purely as an orchestrator.
+### Details:
+Replace direct AI API calls or the original function calls within `gemini_mcp_server.py` with calls to `gemini_helper.execute_gemini_api()` and `gemini_helper.execute_gemini_cli_streaming()`. This establishes the architectural separation.
+
+## 3. Refactor MCP Request Handlers to Utilize Helper Functions [done]
+### Dependencies: 1.2
+### Description: Update specific MCP request handlers within `gemini_mcp_server.py` to leverage the new helper function orchestration pattern for AI interactions.
+### Details:
+Examine each request handler in `gemini_mcp_server.py` that previously interacted with the AI API. Refactor these handlers to exclusively use the `gemini_helper` functions, ensuring all AI-related logic is delegated.
+
+## 4. Update Imports, Error Handling, and Test Coverage [done]
+### Dependencies: 1.1, 1.2, 1.3
+### Description: Review and update all necessary imports, refine error handling mechanisms, and expand test coverage to validate the architectural separation and preserve existing functionality.
+### Details:
+Adjust import statements in both `gemini_mcp_server.py` and `gemini_helper.py`. Implement robust error handling for cross-module calls. Create or update unit, integration, and end-to-end tests to ensure no regressions and that the new architecture functions as expected.
+
+## 5. Create API Key Manager Module [pending]
+### Dependencies: None
+### Description: Extract API key discovery and management logic from gemini_helper.py into helpers/api_key_manager.py (~150 lines)
+### Details:
+Move functions: get_api_key(), _validate_api_key(), _get_from_env_var(), _extract_mcp_api_key(), _get_from_json_config(), _get_from_env_file(), add_shared_mcp_path() and related constants/imports. Create clean public interface for API key operations.
+
+## 6. Create Gemini API Client Module [pending]
+### Dependencies: 1.5
+### Description: Extract direct API interaction logic from gemini_helper.py into helpers/gemini_api_client.py (~100 lines)
+### Details:
+Move function: execute_gemini_api() and related imports/constants. Handle API configuration, model selection, and direct API calls with google-generativeai library. Create clean interface for API operations.
+
+## 7. Create Gemini CLI Client Module [pending]
+### Dependencies: 1.5
+### Description: Extract CLI execution logic from gemini_helper.py into helpers/gemini_cli_client.py (~300 lines)
+### Details:
+Move functions: execute_gemini_cli_streaming(), stream_subprocess_output() and related subprocess handling, timeout management, and streaming logic. Create clean interface for CLI operations.
+
+## 8. Create Execution Orchestrator Module [pending]
+### Dependencies: 1.6, 1.7
+### Description: Extract smart execution and result processing logic from gemini_helper.py into helpers/execution_orchestrator.py (~150 lines)
+### Details:
+Move functions: execute_gemini_smart(), _process_result_output(), execute_gemini_smart_with_progress(), split_into_chunks() and related orchestration logic. Handle API-first fallback-to-CLI strategy.
+
+## 9. Refactor Main Gemini Helper Module [pending]
+### Dependencies: 1.5, 1.6, 1.7, 1.8
+### Description: Slim down gemini_helper.py to ~250 lines by updating imports and delegating to new helper modules
+### Details:
+Update gemini_helper.py to import and use the new helper modules. Keep main CLI interface functions (quick_query, analyze_code, analyze_codebase, main) and update them to use the new modular components. Remove extracted code and update all imports.
+
+## 10. Update Tests and Validate Architecture [pending]
+### Dependencies: 1.9
+### Description: Update test imports, add new module tests, and validate architectural compliance after refactoring
+### Details:
+Update existing tests to import from new modules. Create unit tests for each new helper module. Run full test suite to ensure no regressions. Validate that architectural separation is maintained and all functionality preserved.
+

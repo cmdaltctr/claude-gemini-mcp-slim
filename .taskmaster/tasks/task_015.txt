@@ -9,3 +9,23 @@ Update README.md, API documentation, and user guides to include information abou
 
 # Test Strategy:
 Documentation accuracy validation, user guide testing with new users, example code verification, link validation
+
+# Subtasks:
+## 1. Update Core Documentation for Agentic Features [pending]
+### Dependencies: None
+### Description: Update README.md and API documentation to reflect the new agentic collaboration features and structured response capabilities.
+### Details:
+Ensure README.md provides an overview of agentic features and usage. Update API documentation to include details on AgenticCodePatch schema, new configuration options, and usage examples for structured responses.
+
+## 2. Create Structured Response Migration Guide [pending]
+### Dependencies: None
+### Description: Develop a comprehensive migration guide for users transitioning from text-based responses to the new structured response features.
+### Details:
+The guide should cover steps, best practices, and common pitfalls when migrating existing integrations to utilize structured responses, including examples.
+
+## 3. Update Troubleshooting and FAQ Sections [pending]
+### Dependencies: None
+### Description: Revise the troubleshooting guides and FAQ sections to include new usage patterns and common issues related to agentic features and structured responses.
+### Details:
+Add entries addressing potential problems, error messages, and frequently asked questions concerning the new agentic collaboration and structured response functionalities.
+

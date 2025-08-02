@@ -18,25 +18,25 @@ Unit tests for formatting functions, visual diff validation tests, MCP client co
 Create parser functions in gemini_mcp_server.py to deserialize AgenticCodePatch objects from JSON responses. Implement validation logic to ensure all required fields are present and properly formatted. Add error handling for malformed patch objects with descriptive error messages. Create helper functions to validate action types (REPLACE, INSERT, NOTIFY) and ensure file paths are safe.
 
 ## 2. Implement Diff Generation Engine [pending]
-### Dependencies: 9.4
+### Dependencies: 9.9.1
 ### Description: Create functions to generate unified diff format from AgenticCodePatch REPLACE actions
 ### Details:
 Implement diff generation logic that reads the original file content and compares it with the proposed new_code from REPLACE actions. Use Python's difflib module to generate unified diff format. Handle line number ranges using start_line and end_line fields. Create functions to colorize diff output for terminal display and escape sequences for different MCP clients.
 
 ## 3. Create Markdown Formatting System [pending]
-### Dependencies: 9.4, 9.5
+### Dependencies: 9.9.2
 ### Description: Implement markdown formatters for different AgenticCodePatch action types
 ### Details:
 Create separate formatting functions for each action type: format_replace_action() using diff blocks, format_insert_action() showing insertion point and new code, format_notify_action() for informational messages. Use consistent markdown syntax with code blocks, file path headers, and clear action indicators. Implement proper escaping for special characters in code content.
 
 ## 4. Build MCP Client Compatibility Layer [pending]
-### Dependencies: 9.6
+### Dependencies: 9.9.3
 ### Description: Implement client-specific formatting and output optimization for different MCP clients
 ### Details:
 Create client detection logic and format responses accordingly for IDEs (rich formatting), terminals (ANSI colors), and CLIs (plain text). Implement adaptive line length and color scheme selection. Add configuration options for output preferences. Create fallback formatting for unknown clients. Ensure proper unicode handling across different environments.
 
 ## 5. Integrate Formatted Output into MCP Server Response System [pending]
-### Dependencies: 9.7
+### Dependencies: 9.9.4
 ### Description: Modify the main MCP server response functions to use the new formatting system
 ### Details:
 Update the main tool response functions in gemini_mcp_server.py to use the new formatting pipeline. Replace existing plain text responses with formatted diff views. Implement error handling that gracefully falls back to original response format if formatting fails. Add configuration toggles to enable/disable diff formatting. Ensure backward compatibility with existing MCP clients.
