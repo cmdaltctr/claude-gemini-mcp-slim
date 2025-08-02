@@ -126,7 +126,8 @@ include = '\.pyi?$'
 extend-exclude = '''
 /(
   # directories
-  \.eggs
+  \.test-env
+  | \.eggs
   | \.git
   | \.hg
   | \.mypy_cache
@@ -134,6 +135,8 @@ extend-exclude = '''
   | \.venv
   | build
   | dist
+  | env
+  | venv
 )/
 '''
 
@@ -141,9 +144,11 @@ extend-exclude = '''
 profile = "black"
 multi_line_output = 3
 line_length = 88
-known_first_party = ["gemini_mcp_server", "gemini_helper"]
+known_first_party = ["claude_gemini_mcp"]
 known_third_party = ["pytest", "mcp", "google"]
 sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+skip_gitignore = true
+extend_skip_glob = [".test-env/*", "venv/*", "env/*", ".venv/*"]
 
 [tool.flake8]
 max-line-length = 88
@@ -151,8 +156,10 @@ extend-ignore = ["E203", "W503", "E501"]
 exclude = [
     ".git",
     "__pycache__",
+    ".test-env",
     ".venv",
     "venv",
+    "env",
     ".tox",
     "dist",
     "build",
