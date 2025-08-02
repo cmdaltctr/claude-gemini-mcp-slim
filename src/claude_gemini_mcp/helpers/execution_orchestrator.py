@@ -27,7 +27,7 @@ intelligent orchestration rather than simple pass-through communication.
 import asyncio
 import sys
 import time
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from claude_gemini_mcp.config import get_config
 from claude_gemini_mcp.helpers.api_key_manager import get_api_key
@@ -37,15 +37,16 @@ from claude_gemini_mcp.helpers.gemini_cli_client import execute_gemini_cli_strea
 # Import availability flags and optional dependencies
 try:
     from claude_gemini_mcp.helpers.markdown_utils import markdown_to_text
+
     MARKDOWN_UTILS_AVAILABLE = True
 except ImportError:
     MARKDOWN_UTILS_AVAILABLE = False
 
 try:
     from claude_gemini_mcp.helpers.hybrid_progress import (
-        create_dots_progress,
         create_spinner_progress,
     )
+
     PROGRESS_AVAILABLE = True
 except ImportError:
     PROGRESS_AVAILABLE = False
@@ -57,20 +58,20 @@ cfg = get_config()
 # This will be replaced by direct calls to cfg.get_model(tool_name)
 MODEL_ASSIGNMENTS = {
     "quick_query": "flash",  # Simple Q&A
-    "analyze_code": "pro",   # Deep analysis
+    "analyze_code": "pro",  # Deep analysis
     "analyze_codebase": "pro",  # Large context
 }
 
 # Model nickname mapping for backward compatibility
 GEMINI_MODELS = {
     "flash": cfg.get_raw_config()
-        .get("models", {})
-        .get("nicknames", {})
-        .get("flash", "gemini-2.5-flash"),
+    .get("models", {})
+    .get("nicknames", {})
+    .get("flash", "gemini-2.5-flash"),
     "pro": cfg.get_raw_config()
-        .get("models", {})
-        .get("nicknames", {})
-        .get("pro", "gemini-2.5-pro"),
+    .get("models", {})
+    .get("nicknames", {})
+    .get("pro", "gemini-2.5-pro"),
 }
 
 
@@ -293,7 +294,9 @@ def execute_gemini_smart_with_progress(
         progress.start("Processing request")
 
         # Execute smart orchestration without built-in progress (we handle it here)
-        result = asyncio.run(execute_gemini_smart(prompt, task_type, show_progress=False))
+        result = asyncio.run(
+            execute_gemini_smart(prompt, task_type, show_progress=False)
+        )
 
         if result["success"]:
             # Stream response in chunks for smooth display experience

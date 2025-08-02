@@ -10,12 +10,9 @@ import unittest
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from claude_gemini_mcp.helpers.code_analyzer import (
-    CodeAnalyzerAPI,
-    analyze_codebase,
-)
-from claude_gemini_mcp.helpers.codebase_analyzer import (
+from claude_gemini_mcp.helpers.tools.codebase_analyzer import (
     ArchitectureInfo,
+    CodeAnalyzerAPI,
     CodebaseAnalysisError,
     CodebaseAnalysisResult,
     CodebaseStats,
@@ -23,6 +20,7 @@ from claude_gemini_mcp.helpers.codebase_analyzer import (
     FileFilter,
     ProjectStructure,
     TechStackInfo,
+    analyze_codebase,
 )
 
 

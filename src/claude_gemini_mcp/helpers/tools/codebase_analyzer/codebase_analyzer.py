@@ -15,15 +15,12 @@ Date: 2025-01-20
 Architecture: Pipeline Pattern with Parallel Execution
 """
 
-import hashlib
 import json
 import logging
 import os
 import re
-import sys
 import time
 from collections import Counter, defaultdict
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -31,7 +28,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 # Import single code analyzer for individual file analysis
 try:
-    from .analyze_code import AnalysisResult, AnalysisType, analyze_code
+    from ..analyze_code import AnalysisResult, AnalysisType, analyze_code
 
     CODE_ANALYZER_AVAILABLE = True
 except ImportError:
@@ -171,28 +168,20 @@ class CodebaseAnalysisResult:
 class CodebaseAnalysisError(Exception):
     """Base exception for codebase analysis errors"""
 
-    pass
-
 
 # Raised when file discovery fails
 class FileDiscoveryError(CodebaseAnalysisError):
     """Raised when file discovery fails"""
-
-    pass
 
 
 # Raised when content aggregation fails
 class ContentAggregationError(CodebaseAnalysisError):
     """Raised when content aggregation fails"""
 
-    pass
-
 
 # Raised when project structure analysis fails
 class ProjectStructureError(CodebaseAnalysisError):
     """Raised when project structure analysis fails"""
-
-    pass
 
 
 # File filtering and discovery utilities
@@ -1239,7 +1228,7 @@ class CodebaseAnalyzer:
 
         # Project overview
         payload_parts.append(f"# Codebase Analysis: {self.root_path.name}")
-        payload_parts.append(f"## Project Overview")
+        payload_parts.append("## Project Overview")
         payload_parts.append(f"- Total Files: {result.structure.total_files}")
         payload_parts.append(f"- Total Lines: {result.structure.total_lines:,}")
         payload_parts.append(

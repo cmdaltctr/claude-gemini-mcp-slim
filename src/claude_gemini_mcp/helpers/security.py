@@ -34,11 +34,10 @@ security principles. All external input should be processed through these functi
 before being used elsewhere in the application.
 """
 
-import os
 import re
 import unicodedata
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Optional
 
 from claude_gemini_mcp.config import get_config
 
@@ -100,7 +99,7 @@ def sanitize_for_prompt(text: str, max_length: int = None) -> str:
     for pattern in dangerous_patterns:
         if pattern.lower() in text_lower:
             escaped_pattern = re.escape(pattern)
-            replacement = f"[filtered-content]"
+            replacement = "[filtered-content]"
             text = re.sub(escaped_pattern, replacement, text, flags=re.IGNORECASE)
 
     # Escape potential control characters

@@ -13,6 +13,7 @@ import threading
 import time
 from queue import Queue
 from unittest.mock import MagicMock, patch
+
 import pytest
 
 # Add project root to path for imports
@@ -32,7 +33,7 @@ from claude_gemini_mcp.helpers.gemini_cli_client import (
 class TestCLIAvailability:
     """Test CLI availability validation functionality."""
 
-    @patch('shutil.which')
+    @patch("shutil.which")
     def test_validate_cli_availability_available(self, mock_which):
         """Test when Gemini CLI is available in PATH."""
         mock_which.return_value = "/usr/local/bin/gemini"
@@ -41,7 +42,7 @@ class TestCLIAvailability:
         assert result is True
         mock_which.assert_called_once_with("gemini")
 
-    @patch('shutil.which')
+    @patch("shutil.which")
     def test_validate_cli_availability_unavailable(self, mock_which):
         """Test when Gemini CLI is not available in PATH."""
         mock_which.return_value = None
@@ -155,7 +156,7 @@ class TestSubprocessOutputStreaming:
         thread = threading.Thread(
             target=stream_subprocess_output,
             args=(mock_process, output_queue, stop_event),
-            daemon=True
+            daemon=True,
         )
         thread.start()
 
@@ -193,7 +194,7 @@ class TestSubprocessOutputStreaming:
         thread = threading.Thread(
             target=stream_subprocess_output,
             args=(mock_process, output_queue, stop_event),
-            daemon=True
+            daemon=True,
         )
         thread.start()
         thread.join(timeout=1)
@@ -216,7 +217,7 @@ class TestSubprocessOutputStreaming:
         thread = threading.Thread(
             target=stream_subprocess_output,
             args=(mock_process, output_queue, stop_event),
-            daemon=True
+            daemon=True,
         )
         thread.start()
 
@@ -252,7 +253,7 @@ class TestCLIExecution:
         assert result["success"] is False
         assert "Invalid prompt: must be non-empty string" in result["error"]
 
-    @patch('claude_gemini_mcp.helpers.gemini_cli_client.cfg')
+    @patch("claude_gemini_mcp.helpers.gemini_cli_client.cfg")
     @pytest.mark.asyncio
     async def test_execute_gemini_cli_streaming_prompt_too_large(self, mock_cfg):
         """Test handling of oversized prompt."""
@@ -268,9 +269,7 @@ class TestCLIExecution:
     async def test_execute_gemini_cli_streaming_invalid_model_name(self):
         """Test handling of invalid model name."""
         result = await execute_gemini_cli_streaming(
-            "test prompt",
-            model_name="",
-            show_progress=False
+            "test prompt", model_name="", show_progress=False
         )
 
         assert result["success"] is False
@@ -280,16 +279,14 @@ class TestCLIExecution:
     async def test_execute_gemini_cli_streaming_invalid_model_characters(self):
         """Test handling of model name with invalid characters."""
         result = await execute_gemini_cli_streaming(
-            "test prompt",
-            model_name="model$name",
-            show_progress=False
+            "test prompt", model_name="model$name", show_progress=False
         )
 
         assert result["success"] is False
         assert "Invalid model name characters" in result["error"]
 
-    @patch('subprocess.Popen')
-    @patch('claude_gemini_mcp.helpers.gemini_cli_client.cfg')
+    @patch("subprocess.Popen")
+    @patch("claude_gemini_mcp.helpers.gemini_cli_client.cfg")
     @pytest.mark.asyncio
     async def test_execute_gemini_cli_streaming_success(self, mock_cfg, mock_popen):
         """Test successful CLI execution."""
@@ -311,9 +308,7 @@ class TestCLIExecution:
         mock_popen.return_value = mock_process
 
         result = await execute_gemini_cli_streaming(
-            "Test prompt",
-            "gemini-2.5-flash",
-            show_progress=False
+            "Test prompt", "gemini-2.5-flash", show_progress=False
         )
 
         assert result["success"] is True
@@ -323,11 +318,17 @@ class TestCLIExecution:
         # Verify subprocess was called correctly
         mock_popen.assert_called_once()
         call_args = mock_popen.call_args
-        assert call_args[0][0] == ["gemini", "-m", "gemini-2.5-flash", "-p", "Test prompt"]
+        assert call_args[0][0] == [
+            "gemini",
+            "-m",
+            "gemini-2.5-flash",
+            "-p",
+            "Test prompt",
+        ]
         assert call_args[1]["shell"] is False  # Security: no shell=True
 
-    @patch('subprocess.Popen')
-    @patch('claude_gemini_mcp.helpers.gemini_cli_client.cfg')
+    @patch("subprocess.Popen")
+    @patch("claude_gemini_mcp.helpers.gemini_cli_client.cfg")
     @pytest.mark.asyncio
     async def test_execute_gemini_cli_streaming_failure(self, mock_cfg, mock_popen):
         """Test CLI execution failure."""
@@ -346,16 +347,14 @@ class TestCLIExecution:
         mock_popen.return_value = mock_process
 
         result = await execute_gemini_cli_streaming(
-            "Test prompt",
-            "gemini-2.5-flash",
-            show_progress=False
+            "Test prompt", "gemini-2.5-flash", show_progress=False
         )
 
         assert result["success"] is False
         assert "CLI error message" in result["error"]
 
-    @patch('subprocess.Popen')
-    @patch('claude_gemini_mcp.helpers.gemini_cli_client.cfg')
+    @patch("subprocess.Popen")
+    @patch("claude_gemini_mcp.helpers.gemini_cli_client.cfg")
     @pytest.mark.asyncio
     async def test_execute_gemini_cli_streaming_timeout(self, mock_cfg, mock_popen):
         """Test CLI execution timeout handling."""
@@ -376,9 +375,7 @@ class TestCLIExecution:
         mock_popen.return_value = mock_process
 
         result = await execute_gemini_cli_streaming(
-            "Test prompt",
-            "gemini-2.5-flash",
-            show_progress=False
+            "Test prompt", "gemini-2.5-flash", show_progress=False
         )
 
         assert result["success"] is False
@@ -391,20 +388,20 @@ class TestCLIExecution:
     @pytest.mark.asyncio
     async def test_execute_gemini_cli_streaming_file_not_found(self):
         """Test handling when CLI binary is not found."""
-        with patch('subprocess.Popen', side_effect=FileNotFoundError()):
+        with patch("subprocess.Popen", side_effect=FileNotFoundError()):
             result = await execute_gemini_cli_streaming(
-                "Test prompt",
-                "gemini-2.5-flash",
-                show_progress=False
+                "Test prompt", "gemini-2.5-flash", show_progress=False
             )
 
             assert result["success"] is False
             assert "Gemini CLI not found in PATH" in result["error"]
 
-    @patch('subprocess.Popen')
-    @patch('claude_gemini_mcp.helpers.gemini_cli_client.cfg')
+    @patch("subprocess.Popen")
+    @patch("claude_gemini_mcp.helpers.gemini_cli_client.cfg")
     @pytest.mark.asyncio
-    async def test_execute_gemini_cli_streaming_environment_handling(self, mock_cfg, mock_popen):
+    async def test_execute_gemini_cli_streaming_environment_handling(
+        self, mock_cfg, mock_popen
+    ):
         """Test that environment variables are properly handled."""
         # Setup config mock
         mock_cfg.get_limit.return_value = 1000000
@@ -422,9 +419,7 @@ class TestCLIExecution:
         # Set environment variable
         with patch.dict(os.environ, {"GOOGLE_CLOUD_PROJECT": "test-project"}):
             result = await execute_gemini_cli_streaming(
-                "Test prompt",
-                "gemini-2.5-flash",
-                show_progress=False
+                "Test prompt", "gemini-2.5-flash", show_progress=False
             )
 
         # Verify environment was passed to subprocess
@@ -433,8 +428,8 @@ class TestCLIExecution:
         assert "PATH" in env
         assert env["GOOGLE_CLOUD_PROJECT"] == "test-project"
 
-    @patch('subprocess.Popen')
-    @patch('claude_gemini_mcp.helpers.gemini_cli_client.cfg')
+    @patch("subprocess.Popen")
+    @patch("claude_gemini_mcp.helpers.gemini_cli_client.cfg")
     @pytest.mark.asyncio
     async def test_execute_gemini_cli_streaming_no_model(self, mock_cfg, mock_popen):
         """Test CLI execution without specifying model."""
@@ -451,9 +446,7 @@ class TestCLIExecution:
         mock_popen.return_value = mock_process
 
         result = await execute_gemini_cli_streaming(
-            "Test prompt",
-            model_name=None,
-            show_progress=False
+            "Test prompt", model_name=None, show_progress=False
         )
 
         assert result["success"] is True
@@ -467,7 +460,7 @@ class TestCLIExecution:
 class TestConfigurationAndTimeout:
     """Test configuration and timeout functionality."""
 
-    @patch('claude_gemini_mcp.helpers.gemini_cli_client.cfg')
+    @patch("claude_gemini_mcp.helpers.gemini_cli_client.cfg")
     def test_get_cli_timeout(self, mock_cfg):
         """Test CLI timeout retrieval from configuration."""
         mock_cfg.get_timeout.return_value = 120
@@ -477,7 +470,7 @@ class TestConfigurationAndTimeout:
         assert timeout == 120
         mock_cfg.get_timeout.assert_called_once_with("cli_timeout", 60)
 
-    @patch('claude_gemini_mcp.helpers.gemini_cli_client.cfg')
+    @patch("claude_gemini_mcp.helpers.gemini_cli_client.cfg")
     def test_get_cli_timeout_default(self, mock_cfg):
         """Test CLI timeout default value."""
         mock_cfg.get_timeout.return_value = 60  # Default value
@@ -506,7 +499,9 @@ class TestSecurityFeatures:
 
             # Should be safely contained in arguments
             assert len(result) == 5  # ["gemini", "-m", "model", "-p", "prompt"]
-            assert result[4] == dangerous_input  # Exact string preserved, not interpreted
+            assert (
+                result[4] == dangerous_input
+            )  # Exact string preserved, not interpreted
 
     def test_model_name_sanitization(self):
         """Test that model names are properly sanitized."""
@@ -522,8 +517,8 @@ class TestSecurityFeatures:
             with pytest.raises(ValueError, match="Invalid model name characters"):
                 build_cli_command("Test prompt", dangerous_model)
 
-    @patch('subprocess.Popen')
-    @patch('claude_gemini_mcp.helpers.gemini_cli_client.cfg')
+    @patch("subprocess.Popen")
+    @patch("claude_gemini_mcp.helpers.gemini_cli_client.cfg")
     @pytest.mark.asyncio
     async def test_shell_false_enforcement(self, mock_cfg, mock_popen):
         """Test that shell=False is enforced for security."""
@@ -540,9 +535,7 @@ class TestSecurityFeatures:
         mock_popen.return_value = mock_process
 
         await execute_gemini_cli_streaming(
-            "Test prompt",
-            "gemini-2.5-flash",
-            show_progress=False
+            "Test prompt", "gemini-2.5-flash", show_progress=False
         )
 
         # Verify shell=False was used

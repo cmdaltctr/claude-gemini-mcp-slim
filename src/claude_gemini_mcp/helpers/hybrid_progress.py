@@ -6,14 +6,13 @@ Provides incremental dots/spinners while waiting, then switches to full output
 when response chunks arrive. Designed for MCP servers and CLI tools.
 """
 
-import os
 import sys
 import threading
 import time
 from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, List, Optional, TextIO, Union
+from typing import List, Optional, TextIO
 
 
 # Enum for progress types

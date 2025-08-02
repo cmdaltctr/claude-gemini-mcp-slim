@@ -19,7 +19,7 @@ Architecture: Clean API Facade Pattern
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 
 # Import the comprehensive codebase analyzer
 from .codebase_analyzer import (

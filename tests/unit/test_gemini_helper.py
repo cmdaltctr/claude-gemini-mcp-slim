@@ -15,16 +15,17 @@ from claude_gemini_mcp.gemini_helper import (
     MAX_FILE_SIZE,
     MAX_LINES,
 )
+from claude_gemini_mcp.helpers.api_key_manager import (
+    add_shared_mcp_path,
+    get_api_key,
+)
+
 # These functions are now in the execution orchestrator
 from claude_gemini_mcp.helpers.execution_orchestrator import (
     execute_gemini_smart,
 )
 from claude_gemini_mcp.helpers.gemini_api_client import execute_gemini_api
 from claude_gemini_mcp.helpers.gemini_cli_client import execute_gemini_cli_streaming
-from claude_gemini_mcp.helpers.api_key_manager import (
-    add_shared_mcp_path,
-    get_api_key,
-)
 from claude_gemini_mcp.helpers.security import (
     sanitize_error_message,
     sanitize_for_prompt,
@@ -112,7 +113,9 @@ class TestExecuteGeminiApi(unittest.TestCase):
     async def test_execute_gemini_api_missing_api_key(self, mock_get_api_key):
         """Test handling of missing API key"""
         mock_get_api_key.return_value = None
-        result = await execute_gemini_api("test prompt", "test-model", show_progress=False)
+        result = await execute_gemini_api(
+            "test prompt", "test-model", show_progress=False
+        )
         self.assertFalse(result["success"])
         self.assertIn("No API key found", result["error"])
 
@@ -434,7 +437,9 @@ class TestSmartExecution(unittest.TestCase):
         mock_get_key.return_value = "valid_api_key"
         mock_api.return_value = {"success": True, "output": "API response"}
 
-        result = await execute_gemini_smart("test prompt", "quick_query", show_progress=False)
+        result = await execute_gemini_smart(
+            "test prompt", "quick_query", show_progress=False
+        )
 
         self.assertTrue(result["success"])
         self.assertEqual(result["output"], "API response")
@@ -451,7 +456,9 @@ class TestSmartExecution(unittest.TestCase):
         mock_api.return_value = {"success": False, "error": "API error"}
         mock_cli.return_value = {"success": True, "output": "CLI response"}
 
-        result = await execute_gemini_smart("test prompt", "quick_query", show_progress=False)
+        result = await execute_gemini_smart(
+            "test prompt", "quick_query", show_progress=False
+        )
 
         self.assertTrue(result["success"])
         self.assertEqual(result["output"], "CLI response")
@@ -460,12 +467,16 @@ class TestSmartExecution(unittest.TestCase):
 
     @patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key")
     @patch("claude_gemini_mcp.helpers.gemini_cli_client.execute_gemini_cli_streaming")
-    async def test_execute_gemini_smart_no_api_key_direct_cli(self, mock_cli, mock_get_key):
+    async def test_execute_gemini_smart_no_api_key_direct_cli(
+        self, mock_cli, mock_get_key
+    ):
         """Test smart execution going directly to CLI when no API key"""
         mock_get_key.return_value = None
         mock_cli.return_value = {"success": True, "output": "CLI response"}
 
-        result = await execute_gemini_smart("test prompt", "quick_query", show_progress=False)
+        result = await execute_gemini_smart(
+            "test prompt", "quick_query", show_progress=False
+        )
 
         self.assertTrue(result["success"])
         self.assertEqual(result["output"], "CLI response")
@@ -473,7 +484,9 @@ class TestSmartExecution(unittest.TestCase):
 
     async def test_execute_gemini_smart_model_selection(self):
         """Test that correct models are selected for different task types"""
-        with patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key", return_value=None):
+        with patch(
+            "claude_gemini_mcp.helpers.api_key_manager.get_api_key", return_value=None
+        ):
             with patch(
                 "claude_gemini_mcp.helpers.gemini_cli_client.execute_gemini_cli_streaming"
             ) as mock_cli:
@@ -487,7 +500,9 @@ class TestSmartExecution(unittest.TestCase):
                 ]
 
                 for task_type, expected_model in task_model_pairs:
-                    await execute_gemini_smart("test prompt", task_type, show_progress=False)
+                    await execute_gemini_smart(
+                        "test prompt", task_type, show_progress=False
+                    )
                     # Check that CLI was called with correct model
                     args, kwargs = mock_cli.call_args
                     self.assertEqual(args[1], expected_model)  # model_name argument

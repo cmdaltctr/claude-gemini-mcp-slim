@@ -68,7 +68,9 @@ class TestGeminiAPIIntegration:
     async def test_api_missing_key(self) -> None:
         """Test API behavior with missing API key"""
 
-        with patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key", return_value=None):
+        with patch(
+            "claude_gemini_mcp.helpers.api_key_manager.get_api_key", return_value=None
+        ):
             result = await execute_gemini_api("Test prompt", "gemini-2.5-flash")
 
             assert result["success"] is False
@@ -79,13 +81,20 @@ class TestGeminiAPIIntegration:
         """Test API behavior with invalid API key"""
 
         # Set a short API key that should fail validation
-        monkeypatch.setenv("GOOGLE_API_KEY", "short")  # Only 5 chars, should fail > 10 check
+        monkeypatch.setenv(
+            "GOOGLE_API_KEY", "short"
+        )  # Only 5 chars, should fail > 10 check
 
         # Patch all fallback discovery methods to ensure they don't find other keys
-        with patch(
-            "claude_gemini_mcp.helpers.api_key_manager._get_from_json_config", return_value=None
-        ), patch(
-            "claude_gemini_mcp.helpers.api_key_manager._get_from_env_file", return_value=None
+        with (
+            patch(
+                "claude_gemini_mcp.helpers.api_key_manager._get_from_json_config",
+                return_value=None,
+            ),
+            patch(
+                "claude_gemini_mcp.helpers.api_key_manager._get_from_env_file",
+                return_value=None,
+            ),
         ):
             result = await execute_gemini_api("Test prompt", "gemini-2.5-flash")
 
@@ -114,9 +123,7 @@ class TestGeminiAPIIntegration:
         mock_model = MagicMock()
 
         # Simulate an error that includes an API key
-        error_with_key = Exception(
-            f"Error with key {mock_google_api_key} in message"
-        )
+        error_with_key = Exception(f"Error with key {mock_google_api_key} in message")
         mock_model.generate_content_async = AsyncMock(side_effect=error_with_key)
         mock_genai.GenerativeModel.return_value = mock_model
 
@@ -139,17 +146,23 @@ class TestCLIFallbackIntegration:
         async def mock_cli_execution(prompt, model_name, show_progress=True):
             return {
                 "success": True,
-                "output": "CLI response line 1\nCLI response line 2\n"
+                "output": "CLI response line 1\nCLI response line 2\n",
             }
 
         # First test that API failure triggers CLI fallback
-        with patch("claude_gemini_mcp.helpers.gemini_api_client.execute_gemini_api") as mock_api:
+        with patch(
+            "claude_gemini_mcp.helpers.gemini_api_client.execute_gemini_api"
+        ) as mock_api:
             mock_api.return_value = {"success": False, "error": "API failed"}
 
-            with patch("claude_gemini_mcp.helpers.gemini_cli_client.execute_gemini_cli_streaming",
-                       side_effect=mock_cli_execution):
+            with patch(
+                "claude_gemini_mcp.helpers.gemini_cli_client.execute_gemini_cli_streaming",
+                side_effect=mock_cli_execution,
+            ):
                 # Import and use execute_gemini_smart which handles the fallback
-                from claude_gemini_mcp.helpers.execution_orchestrator import execute_gemini_smart
+                from claude_gemini_mcp.helpers.execution_orchestrator import (
+                    execute_gemini_smart,
+                )
 
                 result = await execute_gemini_smart(
                     "Test prompt", "quick_query", show_progress=False
@@ -166,20 +179,21 @@ class TestCLIFallbackIntegration:
         mock_process = MagicMock()
         mock_process.returncode = 0
         mock_process.pid = 12345
-        mock_process.poll = MagicMock(side_effect=[None, 0])  # Process running then finished
+        mock_process.poll = MagicMock(
+            side_effect=[None, 0]
+        )  # Process running then finished
         mock_process.stdout = MagicMock()
         mock_process.stdout.readline = MagicMock(return_value="")
         mock_process.stdout.read = MagicMock(return_value="Safe output")
         mock_process.stderr = MagicMock()
         mock_process.stderr.read = MagicMock(return_value="")
 
-        with patch(
-            "subprocess.Popen", return_value=mock_process
-        ) as mock_popen:
-            with patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key", return_value=None):  # Force CLI
-                await execute_gemini_cli_streaming(
-                    "Test prompt", "gemini-pro"
-                )
+        with patch("subprocess.Popen", return_value=mock_process) as mock_popen:
+            with patch(
+                "claude_gemini_mcp.helpers.api_key_manager.get_api_key",
+                return_value=None,
+            ):  # Force CLI
+                await execute_gemini_cli_streaming("Test prompt", "gemini-pro")
 
                 # Verify the command was constructed securely
                 mock_popen.assert_called_once()
@@ -203,7 +217,9 @@ class TestCLIFallbackIntegration:
         mock_process = MagicMock()
         mock_process.returncode = 1
         mock_process.pid = 12345
-        mock_process.poll = MagicMock(side_effect=[None, 1])  # Process running then failed
+        mock_process.poll = MagicMock(
+            side_effect=[None, 1]
+        )  # Process running then failed
         mock_process.stdout = MagicMock()
         mock_process.stdout.readline = MagicMock(return_value="")
         mock_process.stdout.read = MagicMock(return_value="")
@@ -211,10 +227,11 @@ class TestCLIFallbackIntegration:
         mock_process.stderr.read = MagicMock(return_value="CLI error message")
 
         with patch("subprocess.Popen", return_value=mock_process):
-            with patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key", return_value=None):
-                result = await execute_gemini_cli_streaming(
-                    "Test prompt", "gemini-pro"
-                )
+            with patch(
+                "claude_gemini_mcp.helpers.api_key_manager.get_api_key",
+                return_value=None,
+            ):
+                result = await execute_gemini_cli_streaming("Test prompt", "gemini-pro")
 
                 assert result["success"] is False
                 assert "CLI error message" in result["error"]
@@ -227,11 +244,13 @@ class TestCLIFallbackIntegration:
         async def mock_cli_streaming(prompt, model_name, show_progress=True):
             return {
                 "success": True,
-                "output": "Starting analysis...\nProcessing data...\nAnalysis complete.\n"
+                "output": "Starting analysis...\nProcessing data...\nAnalysis complete.\n",
             }
 
-        with patch("claude_gemini_mcp.helpers.gemini_cli_client.execute_gemini_cli_streaming",
-                   side_effect=mock_cli_streaming):
+        with patch(
+            "claude_gemini_mcp.helpers.gemini_cli_client.execute_gemini_cli_streaming",
+            side_effect=mock_cli_streaming,
+        ):
             result = await execute_gemini_cli_streaming(
                 "Test prompt", "gemini-pro", show_progress=False
             )
@@ -259,17 +278,20 @@ class TestModelSelection:
             mock_process = MagicMock()
             mock_process.returncode = 0
             mock_process.pid = 12345
-            mock_process.poll = MagicMock(side_effect=[None, 0])  # Process running then finished
+            mock_process.poll = MagicMock(
+                side_effect=[None, 0]
+            )  # Process running then finished
             mock_process.stdout = MagicMock()
             mock_process.stdout.readline = MagicMock(return_value="")
             mock_process.stdout.read = MagicMock(return_value="output")
             mock_process.stderr = MagicMock()
             mock_process.stderr.read = MagicMock(return_value="")
 
-            with patch(
-                "subprocess.Popen", return_value=mock_process
-            ) as mock_popen:
-                with patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key", return_value=None):
+            with patch("subprocess.Popen", return_value=mock_process) as mock_popen:
+                with patch(
+                    "claude_gemini_mcp.helpers.api_key_manager.get_api_key",
+                    return_value=None,
+                ):
                     await execute_gemini_cli_streaming("Test prompt", expected_model)
 
                     # Verify correct model was selected
@@ -281,6 +303,7 @@ class TestModelSelection:
         """Test handling of invalid task types"""
 
         from claude_gemini_mcp.config import get_config
+
         with patch("claude_gemini_mcp.config.get_config") as mock_get_config:
             mock_cfg = mock_get_config.return_value
             mock_cfg.get_model.return_value = None
@@ -303,9 +326,7 @@ class TestModelSelection:
         mock_process.communicate = AsyncMock(return_value=(b"", b""))
 
         # Actually this test doesn't need subprocess mocking since model validation happens before CLI execution
-        result = await execute_gemini_cli_streaming(
-            "Test prompt", "invalid@model#name"
-        )
+        result = await execute_gemini_cli_streaming("Test prompt", "invalid@model#name")
 
         assert result["success"] is False
         assert "Invalid model name" in result["error"]

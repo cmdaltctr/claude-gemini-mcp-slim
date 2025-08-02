@@ -19,7 +19,7 @@ import logging
 import os
 import threading
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Dict, Optional
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -137,6 +137,7 @@ class GeminiConfig:
             "max_parallel_processes": 4,
         },
     }
+
     # Hard-coded defaults (lowest priority)
     def __init__(self):
         """Initialize configuration with load precedence"""
@@ -603,6 +604,7 @@ class GeminiConfig:
             raise ConfigurationError(
                 f"Failed to save configuration to {config_path}: {e}"
             )
+
     # Utility methods
     def validate_model_name(self, model_name: str) -> bool:
         """Validate that a model name is acceptable"""
@@ -633,6 +635,7 @@ def get_config() -> GeminiConfig:
                 _config_instance = GeminiConfig()
 
     return _config_instance
+
 
 # Utility functions
 def register_tool_if_missing(tool_name: str, default_model_nickname: str) -> None:
@@ -671,6 +674,7 @@ def register_tool_if_missing(tool_name: str, default_model_nickname: str) -> Non
             f"Tool '{tool_name}' already registered with model '{assignments[tool_name]}'"
         )
 
+
 # Utility functions
 def reload_config() -> None:
     """Force reload the global configuration"""
@@ -688,6 +692,7 @@ def get_model(tool_name: str, explicit_model: Optional[str] = None) -> str:
     """Get model name for a tool (convenience function)"""
     return get_config().get_model(tool_name, explicit_model)
 
+
 # Typed accessor methods for limits
 def get_limit(limit_name: str, explicit_limit: Optional[int] = None) -> int:
     """Get configuration limit (convenience function)"""
@@ -698,6 +703,7 @@ def get_limit(limit_name: str, explicit_limit: Optional[int] = None) -> int:
 def get_timeout(timeout_name: str, explicit_timeout: Optional[int] = None) -> int:
     """Get timeout configuration (convenience function)"""
     return get_config().get_timeout(timeout_name, explicit_timeout)
+
 
 # Typed accessor methods for security settings
 def is_security_enabled(
@@ -728,7 +734,7 @@ class ConfigOverride:
 
         # Apply overrides
         for key, value in self.overrides.items():
-            if hasattr(config, f"_config"):
+            if hasattr(config, "_config"):
                 config._config[key] = value
 
         return config

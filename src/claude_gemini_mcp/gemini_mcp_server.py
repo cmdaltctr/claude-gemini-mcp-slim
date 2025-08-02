@@ -5,8 +5,7 @@ Slim Gemini CLI MCP Server
 
 import asyncio
 import logging
-import sys
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
@@ -14,18 +13,18 @@ from mcp.types import TextContent, Tool
 
 from claude_gemini_mcp.config import get_config
 from claude_gemini_mcp.helpers.execution_orchestrator import execute_gemini_smart
-from claude_gemini_mcp.helpers.code_analyzer import (
-    CodebaseAnalysisError,
-    analyze_codebase,
-)
 from claude_gemini_mcp.helpers.security import (
     sanitize_for_prompt,
     validate_path_security,
 )
+from claude_gemini_mcp.helpers.tools.codebase_analyzer import (
+    CodebaseAnalysisError,
+    analyze_codebase,
+)
 
 # Import markdown utilities
 try:
-    from claude_gemini_mcp.helpers.markdown_utils import markdown_to_text
+    pass
 
     MARKDOWN_UTILS_AVAILABLE = True
 except ImportError:

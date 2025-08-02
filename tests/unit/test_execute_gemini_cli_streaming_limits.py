@@ -20,9 +20,9 @@ sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
+from claude_gemini_mcp.gemini_mcp_server import call_tool
 from claude_gemini_mcp.helpers.gemini_cli_client import execute_gemini_cli_streaming
 from claude_gemini_mcp.helpers.security import sanitize_for_prompt
-from claude_gemini_mcp.gemini_mcp_server import call_tool
 
 
 class TestExecuteGeminiCliStreamingLimits:
@@ -30,9 +30,11 @@ class TestExecuteGeminiCliStreamingLimits:
 
     def _mock_streaming_thread(self, output="test output"):
         """Create a mock streaming function"""
+
         def mock_stream_thread(process, queue, stop_event):
             queue.put(("stdout", output))
             queue.put(("done", None))
+
         return mock_stream_thread
 
     def _mock_successful_process(self, output="test output"):
@@ -59,7 +61,10 @@ class TestExecuteGeminiCliStreamingLimits:
         mock_stream_func = self._mock_streaming_thread(expected_output)
 
         with patch("subprocess.Popen", return_value=mock_process):
-            with patch("claude_gemini_mcp.helpers.gemini_cli_client.stream_subprocess_output", side_effect=mock_stream_func):
+            with patch(
+                "claude_gemini_mcp.helpers.gemini_cli_client.stream_subprocess_output",
+                side_effect=mock_stream_func,
+            ):
                 # Call execute_gemini_cli_streaming with test mode enabled
                 result = await execute_gemini_cli_streaming(
                     prompt=valid_prompt, show_progress=False
@@ -81,8 +86,7 @@ class TestExecuteGeminiCliStreamingLimits:
 
         # Call execute_gemini_cli_streaming - should be blocked by validation
         result = await execute_gemini_cli_streaming(
-            prompt=oversized_prompt,
-            show_progress=False
+            prompt=oversized_prompt, show_progress=False
         )
 
         # Verify it was blocked by validation
@@ -191,9 +195,7 @@ class TestExecuteGeminiCliStreamingLimits:
         """Test integration with config system for prompt size limits."""
 
         # Mock config to return a custom limit
-        with patch(
-            "claude_gemini_mcp.gemini_helper.cfg.get_limit"
-        ) as mock_get_limit:
+        with patch("claude_gemini_mcp.gemini_helper.cfg.get_limit") as mock_get_limit:
             # Set a custom small limit for testing
             mock_get_limit.return_value = 1000  # 1KB limit
 

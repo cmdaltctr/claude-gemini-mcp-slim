@@ -15,7 +15,6 @@ Date: 2025-01-20
 """
 
 import re
-from typing import Optional
 
 
 # Convert Markdown text to plain text with deterministic regex processing

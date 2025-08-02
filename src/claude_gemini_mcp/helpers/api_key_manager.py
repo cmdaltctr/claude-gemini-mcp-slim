@@ -32,11 +32,10 @@ Usage:
 
 import json
 import os
+import platform
 import sys
 from pathlib import Path
 from typing import Optional
-import platform
-
 
 # Constants for API key discovery
 MIN_API_KEY_LENGTH = 10

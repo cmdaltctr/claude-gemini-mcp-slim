@@ -24,7 +24,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -108,21 +108,15 @@ class AnalysisResult:
 class CodeAnalysisError(Exception):
     """Base exception for code analysis errors"""
 
-    pass
-
 
 # Define specific exception classes
 class ASTParseError(CodeAnalysisError):
     """Raised when AST parsing fails"""
 
-    pass
-
 
 # Define analysis type error class
 class AnalysisTypeError(CodeAnalysisError):
     """Raised when invalid analysis type is requested"""
-
-    pass
 
 
 # Define base analysis strategy class

@@ -43,16 +43,16 @@ Dependencies:
 
 import re
 import sys
-from typing import Dict, Optional, Any
+from typing import Any, Dict, Optional
 
 try:
     import google.generativeai as genai
+
     GOOGLE_GENERATIVEAI_AVAILABLE = True
 except ImportError:
     GOOGLE_GENERATIVEAI_AVAILABLE = False
 
 from claude_gemini_mcp.helpers.api_key_manager import get_api_key
-
 
 # API Error Sanitization Patterns
 API_KEY_PATTERNS = [
@@ -145,7 +145,7 @@ async def execute_gemini_api(
     prompt: str,
     model_name: str,
     api_key: Optional[str] = None,
-    show_progress: bool = True
+    show_progress: bool = True,
 ) -> Dict[str, Any]:
     """Execute Gemini API directly with specified model
 
@@ -265,8 +265,7 @@ def get_supported_models() -> list[str]:
 
 
 async def test_api_connection(
-    api_key: Optional[str] = None,
-    model_name: str = "gemini-2.5-flash"
+    api_key: Optional[str] = None, model_name: str = "gemini-2.5-flash"
 ) -> Dict[str, Any]:
     """Test API connection with a simple prompt
 
@@ -283,10 +282,7 @@ async def test_api_connection(
     test_prompt = "Hello, please respond with just 'OK' to confirm connectivity."
 
     return await execute_gemini_api(
-        prompt=test_prompt,
-        model_name=model_name,
-        api_key=api_key,
-        show_progress=False
+        prompt=test_prompt, model_name=model_name, api_key=api_key, show_progress=False
     )
 
 

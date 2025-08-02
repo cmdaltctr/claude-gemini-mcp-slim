@@ -9,6 +9,7 @@ as specified in task 1.10 requirements.
 import os
 import sys
 from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 
 # Add project root to path for imports
@@ -34,12 +35,18 @@ class TestAPIErrorSanitization:
     def test_sanitize_api_error_google_api_keys(self):
         """Test redaction of Google API keys from error messages."""
         test_cases = [
-            ("Error: Invalid API key AIzaSy123456789012345678901234567890123",
-             "Error: Invalid API key [API_KEY_REDACTED]"),
-            ("AIzaSyABCDEFGHIJKLMNOPQRSTUVWXYZ1234567 not found",
-             "[API_KEY_REDACTED] not found"),
-            ("Multiple keys: AIzaSy111111111111111111111111111111111 and AIzaSy222222222222222222222222222222222",
-             "Multiple keys: [API_KEY_REDACTED] and [API_KEY_REDACTED]"),
+            (
+                "Error: Invalid API key AIzaSy123456789012345678901234567890123",
+                "Error: Invalid API key [API_KEY_REDACTED]",
+            ),
+            (
+                "AIzaSyABCDEFGHIJKLMNOPQRSTUVWXYZ1234567 not found",
+                "[API_KEY_REDACTED] not found",
+            ),
+            (
+                "Multiple keys: AIzaSy111111111111111111111111111111111 and AIzaSy222222222222222222222222222222222",
+                "Multiple keys: [API_KEY_REDACTED] and [API_KEY_REDACTED]",
+            ),
         ]
 
         for error_msg, expected in test_cases:
@@ -50,10 +57,14 @@ class TestAPIErrorSanitization:
     def test_sanitize_api_error_openai_style_keys(self):
         """Test redaction of OpenAI-style API keys."""
         test_cases = [
-            ("Error with sk-1234567890123456789012345678901234567890",
-             "Error with [API_KEY_REDACTED]"),
-            ("sk-abcdefghijklmnopqrstuvwxyz1234567890 is invalid",
-             "[API_KEY_REDACTED] is invalid"),
+            (
+                "Error with sk-1234567890123456789012345678901234567890",
+                "Error with [API_KEY_REDACTED]",
+            ),
+            (
+                "sk-abcdefghijklmnopqrstuvwxyz1234567890 is invalid",
+                "[API_KEY_REDACTED] is invalid",
+            ),
         ]
 
         for error_msg, expected in test_cases:
@@ -64,24 +75,29 @@ class TestAPIErrorSanitization:
     def test_sanitize_api_error_bearer_tokens(self):
         """Test redaction of Bearer tokens."""
         test_cases = [
-            ("Authorization failed: Bearer abc123def456ghi789",
-             "Authorization failed: [TOKEN_REDACTED]"),
-            ("Bearer token_1234567890_abcdefghij expired",
-             "[TOKEN_REDACTED] expired"),
+            (
+                "Authorization failed: Bearer abc123def456ghi789",
+                "Authorization failed: [TOKEN_REDACTED]",
+            ),
+            ("Bearer token_1234567890_abcdefghij expired", "[TOKEN_REDACTED] expired"),
         ]
 
         for error_msg, expected in test_cases:
             result = sanitize_api_error(error_msg)
             assert result == expected
-            assert "Bearer" not in result or result == "Authorization failed: [TOKEN_REDACTED]"
+            assert (
+                "Bearer" not in result
+                or result == "Authorization failed: [TOKEN_REDACTED]"
+            )
 
     def test_sanitize_api_error_mock_keys(self):
         """Test redaction of mock API keys used in tests."""
         test_cases = [
-            ("Test error with mock-api-key-test123",
-             "Test error with [API_KEY_REDACTED]"),
-            ("mock-api-key-integration-test-456 failed",
-             "[API_KEY_REDACTED] failed"),
+            (
+                "Test error with mock-api-key-test123",
+                "Test error with [API_KEY_REDACTED]",
+            ),
+            ("mock-api-key-integration-test-456 failed", "[API_KEY_REDACTED] failed"),
         ]
 
         for error_msg, expected in test_cases:
@@ -133,15 +149,15 @@ class TestModelValidation:
     def test_validate_model_name_invalid_models(self):
         """Test validation of invalid model names."""
         invalid_models = [
-            None,                    # None value
-            "",                     # Empty string
-            123,                    # Non-string
-            "model$name",           # Invalid character
-            "model@name",           # Invalid character
-            "model name",           # Space character
-            "model/name",           # Invalid character
-            "a",                    # Too short
-            "a" * 60,              # Too long
+            None,  # None value
+            "",  # Empty string
+            123,  # Non-string
+            "model$name",  # Invalid character
+            "model@name",  # Invalid character
+            "model name",  # Space character
+            "model/name",  # Invalid character
+            "a",  # Too short
+            "a" * 60,  # Too long
         ]
 
         for model in invalid_models:
@@ -162,14 +178,20 @@ class TestModelValidation:
 class TestAPIAvailability:
     """Test API availability checking functionality."""
 
-    @patch('claude_gemini_mcp.helpers.gemini_api_client.GOOGLE_GENERATIVEAI_AVAILABLE', True)
+    @patch(
+        "claude_gemini_mcp.helpers.gemini_api_client.GOOGLE_GENERATIVEAI_AVAILABLE",
+        True,
+    )
     def test_check_api_availability_available(self):
         """Test when Google Generative AI library is available."""
         available, error = check_api_availability()
         assert available is True
         assert error is None
 
-    @patch('claude_gemini_mcp.helpers.gemini_api_client.GOOGLE_GENERATIVEAI_AVAILABLE', False)
+    @patch(
+        "claude_gemini_mcp.helpers.gemini_api_client.GOOGLE_GENERATIVEAI_AVAILABLE",
+        False,
+    )
     def test_check_api_availability_unavailable(self):
         """Test when Google Generative AI library is unavailable."""
         available, error = check_api_availability()
@@ -180,8 +202,8 @@ class TestAPIAvailability:
 class TestExecuteGeminiAPI:
     """Test main API execution functionality."""
 
-    @patch('claude_gemini_mcp.helpers.gemini_api_client.get_api_key')
-    @patch('claude_gemini_mcp.helpers.gemini_api_client.genai')
+    @patch("claude_gemini_mcp.helpers.gemini_api_client.get_api_key")
+    @patch("claude_gemini_mcp.helpers.gemini_api_client.genai")
     @pytest.mark.asyncio
     async def test_execute_gemini_api_success(self, mock_genai, mock_get_key):
         """Test successful API call execution."""
@@ -195,7 +217,9 @@ class TestExecuteGeminiAPI:
         mock_genai.GenerativeModel.return_value = mock_model
 
         # Execute
-        result = await execute_gemini_api("Test prompt", "gemini-2.5-flash", show_progress=False)
+        result = await execute_gemini_api(
+            "Test prompt", "gemini-2.5-flash", show_progress=False
+        )
 
         # Verify
         assert result["success"] is True
@@ -204,57 +228,72 @@ class TestExecuteGeminiAPI:
         mock_genai.GenerativeModel.assert_called_once_with("gemini-2.5-flash")
         mock_model.generate_content_async.assert_called_once_with("Test prompt")
 
-    @patch('claude_gemini_mcp.helpers.gemini_api_client.get_api_key')
+    @patch("claude_gemini_mcp.helpers.gemini_api_client.get_api_key")
     @pytest.mark.asyncio
     async def test_execute_gemini_api_no_key(self, mock_get_key):
         """Test API call when no API key is available."""
         mock_get_key.return_value = None
 
-        result = await execute_gemini_api("Test prompt", "gemini-2.5-flash", show_progress=False)
+        result = await execute_gemini_api(
+            "Test prompt", "gemini-2.5-flash", show_progress=False
+        )
 
         assert result["success"] is False
         assert "No API key found" in result["error"]
 
-    @patch('claude_gemini_mcp.helpers.gemini_api_client.get_api_key')
+    @patch("claude_gemini_mcp.helpers.gemini_api_client.get_api_key")
     @pytest.mark.asyncio
     async def test_execute_gemini_api_invalid_model(self, mock_get_key):
         """Test API call with invalid model name."""
         mock_get_key.return_value = "test-api-key-1234567890"
 
-        result = await execute_gemini_api("Test prompt", "invalid@model", show_progress=False)
+        result = await execute_gemini_api(
+            "Test prompt", "invalid@model", show_progress=False
+        )
 
         assert result["success"] is False
         assert "Invalid model name" in result["error"]
 
-    @patch('claude_gemini_mcp.helpers.gemini_api_client.GOOGLE_GENERATIVEAI_AVAILABLE', False)
-    @patch('claude_gemini_mcp.helpers.gemini_api_client.get_api_key')
+    @patch(
+        "claude_gemini_mcp.helpers.gemini_api_client.GOOGLE_GENERATIVEAI_AVAILABLE",
+        False,
+    )
+    @patch("claude_gemini_mcp.helpers.gemini_api_client.get_api_key")
     @pytest.mark.asyncio
     async def test_execute_gemini_api_library_unavailable(self, mock_get_key):
         """Test API call when google-generativeai library is unavailable."""
         mock_get_key.return_value = "test-api-key-1234567890"
 
-        result = await execute_gemini_api("Test prompt", "gemini-2.5-flash", show_progress=False)
+        result = await execute_gemini_api(
+            "Test prompt", "gemini-2.5-flash", show_progress=False
+        )
 
         assert result["success"] is False
         assert "google-generativeai package not available" in result["error"]
 
-    @patch('claude_gemini_mcp.helpers.gemini_api_client.get_api_key')
-    @patch('claude_gemini_mcp.helpers.gemini_api_client.genai')
+    @patch("claude_gemini_mcp.helpers.gemini_api_client.get_api_key")
+    @patch("claude_gemini_mcp.helpers.gemini_api_client.genai")
     @pytest.mark.asyncio
-    async def test_execute_gemini_api_exception_handling(self, mock_genai, mock_get_key):
+    async def test_execute_gemini_api_exception_handling(
+        self, mock_genai, mock_get_key
+    ):
         """Test exception handling during API call."""
         # Setup mocks
         mock_get_key.return_value = "test-api-key-1234567890"
-        mock_genai.GenerativeModel.side_effect = Exception("API error with AIzaSy1234567890123456789012345678901234567890")
+        mock_genai.GenerativeModel.side_effect = Exception(
+            "API error with AIzaSy1234567890123456789012345678901234567890"
+        )
 
-        result = await execute_gemini_api("Test prompt", "gemini-2.5-flash", show_progress=False)
+        result = await execute_gemini_api(
+            "Test prompt", "gemini-2.5-flash", show_progress=False
+        )
 
         assert result["success"] is False
         assert "[API_KEY_REDACTED]" in result["error"]
         assert "AIzaSy1234567890123456789012345678901234567890" not in result["error"]
 
-    @patch('claude_gemini_mcp.helpers.gemini_api_client.get_api_key')
-    @patch('claude_gemini_mcp.helpers.gemini_api_client.genai')
+    @patch("claude_gemini_mcp.helpers.gemini_api_client.get_api_key")
+    @patch("claude_gemini_mcp.helpers.gemini_api_client.genai")
     @pytest.mark.asyncio
     async def test_execute_gemini_api_with_provided_key(self, mock_genai, mock_get_key):
         """Test API call with explicitly provided API key."""
@@ -268,22 +307,26 @@ class TestExecuteGeminiAPI:
         mock_genai.GenerativeModel.return_value = mock_model
 
         # Execute with provided key
-        result = await execute_gemini_api("Test prompt", "gemini-2.5-flash", api_key=provided_key, show_progress=False)
+        result = await execute_gemini_api(
+            "Test prompt", "gemini-2.5-flash", api_key=provided_key, show_progress=False
+        )
 
         # Verify
         assert result["success"] is True
         mock_genai.configure.assert_called_once_with(api_key=provided_key)
         mock_get_key.assert_not_called()  # Should not call auto-discovery
 
-    @patch('claude_gemini_mcp.helpers.gemini_api_client.get_api_key')
-    @patch('claude_gemini_mcp.helpers.gemini_api_client.genai')
+    @patch("claude_gemini_mcp.helpers.gemini_api_client.get_api_key")
+    @patch("claude_gemini_mcp.helpers.gemini_api_client.genai")
     @pytest.mark.asyncio
     async def test_execute_gemini_api_import_error(self, mock_genai, mock_get_key):
         """Test handling of ImportError during API call."""
         mock_get_key.return_value = "test-api-key-1234567890"
         mock_genai.configure.side_effect = ImportError("Module not found")
 
-        result = await execute_gemini_api("Test prompt", "gemini-2.5-flash", show_progress=False)
+        result = await execute_gemini_api(
+            "Test prompt", "gemini-2.5-flash", show_progress=False
+        )
 
         assert result["success"] is False
         assert "API library not available" in result["error"]
@@ -292,7 +335,7 @@ class TestExecuteGeminiAPI:
 class TestAPIConnectionTesting:
     """Test API connection testing functionality."""
 
-    @patch('claude_gemini_mcp.helpers.gemini_api_client.execute_gemini_api')
+    @patch("claude_gemini_mcp.helpers.gemini_api_client.execute_gemini_api")
     @pytest.mark.asyncio
     async def test_test_api_connection_success(self, mock_execute):
         """Test successful API connection test."""
@@ -310,7 +353,7 @@ class TestAPIConnectionTesting:
         assert call_args[1]["api_key"] == "test-api-key-1234567890"
         assert call_args[1]["show_progress"] is False
 
-    @patch('claude_gemini_mcp.helpers.gemini_api_client.execute_gemini_api')
+    @patch("claude_gemini_mcp.helpers.gemini_api_client.execute_gemini_api")
     @pytest.mark.asyncio
     async def test_test_api_connection_failure(self, mock_execute):
         """Test failed API connection test."""
@@ -321,7 +364,7 @@ class TestAPIConnectionTesting:
         assert result["success"] is False
         assert result["error"] == "Connection failed"
 
-    @patch('claude_gemini_mcp.helpers.gemini_api_client.execute_gemini_api')
+    @patch("claude_gemini_mcp.helpers.gemini_api_client.execute_gemini_api")
     @pytest.mark.asyncio
     async def test_test_api_connection_auto_discover_key(self, mock_execute):
         """Test API connection test with auto-discovered key."""
@@ -336,7 +379,7 @@ class TestAPIConnectionTesting:
         call_args = mock_execute.call_args
         assert call_args[1]["api_key"] is None
 
-    @patch('claude_gemini_mcp.helpers.gemini_api_client.execute_gemini_api')
+    @patch("claude_gemini_mcp.helpers.gemini_api_client.execute_gemini_api")
     @pytest.mark.asyncio
     async def test_test_api_connection_custom_model(self, mock_execute):
         """Test API connection test with custom model."""
@@ -396,7 +439,10 @@ class TestTokenEstimation:
 
     def test_estimate_token_count_long_text(self):
         """Test token estimation for longer text."""
-        text = "This is a much longer piece of text that should result in more tokens. " * 10
+        text = (
+            "This is a much longer piece of text that should result in more tokens. "
+            * 10
+        )
         tokens = estimate_token_count(text)
 
         assert isinstance(tokens, int)

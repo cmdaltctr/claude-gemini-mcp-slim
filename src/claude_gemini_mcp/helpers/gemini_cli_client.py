@@ -44,17 +44,15 @@ Usage:
 """
 
 import os
+import shutil
 import subprocess
 import sys
 import threading
 import time
-import shutil
-from pathlib import Path
 from queue import Empty, Queue
 from typing import Any, Dict, List, Optional
 
 from claude_gemini_mcp.config import get_config
-
 
 # Load configuration
 cfg = get_config()

@@ -8,7 +8,7 @@ import asyncio
 import os
 import sys
 import time
-from queue import Queue, Empty
+from queue import Empty, Queue
 from typing import Any, List
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -27,9 +27,11 @@ class TestCLIFallbackSecurity:
 
     def _mock_streaming_thread(self, output="test output"):
         """Create a mock streaming function"""
+
         def mock_stream_thread(process, queue, stop_event):
             queue.put(("stdout", output))
             queue.put(("done", None))
+
         return mock_stream_thread
 
     def _mock_successful_process(self, output="test output"):
@@ -61,22 +63,32 @@ class TestCLIFallbackSecurity:
             mock_stream_func = self._mock_streaming_thread("safe output")
 
             with patch("subprocess.Popen", return_value=mock_process) as mock_exec:
-                with patch("claude_gemini_mcp.helpers.gemini_cli_client.stream_subprocess_output", side_effect=mock_stream_func):
-                    with patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key", return_value=None):
+                with patch(
+                    "claude_gemini_mcp.helpers.gemini_cli_client.stream_subprocess_output",
+                    side_effect=mock_stream_func,
+                ):
+                    with patch(
+                        "claude_gemini_mcp.helpers.api_key_manager.get_api_key",
+                        return_value=None,
+                    ):
                         result = await execute_gemini_cli_streaming(
                             malicious_prompt, "gemini-2.5-flash"
                         )
 
                     # Verify that subprocess.Popen was called with individual args
                     # This ensures no shell interpretation of the malicious content
-                    if mock_exec.call_args:  # Only check if subprocess was actually called
+                    if (
+                        mock_exec.call_args
+                    ):  # Only check if subprocess was actually called
                         call_args = mock_exec.call_args[0]
                         assert call_args[0] == [
                             "gemini",
                             "-m",
                             "gemini-2.5-flash",
                             "-p",
-                            malicious_prompt[:1000],  # CLI truncates prompt to 1000 chars
+                            malicious_prompt[
+                                :1000
+                            ],  # CLI truncates prompt to 1000 chars
                         ]
 
                         # Verify no shell=True was used  # noqa: B602
@@ -98,9 +110,7 @@ class TestCLIFallbackSecurity:
         ]
 
         for dangerous_model in dangerous_models:
-            result = await execute_gemini_cli_streaming(
-                "test", dangerous_model
-            )
+            result = await execute_gemini_cli_streaming("test", dangerous_model)
 
             assert result["success"] is False
             # Should fail with model name validation error
@@ -114,9 +124,17 @@ class TestCLIFallbackSecurity:
         mock_stream_func = self._mock_streaming_thread("test output")
 
         with patch("subprocess.Popen", return_value=mock_process) as mock_exec:
-            with patch("claude_gemini_mcp.helpers.gemini_cli_client.stream_subprocess_output", side_effect=mock_stream_func):
-                with patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key", return_value=None):
-                    result = await execute_gemini_cli_streaming("test", "gemini-2.5-flash")
+            with patch(
+                "claude_gemini_mcp.helpers.gemini_cli_client.stream_subprocess_output",
+                side_effect=mock_stream_func,
+            ):
+                with patch(
+                    "claude_gemini_mcp.helpers.api_key_manager.get_api_key",
+                    return_value=None,
+                ):
+                    result = await execute_gemini_cli_streaming(
+                        "test", "gemini-2.5-flash"
+                    )
 
                 # Verify minimal environment was passed
                 if mock_exec.call_args:
@@ -154,8 +172,14 @@ class TestCLIProcessManagement:
             queue.put(("done", None))
 
         with patch("subprocess.Popen", return_value=mock_process):
-            with patch("claude_gemini_mcp.helpers.gemini_cli_client.stream_subprocess_output", side_effect=mock_delayed_stream):
-                with patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key", return_value=None):
+            with patch(
+                "claude_gemini_mcp.helpers.gemini_cli_client.stream_subprocess_output",
+                side_effect=mock_delayed_stream,
+            ):
+                with patch(
+                    "claude_gemini_mcp.helpers.api_key_manager.get_api_key",
+                    return_value=None,
+                ):
                     # This should not hang indefinitely
                     result = await execute_gemini_cli_streaming(
                         "test", "gemini-2.5-flash"
@@ -185,8 +209,14 @@ class TestCLIProcessManagement:
             queue.put(("done", None))
 
         with patch("subprocess.Popen", return_value=mock_process):
-            with patch("claude_gemini_mcp.helpers.gemini_cli_client.stream_subprocess_output", side_effect=mock_large_stream):
-                with patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key", return_value=None):
+            with patch(
+                "claude_gemini_mcp.helpers.gemini_cli_client.stream_subprocess_output",
+                side_effect=mock_large_stream,
+            ):
+                with patch(
+                    "claude_gemini_mcp.helpers.api_key_manager.get_api_key",
+                    return_value=None,
+                ):
                     result = await execute_gemini_cli_streaming(
                         "test", "gemini-2.5-flash"
                     )
@@ -216,8 +246,14 @@ class TestCLIProcessManagement:
             queue.put(("done", None))
 
         with patch("subprocess.Popen", return_value=mock_process):
-            with patch("claude_gemini_mcp.helpers.gemini_cli_client.stream_subprocess_output", side_effect=mock_error_stream):
-                with patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key", return_value=None):
+            with patch(
+                "claude_gemini_mcp.helpers.gemini_cli_client.stream_subprocess_output",
+                side_effect=mock_error_stream,
+            ):
+                with patch(
+                    "claude_gemini_mcp.helpers.api_key_manager.get_api_key",
+                    return_value=None,
+                ):
                     result = await execute_gemini_cli_streaming(
                         "test", "gemini-2.5-flash"
                     )
@@ -250,8 +286,14 @@ class TestCLIProcessManagement:
             queue.put(("done", None))
 
         with patch("subprocess.Popen", side_effect=processes):
-            with patch("claude_gemini_mcp.helpers.gemini_cli_client.stream_subprocess_output", side_effect=mock_concurrent_stream):
-                with patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key", return_value=None):
+            with patch(
+                "claude_gemini_mcp.helpers.gemini_cli_client.stream_subprocess_output",
+                side_effect=mock_concurrent_stream,
+            ):
+                with patch(
+                    "claude_gemini_mcp.helpers.api_key_manager.get_api_key",
+                    return_value=None,
+                ):
                     # Run multiple CLI executions concurrently
                     tasks = [
                         execute_gemini_cli_streaming(f"test {i}", "gemini-2.5-flash")
@@ -332,8 +374,14 @@ class TestCLIErrorRecovery:
             queue.put(("error", "Process killed"))
 
         with patch("subprocess.Popen", return_value=mock_process):
-            with patch("claude_gemini_mcp.helpers.gemini_cli_client.stream_subprocess_output", side_effect=mock_error_stream):
-                with patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key", return_value=None):
+            with patch(
+                "claude_gemini_mcp.helpers.gemini_cli_client.stream_subprocess_output",
+                side_effect=mock_error_stream,
+            ):
+                with patch(
+                    "claude_gemini_mcp.helpers.api_key_manager.get_api_key",
+                    return_value=None,
+                ):
                     result = await execute_gemini_cli_streaming(
                         "test", "gemini-2.5-flash"
                     )
@@ -345,13 +393,12 @@ class TestCLIErrorRecovery:
     async def test_subprocess_exception_handling(self) -> None:
         """Test handling of subprocess creation exceptions"""
 
-        with patch(
-            "subprocess.Popen", side_effect=OSError("Command not found")
-        ):
-            with patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key", return_value=None):
-                result = await execute_gemini_cli_streaming(
-                    "test", "gemini-2.5-flash"
-                )
+        with patch("subprocess.Popen", side_effect=OSError("Command not found")):
+            with patch(
+                "claude_gemini_mcp.helpers.api_key_manager.get_api_key",
+                return_value=None,
+            ):
+                result = await execute_gemini_cli_streaming("test", "gemini-2.5-flash")
 
                 assert result["success"] is False
                 assert "Command not found" in result["error"]

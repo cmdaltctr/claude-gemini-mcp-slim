@@ -10,13 +10,19 @@ import sys
 import time
 from pathlib import Path
 
-from claude_gemini_mcp.helpers.execution_orchestrator import execute_gemini_smart
 from claude_gemini_mcp.config import get_config
-from claude_gemini_mcp.helpers.security import sanitize_for_prompt, validate_file_security
+from claude_gemini_mcp.helpers.execution_orchestrator import execute_gemini_smart
+from claude_gemini_mcp.helpers.security import (
+    sanitize_for_prompt,
+    validate_file_security,
+)
 
 # Import availability flags for codebase analysis
 try:
-    from claude_gemini_mcp.helpers.code_analyzer import analyze_codebase as real_analyze_codebase
+    from claude_gemini_mcp.helpers.tools.codebase_analyzer import (
+        analyze_codebase as real_analyze_codebase,
+    )
+
     CODEBASE_ANALYZER_AVAILABLE = True
 except ImportError:
     CODEBASE_ANALYZER_AVAILABLE = False
@@ -68,7 +74,12 @@ def analyze_code(file_path: str, analysis_type: str = "comprehensive") -> None:
         if not isinstance(file_path, str) or not file_path.strip():
             print("Error: Invalid file path")
             return
-        if not isinstance(analysis_type, str) or analysis_type not in ["comprehensive", "security", "performance", "architecture"]:
+        if not isinstance(analysis_type, str) or analysis_type not in [
+            "comprehensive",
+            "security",
+            "performance",
+            "architecture",
+        ]:
             print("Error: Invalid analysis type")
             return
 
@@ -83,12 +94,16 @@ def analyze_code(file_path: str, analysis_type: str = "comprehensive") -> None:
             content = f.read()
 
         if len(content) > MAX_FILE_SIZE:
-            print(f"Warning: File too large ({len(content)} bytes). Truncating to {MAX_FILE_SIZE} bytes...")
+            print(
+                f"Warning: File too large ({len(content)} bytes). Truncating to {MAX_FILE_SIZE} bytes..."
+            )
             content = content[:MAX_FILE_SIZE]
 
         line_count = len(content.splitlines())
         if line_count > MAX_LINES:
-            print(f"Warning: Too many lines ({line_count}). Truncating to {MAX_LINES} lines...")
+            print(
+                f"Warning: Too many lines ({line_count}). Truncating to {MAX_LINES} lines..."
+            )
             lines = content.splitlines()[:MAX_LINES]
             content = "\n".join(lines)
 
@@ -127,7 +142,13 @@ def analyze_codebase(directory_path: str, analysis_scope: str = "all") -> None:
     if not isinstance(directory_path, str) or not directory_path.strip():
         print("Error: Invalid directory path")
         return
-    if not isinstance(analysis_scope, str) or analysis_scope not in ["structure", "security", "performance", "patterns", "all"]:
+    if not isinstance(analysis_scope, str) or analysis_scope not in [
+        "structure",
+        "security",
+        "performance",
+        "patterns",
+        "all",
+    ]:
         print("Error: Invalid analysis scope")
         return
 
@@ -139,7 +160,9 @@ def analyze_codebase(directory_path: str, analysis_scope: str = "all") -> None:
         try:
             resolved_path.relative_to(current_dir)
         except ValueError:
-            print(f"Error: Directory access denied - path outside allowed directory: {directory_path}")
+            print(
+                f"Error: Directory access denied - path outside allowed directory: {directory_path}"
+            )
             return
         if not resolved_path.exists():
             print(f"Error: Directory not found: {directory_path}")
@@ -153,7 +176,9 @@ def analyze_codebase(directory_path: str, analysis_scope: str = "all") -> None:
 
     # Check if codebase analyzer is available
     if not CODEBASE_ANALYZER_AVAILABLE:
-        print("Error: Codebase analyzer not available. Please ensure helpers/codebase_analyzer.py is accessible.")
+        print(
+            "Error: Codebase analyzer not available. Please ensure helpers/codebase_analyzer.py is accessible."
+        )
         return
 
     try:
@@ -198,7 +223,6 @@ def analyze_codebase(directory_path: str, analysis_scope: str = "all") -> None:
         analysis_prompt = f"""You are a senior software architect and code reviewer. Analyze this codebase comprehensively.\n\n{prompt_payload}\n\n## Analysis Requirements\n\nBased on the scope '{analysis_scope}', provide detailed analysis covering:\n\n1. **Architecture & Design Patterns**: Overall system design, patterns used, architectural decisions\n2. **Code Quality & Maintainability**: Code organization, readability, documentation quality\n3. **Security Analysis**: Potential vulnerabilities, security best practices, risk assessment\n4. **Performance Considerations**: Bottlenecks, optimization opportunities, scalability issues\n5. **Best Practices Compliance**: Following language/framework conventions, industry standards\n6. **Dependencies & Integration**: External dependencies, integration points, potential risks\n7. **Testing & Quality Assurance**: Test coverage, testing strategies, quality metrics\n8. **Documentation & Developer Experience**: Code clarity, documentation completeness, onboarding ease\n\n## Output Format\n\nProvide a comprehensive report with:\n- **Executive Summary**: Key findings and overall assessment\n- **Detailed Analysis**: In-depth analysis for each area above\n- **Actionable Recommendations**: Specific, prioritized improvement suggestions\n- **Risk Assessment**: Potential issues and their impact levels\n- **Implementation Roadmap**: Step-by-step improvement plan\n\nBe thorough, specific, and provide actionable insights."""
 
         # Step 3: Feed to Gemini and stream results
-        import asyncio
         result = asyncio.run(execute_gemini_smart(analysis_prompt, "analyze_codebase"))
 
         elapsed_time = time.time() - start_time
@@ -236,8 +260,6 @@ def analyze_codebase(directory_path: str, analysis_scope: str = "all") -> None:
             print()
             # Fallback: show the project report if Gemini fails
             if project_report:
-                import json
-
                 print(json.dumps(project_report, indent=2))
             print()
             print("=" * 50)
