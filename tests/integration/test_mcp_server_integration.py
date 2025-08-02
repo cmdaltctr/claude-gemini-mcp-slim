@@ -19,12 +19,12 @@ sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
-from claude_gemini_mcp.gemini_helper import (
+from claude_gemini_mcp.helpers.api_key_manager import get_api_key
+from claude_gemini_mcp.helpers.gemini_api_client import execute_gemini_api
+from claude_gemini_mcp.helpers.gemini_cli_client import execute_gemini_cli_streaming
+from claude_gemini_mcp.helpers.execution_orchestrator import (
     GEMINI_MODELS,
     MODEL_ASSIGNMENTS,
-    execute_gemini_api,
-    execute_gemini_cli_streaming,
-    get_api_key,
 )
 from claude_gemini_mcp.gemini_mcp_server import (
     call_tool,
@@ -314,7 +314,7 @@ class TestMCPServerAsyncExecution:
         """Test API execution integration with async"""
 
         with patch(
-            "claude_gemini_mcp.gemini_helper.get_api_key",
+            "claude_gemini_mcp.helpers.api_key_manager.get_api_key",
             return_value="test_api_key_123456789",
         ):
             with patch("claude_gemini_mcp.gemini_helper.genai.configure") as mock_configure:
@@ -340,7 +340,7 @@ class TestMCPServerAsyncExecution:
         """Test CLI streaming execution integration"""
 
         with patch("subprocess.Popen") as mock_popen:
-            with patch("claude_gemini_mcp.gemini_helper.stream_subprocess_output") as mock_stream:
+            with patch("claude_gemini_mcp.helpers.gemini_cli_client.stream_subprocess_output") as mock_stream:
                 # Mock process
                 mock_process = MagicMock()
                 mock_process.pid = 12345
@@ -382,7 +382,7 @@ class TestMCPServerAsyncExecution:
     async def test_api_fallback_to_cli_integration(self) -> None:
         """Test API fallback to CLI functionality"""
 
-        with patch("claude_gemini_mcp.gemini_helper.get_api_key", return_value="test_key"):
+        with patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key", return_value="test_key"):
             with patch(
                 "claude_gemini_mcp.gemini_helper.execute_gemini_api"
             ) as mock_api:

@@ -18,12 +18,9 @@ sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
-from claude_gemini_mcp import gemini_helper
-from claude_gemini_mcp.gemini_helper import (
-    execute_gemini_api,
-    execute_gemini_cli_streaming,
-    get_api_key,
-)
+from claude_gemini_mcp.helpers.api_key_manager import get_api_key
+from claude_gemini_mcp.helpers.gemini_api_client import execute_gemini_api
+from claude_gemini_mcp.helpers.gemini_cli_client import execute_gemini_cli_streaming
 
 
 class TestGeminiAPIIntegration:
@@ -56,7 +53,7 @@ class TestGeminiAPIIntegration:
         mock_genai.GenerativeModel.return_value = mock_model
 
         # Need to patch at the module level where it's imported
-        with patch("claude_gemini_mcp.gemini_helper.genai", mock_genai):
+        with patch("claude_gemini_mcp.helpers.gemini_api_client.genai", mock_genai):
             result = await execute_gemini_api("Test prompt", "gemini-2.5-flash")
 
             assert result["success"] is True
@@ -71,7 +68,7 @@ class TestGeminiAPIIntegration:
     async def test_api_missing_key(self) -> None:
         """Test API behavior with missing API key"""
 
-        with patch("claude_gemini_mcp.gemini_helper.get_api_key", return_value=None):
+        with patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key", return_value=None):
             result = await execute_gemini_api("Test prompt", "gemini-2.5-flash")
 
             assert result["success"] is False
@@ -86,9 +83,9 @@ class TestGeminiAPIIntegration:
 
         # Patch all fallback discovery methods to ensure they don't find other keys
         with patch(
-            "claude_gemini_mcp.gemini_helper._get_from_json_config", return_value=None
+            "claude_gemini_mcp.helpers.api_key_manager._get_from_json_config", return_value=None
         ), patch(
-            "claude_gemini_mcp.gemini_helper._get_from_env_file", return_value=None
+            "claude_gemini_mcp.helpers.api_key_manager._get_from_env_file", return_value=None
         ):
             result = await execute_gemini_api("Test prompt", "gemini-2.5-flash")
 
@@ -123,7 +120,7 @@ class TestGeminiAPIIntegration:
         mock_model.generate_content_async = AsyncMock(side_effect=error_with_key)
         mock_genai.GenerativeModel.return_value = mock_model
 
-        with patch("claude_gemini_mcp.gemini_helper.genai", mock_genai):
+        with patch("claude_gemini_mcp.helpers.gemini_api_client.genai", mock_genai):
             result = await execute_gemini_api("Test prompt", "gemini-2.5-flash")
 
             assert result["success"] is False
@@ -146,13 +143,13 @@ class TestCLIFallbackIntegration:
             }
 
         # First test that API failure triggers CLI fallback
-        with patch("claude_gemini_mcp.gemini_helper.execute_gemini_api") as mock_api:
+        with patch("claude_gemini_mcp.helpers.gemini_api_client.execute_gemini_api") as mock_api:
             mock_api.return_value = {"success": False, "error": "API failed"}
 
-            with patch("claude_gemini_mcp.gemini_helper.execute_gemini_cli_streaming",
+            with patch("claude_gemini_mcp.helpers.gemini_cli_client.execute_gemini_cli_streaming",
                        side_effect=mock_cli_execution):
                 # Import and use execute_gemini_smart which handles the fallback
-                from claude_gemini_mcp.gemini_helper import execute_gemini_smart
+                from claude_gemini_mcp.helpers.execution_orchestrator import execute_gemini_smart
 
                 result = await execute_gemini_smart(
                     "Test prompt", "quick_query", show_progress=False
@@ -179,7 +176,7 @@ class TestCLIFallbackIntegration:
         with patch(
             "subprocess.Popen", return_value=mock_process
         ) as mock_popen:
-            with patch("claude_gemini_mcp.gemini_helper.get_api_key", return_value=None):  # Force CLI
+            with patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key", return_value=None):  # Force CLI
                 await execute_gemini_cli_streaming(
                     "Test prompt", "gemini-pro"
                 )
@@ -214,7 +211,7 @@ class TestCLIFallbackIntegration:
         mock_process.stderr.read = MagicMock(return_value="CLI error message")
 
         with patch("subprocess.Popen", return_value=mock_process):
-            with patch("claude_gemini_mcp.gemini_helper.get_api_key", return_value=None):
+            with patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key", return_value=None):
                 result = await execute_gemini_cli_streaming(
                     "Test prompt", "gemini-pro"
                 )
@@ -233,7 +230,7 @@ class TestCLIFallbackIntegration:
                 "output": "Starting analysis...\nProcessing data...\nAnalysis complete.\n"
             }
 
-        with patch("claude_gemini_mcp.gemini_helper.execute_gemini_cli_streaming",
+        with patch("claude_gemini_mcp.helpers.gemini_cli_client.execute_gemini_cli_streaming",
                    side_effect=mock_cli_streaming):
             result = await execute_gemini_cli_streaming(
                 "Test prompt", "gemini-pro", show_progress=False
@@ -272,7 +269,7 @@ class TestModelSelection:
             with patch(
                 "subprocess.Popen", return_value=mock_process
             ) as mock_popen:
-                with patch("claude_gemini_mcp.gemini_helper.get_api_key", return_value=None):
+                with patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key", return_value=None):
                     await execute_gemini_cli_streaming("Test prompt", expected_model)
 
                     # Verify correct model was selected
@@ -283,7 +280,10 @@ class TestModelSelection:
     async def test_invalid_task_type(self) -> None:
         """Test handling of invalid task types"""
 
-        with patch("claude_gemini_mcp.gemini_helper.cfg.get_model", return_value=None):
+        from claude_gemini_mcp.config import get_config
+        with patch("claude_gemini_mcp.config.get_config") as mock_get_config:
+            mock_cfg = mock_get_config.return_value
+            mock_cfg.get_model.return_value = None
             result = await execute_gemini_cli_streaming(
                 "Test prompt", "invalid_model_name"
             )

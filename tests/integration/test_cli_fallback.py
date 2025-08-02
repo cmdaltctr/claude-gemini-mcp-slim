@@ -19,7 +19,7 @@ sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
-from claude_gemini_mcp.gemini_helper import execute_gemini_cli_streaming
+from claude_gemini_mcp.helpers.gemini_cli_client import execute_gemini_cli_streaming
 
 
 class TestCLIFallbackSecurity:
@@ -61,8 +61,8 @@ class TestCLIFallbackSecurity:
             mock_stream_func = self._mock_streaming_thread("safe output")
 
             with patch("subprocess.Popen", return_value=mock_process) as mock_exec:
-                with patch("claude_gemini_mcp.gemini_helper.stream_subprocess_output", side_effect=mock_stream_func):
-                    with patch("claude_gemini_mcp.gemini_helper.get_api_key", return_value=None):
+                with patch("claude_gemini_mcp.helpers.gemini_cli_client.stream_subprocess_output", side_effect=mock_stream_func):
+                    with patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key", return_value=None):
                         result = await execute_gemini_cli_streaming(
                             malicious_prompt, "gemini-2.5-flash"
                         )
@@ -114,8 +114,8 @@ class TestCLIFallbackSecurity:
         mock_stream_func = self._mock_streaming_thread("test output")
 
         with patch("subprocess.Popen", return_value=mock_process) as mock_exec:
-            with patch("claude_gemini_mcp.gemini_helper.stream_subprocess_output", side_effect=mock_stream_func):
-                with patch("claude_gemini_mcp.gemini_helper.get_api_key", return_value=None):
+            with patch("claude_gemini_mcp.helpers.gemini_cli_client.stream_subprocess_output", side_effect=mock_stream_func):
+                with patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key", return_value=None):
                     result = await execute_gemini_cli_streaming("test", "gemini-2.5-flash")
 
                 # Verify minimal environment was passed
@@ -154,8 +154,8 @@ class TestCLIProcessManagement:
             queue.put(("done", None))
 
         with patch("subprocess.Popen", return_value=mock_process):
-            with patch("claude_gemini_mcp.gemini_helper.stream_subprocess_output", side_effect=mock_delayed_stream):
-                with patch("claude_gemini_mcp.gemini_helper.get_api_key", return_value=None):
+            with patch("claude_gemini_mcp.helpers.gemini_cli_client.stream_subprocess_output", side_effect=mock_delayed_stream):
+                with patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key", return_value=None):
                     # This should not hang indefinitely
                     result = await execute_gemini_cli_streaming(
                         "test", "gemini-2.5-flash"
@@ -185,8 +185,8 @@ class TestCLIProcessManagement:
             queue.put(("done", None))
 
         with patch("subprocess.Popen", return_value=mock_process):
-            with patch("claude_gemini_mcp.gemini_helper.stream_subprocess_output", side_effect=mock_large_stream):
-                with patch("claude_gemini_mcp.gemini_helper.get_api_key", return_value=None):
+            with patch("claude_gemini_mcp.helpers.gemini_cli_client.stream_subprocess_output", side_effect=mock_large_stream):
+                with patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key", return_value=None):
                     result = await execute_gemini_cli_streaming(
                         "test", "gemini-2.5-flash"
                     )
@@ -216,8 +216,8 @@ class TestCLIProcessManagement:
             queue.put(("done", None))
 
         with patch("subprocess.Popen", return_value=mock_process):
-            with patch("claude_gemini_mcp.gemini_helper.stream_subprocess_output", side_effect=mock_error_stream):
-                with patch("claude_gemini_mcp.gemini_helper.get_api_key", return_value=None):
+            with patch("claude_gemini_mcp.helpers.gemini_cli_client.stream_subprocess_output", side_effect=mock_error_stream):
+                with patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key", return_value=None):
                     result = await execute_gemini_cli_streaming(
                         "test", "gemini-2.5-flash"
                     )
@@ -250,8 +250,8 @@ class TestCLIProcessManagement:
             queue.put(("done", None))
 
         with patch("subprocess.Popen", side_effect=processes):
-            with patch("claude_gemini_mcp.gemini_helper.stream_subprocess_output", side_effect=mock_concurrent_stream):
-                with patch("claude_gemini_mcp.gemini_helper.get_api_key", return_value=None):
+            with patch("claude_gemini_mcp.helpers.gemini_cli_client.stream_subprocess_output", side_effect=mock_concurrent_stream):
+                with patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key", return_value=None):
                     # Run multiple CLI executions concurrently
                     tasks = [
                         execute_gemini_cli_streaming(f"test {i}", "gemini-2.5-flash")
@@ -332,8 +332,8 @@ class TestCLIErrorRecovery:
             queue.put(("error", "Process killed"))
 
         with patch("subprocess.Popen", return_value=mock_process):
-            with patch("claude_gemini_mcp.gemini_helper.stream_subprocess_output", side_effect=mock_error_stream):
-                with patch("claude_gemini_mcp.gemini_helper.get_api_key", return_value=None):
+            with patch("claude_gemini_mcp.helpers.gemini_cli_client.stream_subprocess_output", side_effect=mock_error_stream):
+                with patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key", return_value=None):
                     result = await execute_gemini_cli_streaming(
                         "test", "gemini-2.5-flash"
                     )
@@ -348,7 +348,7 @@ class TestCLIErrorRecovery:
         with patch(
             "subprocess.Popen", side_effect=OSError("Command not found")
         ):
-            with patch("claude_gemini_mcp.gemini_helper.get_api_key", return_value=None):
+            with patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key", return_value=None):
                 result = await execute_gemini_cli_streaming(
                     "test", "gemini-2.5-flash"
                 )

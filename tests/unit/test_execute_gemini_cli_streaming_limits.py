@@ -20,10 +20,8 @@ sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
-from claude_gemini_mcp.gemini_helper import (
-    execute_gemini_cli_streaming,
-    sanitize_for_prompt,
-)
+from claude_gemini_mcp.helpers.gemini_cli_client import execute_gemini_cli_streaming
+from claude_gemini_mcp.helpers.security import sanitize_for_prompt
 from claude_gemini_mcp.gemini_mcp_server import call_tool
 
 
@@ -61,7 +59,7 @@ class TestExecuteGeminiCliStreamingLimits:
         mock_stream_func = self._mock_streaming_thread(expected_output)
 
         with patch("subprocess.Popen", return_value=mock_process):
-            with patch("claude_gemini_mcp.gemini_helper.stream_subprocess_output", side_effect=mock_stream_func):
+            with patch("claude_gemini_mcp.helpers.gemini_cli_client.stream_subprocess_output", side_effect=mock_stream_func):
                 # Call execute_gemini_cli_streaming with test mode enabled
                 result = await execute_gemini_cli_streaming(
                     prompt=valid_prompt, show_progress=False
@@ -102,7 +100,7 @@ class TestExecuteGeminiCliStreamingLimits:
 
         # Mock execute_gemini_cli_streaming to capture calls
         with patch(
-            "claude_gemini_mcp.gemini_helper.execute_gemini_cli_streaming"
+            "claude_gemini_mcp.helpers.gemini_cli_client.execute_gemini_cli_streaming"
         ) as mock_streaming:
             mock_streaming.return_value = {
                 "success": True,
@@ -137,7 +135,7 @@ class TestExecuteGeminiCliStreamingLimits:
 
         # Mock execute_gemini_cli_streaming to capture calls
         with patch(
-            "claude_gemini_mcp.gemini_helper.execute_gemini_cli_streaming"
+            "claude_gemini_mcp.helpers.gemini_cli_client.execute_gemini_cli_streaming"
         ) as mock_streaming:
             mock_streaming.return_value = {"success": True, "output": "Python response"}
 
@@ -168,7 +166,7 @@ class TestExecuteGeminiCliStreamingLimits:
 
         # Mock execute_gemini_cli_streaming to capture calls
         with patch(
-            "claude_gemini_mcp.gemini_helper.execute_gemini_cli_streaming"
+            "claude_gemini_mcp.helpers.gemini_cli_client.execute_gemini_cli_streaming"
         ) as mock_streaming:
             mock_streaming.return_value = {"success": True, "output": "Safe response"}
 
@@ -202,14 +200,14 @@ class TestExecuteGeminiCliStreamingLimits:
             # Test with prompt under the custom limit
             small_prompt = "A" * 500  # 500 bytes - under 1KB
             result = await execute_gemini_cli_streaming(
-                prompt=small_prompt, model_name="gemini-pro", _test_mode=True
+                prompt=small_prompt, model_name="gemini-pro", show_progress=False
             )
             assert result["success"] is True
 
             # Test with prompt over the custom limit
             large_prompt = "A" * 1500  # 1.5KB - over 1KB limit
             result = await execute_gemini_cli_streaming(
-                prompt=large_prompt, model_name="gemini-pro", _test_mode=True
+                prompt=large_prompt, model_name="gemini-pro", show_progress=False
             )
             assert result["success"] is False
             assert "Prompt too large (max 1000 bytes)" in result["error"]
@@ -223,7 +221,7 @@ class TestExecuteGeminiCliStreamingLimits:
 
         # Test mode should be blocked by validation (before test mode logic)
         result_test = await execute_gemini_cli_streaming(
-            prompt=oversized_prompt, model_name="gemini-pro", _test_mode=True
+            prompt=oversized_prompt, model_name="gemini-pro", show_progress=False
         )
 
         # Real mode should also be blocked by validation (before subprocess execution)
@@ -232,7 +230,7 @@ class TestExecuteGeminiCliStreamingLimits:
             result_real = await execute_gemini_cli_streaming(
                 prompt=oversized_prompt,
                 model_name="gemini-pro",
-                _test_mode=False,
+                show_progress=False,
             )
 
             # Subprocess should not be called because validation blocks first
@@ -254,7 +252,7 @@ class TestExecuteGeminiCliStreamingLimits:
 
         # Mock the execute_gemini_cli_streaming function
         with patch(
-            "claude_gemini_mcp.gemini_helper.execute_gemini_cli_streaming"
+            "claude_gemini_mcp.helpers.gemini_cli_client.execute_gemini_cli_streaming"
         ) as mock_streaming:
 
             # Attempt to call the tool with oversized content
@@ -287,7 +285,7 @@ class TestExecuteGeminiCliStreamingLimits:
 
         # Mock the execute_gemini_cli_streaming function
         with patch(
-            "claude_gemini_mcp.gemini_helper.execute_gemini_cli_streaming"
+            "claude_gemini_mcp.helpers.gemini_cli_client.execute_gemini_cli_streaming"
         ) as mock_streaming:
             mock_streaming.return_value = {
                 "success": True,

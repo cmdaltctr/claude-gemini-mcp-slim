@@ -6,22 +6,26 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, mock_open, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, mock_open, patch
 
 import pytest
 
 # Import functions to test
 from claude_gemini_mcp.gemini_helper import (
-    CLI_TIMEOUT,
-    GEMINI_MODELS,
     MAX_FILE_SIZE,
     MAX_LINES,
-    MODEL_ASSIGNMENTS,
-    add_shared_mcp_path,
-    execute_gemini_api,
-    execute_gemini_cli_streaming,
+)
+# These functions are now in the execution orchestrator
+from claude_gemini_mcp.helpers.execution_orchestrator import (
     execute_gemini_smart,
+)
+from claude_gemini_mcp.helpers.gemini_api_client import execute_gemini_api
+from claude_gemini_mcp.helpers.gemini_cli_client import execute_gemini_cli_streaming
+from claude_gemini_mcp.helpers.api_key_manager import (
+    add_shared_mcp_path,
     get_api_key,
+)
+from claude_gemini_mcp.helpers.security import (
     sanitize_error_message,
     sanitize_for_prompt,
     validate_file_security,
@@ -104,47 +108,47 @@ class TestSanitizeForPrompt(unittest.TestCase):
 class TestExecuteGeminiApi(unittest.TestCase):
     """Test cases for execute_gemini_api function"""
 
-    @patch("claude_gemini_mcp.gemini_helper.get_api_key")
-    def test_execute_gemini_api_missing_api_key(self, mock_get_api_key):
+    @patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key")
+    async def test_execute_gemini_api_missing_api_key(self, mock_get_api_key):
         """Test handling of missing API key"""
         mock_get_api_key.return_value = None
-        result = execute_gemini_api("test prompt", "test-model", show_progress=False)
+        result = await execute_gemini_api("test prompt", "test-model", show_progress=False)
         self.assertFalse(result["success"])
         self.assertIn("No API key found", result["error"])
 
-    @patch("claude_gemini_mcp.gemini_helper.get_api_key")
-    def test_execute_gemini_api_import_error(self, mock_get_api_key):
+    @patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key")
+    async def test_execute_gemini_api_import_error(self, mock_get_api_key):
         """Test handling of missing google-generativeai library"""
         mock_get_api_key.return_value = "valid_key_123456789"
         with patch("builtins.__import__", side_effect=ImportError):
-            result = execute_gemini_api(
+            result = await execute_gemini_api(
                 "test prompt", "test-model", show_progress=False
             )
             self.assertFalse(result["success"])
             self.assertIn("API library not available", result["error"])
 
-    @patch("claude_gemini_mcp.gemini_helper.get_api_key")
-    def test_execute_gemini_api_success(self, mock_get_api_key):
+    @patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key")
+    async def test_execute_gemini_api_success(self, mock_get_api_key):
         """Test successful API call"""
         mock_get_api_key.return_value = "valid_key_123456789"
         mock_response = MagicMock()
         mock_response.text = "Test response"
 
         mock_model = MagicMock()
-        mock_model.generate_content.return_value = mock_response
+        mock_model.generate_content_async = AsyncMock(return_value=mock_response)
 
         mock_genai = MagicMock()
         mock_genai.GenerativeModel.return_value = mock_model
 
-        with patch.dict("sys.modules", {"google.generativeai": mock_genai}):
-            result = execute_gemini_api(
+        with patch("claude_gemini_mcp.helpers.gemini_api_client.genai", mock_genai):
+            result = await execute_gemini_api(
                 "test prompt", "test-model", show_progress=False
             )
             self.assertTrue(result["success"])
             self.assertEqual(result["output"], "Test response")
 
-    @patch("claude_gemini_mcp.gemini_helper.get_api_key")
-    def test_execute_gemini_api_exception_handling(self, mock_get_api_key):
+    @patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key")
+    async def test_execute_gemini_api_exception_handling(self, mock_get_api_key):
         """Test exception handling and error sanitization"""
         mock_get_api_key.return_value = "valid_key_123456789"
         mock_genai = MagicMock()
@@ -152,8 +156,8 @@ class TestExecuteGeminiApi(unittest.TestCase):
             "API error with AIzaSy123456789012345678901234567890123"
         )
 
-        with patch.dict("sys.modules", {"google.generativeai": mock_genai}):
-            result = execute_gemini_api(
+        with patch("claude_gemini_mcp.helpers.gemini_api_client.genai", mock_genai):
+            result = await execute_gemini_api(
                 "test prompt", "test-model", show_progress=False
             )
             self.assertFalse(result["success"])
@@ -164,42 +168,42 @@ class TestExecuteGeminiApi(unittest.TestCase):
 class TestExecuteGeminiCli(unittest.TestCase):
     """Test cases for execute_gemini_cli_streaming function"""
 
-    def test_execute_gemini_cli_invalid_prompt_empty(self):
+    async def test_execute_gemini_cli_invalid_prompt_empty(self):
         """Test handling of empty prompt"""
-        result = execute_gemini_cli_streaming("", show_progress=False)
+        result = await execute_gemini_cli_streaming("", show_progress=False)
         self.assertFalse(result["success"])
         self.assertIn("Invalid prompt: must be non-empty string", result["error"])
 
-    def test_execute_gemini_cli_invalid_prompt_non_string(self):
+    async def test_execute_gemini_cli_invalid_prompt_non_string(self):
         """Test handling of non-string prompt"""
-        result = execute_gemini_cli_streaming(123, show_progress=False)
+        result = await execute_gemini_cli_streaming(123, show_progress=False)
         self.assertFalse(result["success"])
         self.assertIn("Invalid prompt: must be non-empty string", result["error"])
 
-    def test_execute_gemini_cli_prompt_too_large(self):
+    async def test_execute_gemini_cli_prompt_too_large(self):
         """Test handling of oversized prompt"""
         large_prompt = "A" * 1000001  # 1MB + 1 byte
-        result = execute_gemini_cli_streaming(large_prompt, show_progress=False)
+        result = await execute_gemini_cli_streaming(large_prompt, show_progress=False)
         self.assertFalse(result["success"])
         self.assertIn("Prompt too large", result["error"])
 
-    def test_execute_gemini_cli_invalid_model_name(self):
+    async def test_execute_gemini_cli_invalid_model_name(self):
         """Test handling of invalid model name"""
-        result = execute_gemini_cli_streaming(
+        result = await execute_gemini_cli_streaming(
             "test prompt", model_name="", show_progress=False
         )
         self.assertFalse(result["success"])
         self.assertIn("Invalid model name", result["error"])
 
-    def test_execute_gemini_cli_invalid_model_name_characters(self):
+    async def test_execute_gemini_cli_invalid_model_name_characters(self):
         """Test handling of model name with invalid characters"""
-        result = execute_gemini_cli_streaming(
+        result = await execute_gemini_cli_streaming(
             "test prompt", model_name="model$name", show_progress=False
         )
         self.assertFalse(result["success"])
         self.assertIn("Invalid model name characters", result["error"])
 
-    def test_execute_gemini_cli_valid_model_name(self):
+    async def test_execute_gemini_cli_valid_model_name(self):
         """Test validation of valid model name"""
         valid_names = ["gemini-pro", "gemini-2.5-flash", "model-1.0"]
         for model_name in valid_names:
@@ -210,7 +214,7 @@ class TestExecuteGeminiCli(unittest.TestCase):
                 mock_process.communicate.return_value = ("success", "")
                 mock_popen.return_value = mock_process
 
-                result = execute_gemini_cli_streaming(
+                result = await execute_gemini_cli_streaming(
                     "test prompt", model_name=model_name, show_progress=False
                 )
                 # Should not fail on model name validation
@@ -220,33 +224,14 @@ class TestExecuteGeminiCli(unittest.TestCase):
 class TestConstants(unittest.TestCase):
     """Test cases for constants and configuration"""
 
-    def test_gemini_models_structure(self):
-        """Test GEMINI_MODELS dictionary structure"""
-        self.assertIsInstance(GEMINI_MODELS, dict)
-        self.assertIn("flash", GEMINI_MODELS)
-        self.assertIn("pro", GEMINI_MODELS)
-        self.assertIsInstance(GEMINI_MODELS["flash"], str)
-        self.assertIsInstance(GEMINI_MODELS["pro"], str)
-
-    def test_model_assignments_structure(self):
-        """Test MODEL_ASSIGNMENTS dictionary structure"""
-        self.assertIsInstance(MODEL_ASSIGNMENTS, dict)
-        self.assertIn("quick_query", MODEL_ASSIGNMENTS)
-        self.assertIn("analyze_code", MODEL_ASSIGNMENTS)
-        self.assertIn("analyze_codebase", MODEL_ASSIGNMENTS)
-
-        # Check that assignments reference valid models
-        for assignment in MODEL_ASSIGNMENTS.values():
-            self.assertIn(assignment, GEMINI_MODELS)
-
     def test_constants_values(self):
-        """Test constant values are reasonable"""
+        """Test remaining constant values are reasonable"""
         self.assertIsInstance(MAX_FILE_SIZE, int)
         self.assertGreater(MAX_FILE_SIZE, 0)
         self.assertIsInstance(MAX_LINES, int)
         self.assertGreater(MAX_LINES, 0)
-        self.assertIsInstance(CLI_TIMEOUT, int)
-        self.assertGreater(CLI_TIMEOUT, 0)
+        # Note: CLI_TIMEOUT, GEMINI_MODELS, and MODEL_ASSIGNMENTS
+        # are now tested in test_execution_orchestrator.py
 
 
 class TestApiKeyDiscovery(unittest.TestCase):
@@ -442,23 +427,23 @@ class TestErrorSanitization(unittest.TestCase):
 class TestSmartExecution(unittest.TestCase):
     """Test cases for execute_gemini_smart function"""
 
-    @patch("claude_gemini_mcp.gemini_helper.get_api_key")
-    @patch("claude_gemini_mcp.gemini_helper.execute_gemini_api")
-    def test_execute_gemini_smart_api_success(self, mock_api, mock_get_key):
+    @patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key")
+    @patch("claude_gemini_mcp.helpers.gemini_api_client.execute_gemini_api")
+    async def test_execute_gemini_smart_api_success(self, mock_api, mock_get_key):
         """Test smart execution with successful API call"""
         mock_get_key.return_value = "valid_api_key"
         mock_api.return_value = {"success": True, "output": "API response"}
 
-        result = execute_gemini_smart("test prompt", "quick_query", show_progress=False)
+        result = await execute_gemini_smart("test prompt", "quick_query", show_progress=False)
 
         self.assertTrue(result["success"])
         self.assertEqual(result["output"], "API response")
         mock_api.assert_called_once()
 
-    @patch("claude_gemini_mcp.gemini_helper.get_api_key")
-    @patch("claude_gemini_mcp.gemini_helper.execute_gemini_api")
-    @patch("claude_gemini_mcp.gemini_helper.execute_gemini_cli_streaming")
-    def test_execute_gemini_smart_api_fallback_to_cli(
+    @patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key")
+    @patch("claude_gemini_mcp.helpers.gemini_api_client.execute_gemini_api")
+    @patch("claude_gemini_mcp.helpers.gemini_cli_client.execute_gemini_cli_streaming")
+    async def test_execute_gemini_smart_api_fallback_to_cli(
         self, mock_cli, mock_api, mock_get_key
     ):
         """Test smart execution falling back to CLI when API fails"""
@@ -466,31 +451,31 @@ class TestSmartExecution(unittest.TestCase):
         mock_api.return_value = {"success": False, "error": "API error"}
         mock_cli.return_value = {"success": True, "output": "CLI response"}
 
-        result = execute_gemini_smart("test prompt", "quick_query", show_progress=False)
+        result = await execute_gemini_smart("test prompt", "quick_query", show_progress=False)
 
         self.assertTrue(result["success"])
         self.assertEqual(result["output"], "CLI response")
         mock_api.assert_called_once()
         mock_cli.assert_called_once()
 
-    @patch("claude_gemini_mcp.gemini_helper.get_api_key")
-    @patch("claude_gemini_mcp.gemini_helper.execute_gemini_cli_streaming")
-    def test_execute_gemini_smart_no_api_key_direct_cli(self, mock_cli, mock_get_key):
+    @patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key")
+    @patch("claude_gemini_mcp.helpers.gemini_cli_client.execute_gemini_cli_streaming")
+    async def test_execute_gemini_smart_no_api_key_direct_cli(self, mock_cli, mock_get_key):
         """Test smart execution going directly to CLI when no API key"""
         mock_get_key.return_value = None
         mock_cli.return_value = {"success": True, "output": "CLI response"}
 
-        result = execute_gemini_smart("test prompt", "quick_query", show_progress=False)
+        result = await execute_gemini_smart("test prompt", "quick_query", show_progress=False)
 
         self.assertTrue(result["success"])
         self.assertEqual(result["output"], "CLI response")
         mock_cli.assert_called_once()
 
-    def test_execute_gemini_smart_model_selection(self):
+    async def test_execute_gemini_smart_model_selection(self):
         """Test that correct models are selected for different task types"""
-        with patch("claude_gemini_mcp.gemini_helper.get_api_key", return_value=None):
+        with patch("claude_gemini_mcp.helpers.api_key_manager.get_api_key", return_value=None):
             with patch(
-                "claude_gemini_mcp.gemini_helper.execute_gemini_cli_streaming"
+                "claude_gemini_mcp.helpers.gemini_cli_client.execute_gemini_cli_streaming"
             ) as mock_cli:
                 mock_cli.return_value = {"success": True, "output": "response"}
 
@@ -502,7 +487,7 @@ class TestSmartExecution(unittest.TestCase):
                 ]
 
                 for task_type, expected_model in task_model_pairs:
-                    execute_gemini_smart("test prompt", task_type, show_progress=False)
+                    await execute_gemini_smart("test prompt", task_type, show_progress=False)
                     # Check that CLI was called with correct model
                     args, kwargs = mock_cli.call_args
                     self.assertEqual(args[1], expected_model)  # model_name argument

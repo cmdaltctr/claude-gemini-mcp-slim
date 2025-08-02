@@ -308,10 +308,10 @@ Async operations are properly implemented. The streaming output handling prevent
 
         # Test API failure leading to CLI fallback
         with patch(
-            "claude_gemini_mcp.gemini_helper.execute_gemini_api"
+            "claude_gemini_mcp.helpers.gemini_api_client.execute_gemini_api"
         ) as mock_api:
             with patch(
-                "claude_gemini_mcp.gemini_helper.execute_gemini_cli_streaming"
+                "claude_gemini_mcp.helpers.gemini_cli_client.execute_gemini_cli_streaming"
             ) as mock_cli:
                 # Mock API failure
                 mock_api.return_value = {
