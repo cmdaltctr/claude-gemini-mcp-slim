@@ -1,0 +1,46 @@
+# Task ID: 16
+# Title: Integrate Claude Code Router into Claude Gemini MCP Slim for Dynamic Model Routing and Multi-Provider Support
+# Status: pending
+# Dependencies: 7, 11, 12
+# Priority: medium
+# Description: Incorporate the claude-code-router framework into the claude-gemini-mcp-slim project to enable intelligent, scenario-based model routing and multi-provider abstraction while preserving the existing MCP architecture and decoupled design principles.
+# Details:
+1. Analyze the claude-code-router repository to understand its architecture, focusing on model routing, multi-provider support, request/response transformation, and plugin systems as described in the official GitHub repository[1]. 2. Design an integration plan that extends the current claude-gemini-mcp-slim orchestration layer to include dynamic routing capabilities based on request context and scenario-based model selection. 3. Implement abstractions to support multiple model providers (e.g., OpenRouter, DeepSeek, Ollama, Gemini, Volcengine, SiliconFlow) within the MCP framework, ensuring seamless switching and fallback mechanisms. 4. Integrate request and response transformers from claude-code-router to customize interactions per provider, maintaining compatibility with existing Gemini API client enhancements (e.g., instructor library integration from Task 7). 5. Preserve the decoupled architecture by modularizing routing logic, enabling independent updates and testing. 6. Implement configuration options to enable or disable routing features and specify provider/model preferences, aligning with existing configuration management patterns (see Task 11). 7. Ensure robust error handling and logging for routing decisions and provider interactions, consistent with agentic workflow standards (see Task 12). 8. Document the integration approach, configuration options, and usage examples to facilitate developer adoption and maintenance. 9. Follow best practices for AI coding workflows and testing as outlined in Claude Code best practices and AI coding guides[3][4].
+
+# Test Strategy:
+- Unit tests for routing logic covering various scenarios and model/provider selections. - Integration tests validating end-to-end request routing through multiple providers within the MCP architecture. - Mock tests simulating provider failures to verify fallback and error handling mechanisms. - Performance tests to ensure routing does not introduce unacceptable latency. - Configuration tests verifying correct application of routing preferences and toggles. - Logging and error handling validation through simulated failure scenarios. - Compatibility tests with existing agentic collaboration features and structured response handling (Tasks 7, 10, 12). - Continuous integration pipeline validation to ensure stability across Python versions and environments (see Task 14).
+
+# Subtasks:
+## 1. Phase 1: Enhanced Model Routing [pending]
+### Dependencies: None
+### Description: Implement scenario-based routing and provider abstraction layer in the existing orchestration system
+### Details:
+1. Extend config.py to support scenario-based routing (background, longContext, think scenarios)
+2. Add provider abstraction layer in execution_orchestrator.py  
+3. Implement dynamic model selection based on request context (token count, complexity, task type)
+4. Maintain backward compatibility with existing model assignments
+5. Add configuration validation for new routing scenarios
+
+## 2. Phase 2: Multi-Provider Support [pending]
+### Dependencies: 16.1
+### Description: Implement multi-provider architecture with request/response transformation capabilities
+### Details:
+1. Create provider interfaces for OpenRouter, DeepSeek, Ollama following claude-code-router patterns
+2. Add transformer layer for request/response adaptation between different provider APIs
+3. Extend existing API-first, CLI-fallback pattern to provider-first, fallback-cascade architecture
+4. Implement provider-specific authentication and configuration management
+5. Add error handling and retry logic for provider failures
+6. Maintain existing security and input validation through helpers/security.py
+
+## 3. Phase 3: Advanced Routing Logic [pending]
+### Dependencies: 16.2
+### Description: Implement intelligent routing strategies for optimization and performance
+### Details:
+1. Implement token-aware routing using longContext models for large requests automatically
+2. Add performance-based routing using faster models for quick queries and heavier models for complex analysis
+3. Implement cost-optimization routing with cheaper models for background tasks and premium models for critical operations
+4. Add request context analysis to determine optimal routing strategy (content type, size, complexity)
+5. Implement routing telemetry and analytics for performance monitoring
+6. Add configuration options for routing strategy preferences (cost vs speed vs accuracy)
+7. Ensure integration maintains existing MCP architecture and orchestration patterns
+

@@ -1,6 +1,6 @@
 # Task ID: 1
 # Title: Refactor AI API Logic from Server to Helper Module
-# Status: pending
+# Status: in-progress
 # Dependencies: None
 # Priority: high
 # Description: Remove execute_gemini_api() and execute_gemini_cli_streaming() functions from gemini_mcp_server.py and move all AI API interaction logic to gemini_helper.py to enforce proper architectural separation.
@@ -35,39 +35,385 @@ Examine each request handler in `gemini_mcp_server.py` that previously interacte
 ### Details:
 Adjust import statements in both `gemini_mcp_server.py` and `gemini_helper.py`. Implement robust error handling for cross-module calls. Create or update unit, integration, and end-to-end tests to ensure no regressions and that the new architecture functions as expected.
 
-## 5. Create API Key Manager Module [pending]
+## 5. Create API Key Manager Module [done]
 ### Dependencies: None
 ### Description: Extract API key discovery and management logic from gemini_helper.py into helpers/api_key_manager.py (~150 lines)
 ### Details:
 Move functions: get_api_key(), _validate_api_key(), _get_from_env_var(), _extract_mcp_api_key(), _get_from_json_config(), _get_from_env_file(), add_shared_mcp_path() and related constants/imports. Create clean public interface for API key operations.
+<info added on 2025-07-22T12:35:33.747Z>
+File Location: src/claude_gemini_mcp/helpers/api_key_manager.py
 
-## 6. Create Gemini API Client Module [pending]
+Functions to Extract (lines 56-232):
+- add_shared_mcp_path() - Dynamic MCP environment detection
+- get_api_key() - Main API key discovery orchestrator  
+- _validate_api_key() - API key validation logic
+- _get_from_env_var() - Environment variable strategy
+- _extract_mcp_api_key() - MCP config extraction
+- _get_from_json_config() - JSON config file reading
+- _get_from_env_file() - Project .env file reading
+
+Constants to Move:
+- MIN_API_KEY_LENGTH = 10
+- CONFIG_PATHS dictionary with Claude config paths
+- Shared MCP path detection logic
+
+Implementation Steps:
+1. Create new file with proper module docstring
+2. Copy functions maintaining original logic and error handling
+3. Add type hints and comprehensive docstrings
+4. Create clean public interface: get_api_key() as main entry point
+5. Keep private functions prefixed with underscore
+6. Add module-level logging configuration
+7. Include fallback chain strategy documentation
+8. Update imports to use pathlib.Path consistently
+
+Public API:
+def get_api_key() -> Optional[str]:
+    """Get API key using simplified discovery approach with fallback chain"""
+    
+def is_api_key_available() -> bool:
+    """Check if valid API key is available without retrieving it"""
+</info added on 2025-07-22T12:35:33.747Z>
+
+## 6. Create Gemini API Client Module [done]
 ### Dependencies: 1.5
 ### Description: Extract direct API interaction logic from gemini_helper.py into helpers/gemini_api_client.py (~100 lines)
 ### Details:
 Move function: execute_gemini_api() and related imports/constants. Handle API configuration, model selection, and direct API calls with google-generativeai library. Create clean interface for API operations.
+<info added on 2025-07-22T12:35:48.379Z>
+**File Location:** `src/claude_gemini_mcp/helpers/gemini_api_client.py`
 
-## 7. Create Gemini CLI Client Module [pending]
+**Functions to Extract (lines 259-316):**
+- `execute_gemini_api()` - Main API execution with error handling
+
+**Constants/Imports to Move:**
+- `import google.generativeai as genai`
+- Model configuration logic
+- API error sanitization patterns (regex patterns for key redaction)
+
+**Implementation Steps:**
+1. Create new file with proper module docstring
+2. Extract `execute_gemini_api()` function with all dependencies
+3. Move API key redaction regex patterns and sanitization
+4. Add comprehensive error handling for API failures
+5. Include model validation and configuration
+6. Add retry logic for transient failures
+7. Implement proper logging for API calls
+8. Create helper functions for API response processing
+
+**Additional Features to Add:**
+- Model availability checking
+- API quota/rate limit handling
+- Response validation
+- Token counting utilities
+
+**Public API:**
+```python
+async def execute_gemini_api(
+    prompt: str, 
+    model_name: str, 
+    api_key: str,
+    show_progress: bool = True
+) -> dict:
+    """Execute Gemini API directly with specified model"""
+
+def validate_model_name(model_name: str) -> bool:
+    """Validate if model name is supported"""
+    
+def sanitize_api_error(error_message: str) -> str:
+    """Remove sensitive information from error messages"""
+```
+
+**Error Handling:**
+- Import errors for missing google-generativeai
+- API key validation failures
+- Model not found errors
+- Rate limiting and quota exceeded
+- Network connectivity issues
+</info added on 2025-07-22T12:35:48.379Z>
+
+## 7. Create Gemini CLI Client Module [done]
 ### Dependencies: 1.5
 ### Description: Extract CLI execution logic from gemini_helper.py into helpers/gemini_cli_client.py (~300 lines)
 ### Details:
 Move functions: execute_gemini_cli_streaming(), stream_subprocess_output() and related subprocess handling, timeout management, and streaming logic. Create clean interface for CLI operations.
+<info added on 2025-07-22T12:36:03.703Z>
+File Location: src/claude_gemini_mcp/helpers/gemini_cli_client.py
 
-## 8. Create Execution Orchestrator Module [pending]
+Functions to Extract (lines 234-500):
+- stream_subprocess_output() - Thread function for streaming subprocess output
+- execute_gemini_cli_streaming() - Main CLI execution with timeout protection
+
+Implementation Steps:
+1. Create new file with comprehensive module docstring
+2. Extract subprocess streaming and management functions
+3. Move timeout protection and threading logic
+4. Include command argument sanitization and validation
+5. Add environment variable handling (PATH, GOOGLE_CLOUD_PROJECT)
+6. Implement progress tracking and output streaming
+7. Create helper functions for process lifecycle management
+8. Add comprehensive error handling for subprocess failures
+
+Key Features to Preserve:
+- Real-time streaming output with queue-based communication
+- Timeout protection with graceful process termination
+- Command argument sanitization (no shell injection)
+- Progress indicators and elapsed time tracking
+- Thread-safe output handling
+- Proper process cleanup and resource management
+
+Additional Enhancements:
+- Process memory monitoring
+- Output buffering configuration
+- Signal handling for process interruption
+- CLI binary availability checking
+- Command validation and escaping
+
+Public API:
+async def execute_gemini_cli_streaming(
+    prompt: str, 
+    model_name: Optional[str] = None, 
+    timeout: int = 60,
+    show_progress: bool = True
+) -> Dict[str, Any]:
+    """Execute Gemini CLI with timeout-protected real-time streaming"""
+
+def validate_cli_availability() -> bool:
+    """Check if Gemini CLI is available in PATH"""
+    
+def build_cli_command(prompt: str, model_name: Optional[str]) -> List[str]:
+    """Build sanitized CLI command arguments"""
+
+Threading and Process Management:
+- Queue-based output streaming
+- Stop event for graceful thread termination
+- Process lifecycle management (start, monitor, cleanup)
+- Timeout handling with SIGTERM → SIGKILL escalation
+</info added on 2025-07-22T12:36:03.703Z>
+
+## 8. Create Execution Orchestrator Module [done]
 ### Dependencies: 1.6, 1.7
 ### Description: Extract smart execution and result processing logic from gemini_helper.py into helpers/execution_orchestrator.py (~150 lines)
 ### Details:
 Move functions: execute_gemini_smart(), _process_result_output(), execute_gemini_smart_with_progress(), split_into_chunks() and related orchestration logic. Handle API-first fallback-to-CLI strategy.
+<info added on 2025-07-22T12:36:22.754Z>
+File Location: src/claude_gemini_mcp/helpers/execution_orchestrator.py
 
-## 9. Refactor Main Gemini Helper Module [pending]
+Functions to Extract (lines 502-612, 921-951):
+- execute_gemini_smart() - Main orchestration function with API-first, CLI-fallback strategy
+- _process_result_output() - Result processing through markdown parser
+- execute_gemini_smart_with_progress() - Execution with progress indicators
+- split_into_chunks() - Text chunking for streaming display (lines 899-919)
+
+Implementation Steps:
+1. Create new file with detailed module docstring explaining orchestration strategy
+2. Extract smart execution logic that coordinates API and CLI clients
+3. Move result processing and markdown conversion handling
+4. Include model selection and task type mapping logic
+5. Add progress indicator coordination
+6. Implement fallback chain logic (API → CLI)
+7. Create helper functions for response formatting
+8. Add comprehensive logging for execution decisions
+
+Key Orchestration Logic:
+- Model Selection: Use config.get_model() with backward compatibility fallback
+- Execution Strategy: Try API first, fallback to CLI on failure
+- Result Processing: Optional markdown-to-text conversion
+- Progress Management: Coordinate progress indicators across clients
+- Error Propagation: Proper error handling and user feedback
+
+Dependencies on New Modules:
+- Import from api_key_manager for key availability checking
+- Import from gemini_api_client for direct API calls
+- Import from gemini_cli_client for CLI fallback execution
+- Import from markdown_utils for optional output processing
+
+Public API:
+```python
+async def execute_gemini_smart(
+    prompt: str,
+    task_type: str = "quick_query",
+    show_progress: bool = True,
+    convert_markdown: bool = True,
+) -> dict:
+    """Smart execution: try API first, fall back to CLI if needed"""
+
+def execute_gemini_smart_with_progress(
+    prompt: str, 
+    task_type: str = "quick_query"
+) -> dict:
+    """Execute with beautiful streaming progress indicators"""
+```
+
+Configuration Integration:
+- Model nickname resolution (flash → gemini-2.5-flash)
+- Task type to model mapping
+- Feature flag support for API/CLI preference
+</info added on 2025-07-22T12:36:22.754Z>
+
+## 9. Refactor Main Gemini Helper Module [done]
 ### Dependencies: 1.5, 1.6, 1.7, 1.8
 ### Description: Slim down gemini_helper.py to ~250 lines by updating imports and delegating to new helper modules
 ### Details:
 Update gemini_helper.py to import and use the new helper modules. Keep main CLI interface functions (quick_query, analyze_code, analyze_codebase, main) and update them to use the new modular components. Remove extracted code and update all imports.
+<info added on 2025-07-22T12:36:43.552Z>
+File Location: src/claude_gemini_mcp/gemini_helper.py (slimmed down to ~250 lines)
 
-## 10. Update Tests and Validate Architecture [pending]
+Functions to Keep (lines 614-897):
+- quick_query() - CLI interface for quick questions
+- analyze_code() - CLI interface for code analysis  
+- analyze_codebase() - CLI interface for codebase analysis
+- main() - CLI entry point and argument parsing
+
+Implementation Steps:
+1. Update Imports - Replace internal imports with new helper module imports:
+   from claude_gemini_mcp.helpers.api_key_manager import get_api_key
+   from claude_gemini_mcp.helpers.execution_orchestrator import execute_gemini_smart
+
+2. Remove Extracted Code:
+   - Delete lines 56-232 (API key management)
+   - Delete lines 234-316 (API client)  
+   - Delete lines 318-500 (CLI client)
+   - Delete lines 502-612 (orchestration logic)
+   - Delete lines 899-951 (progress utilities)
+
+3. Update Function Implementations:
+   - Modify quick_query() to use execute_gemini_smart() from orchestrator
+   - Update analyze_code() to delegate to orchestrator
+   - Update analyze_codebase() to use orchestrator for AI analysis
+   - Keep input validation and CLI parsing logic
+
+4. Maintain Configuration:
+   - Keep config loading and constants (MAX_FILE_SIZE, MAX_LINES)
+   - Remove model assignments (now handled by orchestrator)
+   - Keep CLI timeout configuration
+
+5. Clean Up Module-Level Code:
+   - Remove shared MCP path detection (moved to api_key_manager)
+   - Keep availability flags for optional imports
+   - Clean up unused constants and variables
+
+Preserved Functionality:
+- All CLI command interfaces remain identical
+- Input validation and sanitization
+- File size and line limit checking  
+- Error handling and user feedback
+- CLI argument parsing in main()
+
+New Structure:
+#!/usr/bin/env python3
+"""Gemini CLI Helper - Main public interface"""
+
+# Imports (~20 lines)
+# Configuration (~10 lines) 
+# CLI Interface Functions (~180 lines)
+# Main CLI Entry Point (~40 lines)
+
+Dependencies:
+- Must import from all 4 new helper modules
+- Update error handling to work with new module interfaces
+- Ensure backward compatibility for external callers
+</info added on 2025-07-22T12:36:43.552Z>
+
+## 10. Update Tests and Validate Architecture [in-progress]
 ### Dependencies: 1.9
 ### Description: Update test imports, add new module tests, and validate architectural compliance after refactoring
 ### Details:
 Update existing tests to import from new modules. Create unit tests for each new helper module. Run full test suite to ensure no regressions. Validate that architectural separation is maintained and all functionality preserved.
+<info added on 2025-07-22T12:37:08.374Z>
+Test Files to Update:
+- tests/integration/test_gemini_api_mocked.py - Update imports to new modules
+- tests/unit/test_gemini_helper.py - Update imports and add new module tests
+- tests/integration/test_gemini_integration.py - Validate end-to-end functionality
+- Any other test files importing from gemini_helper.py
+
+Implementation Steps:
+
+1. Update Existing Test Imports:
+   - Replace from claude_gemini_mcp.gemini_helper import execute_gemini_api
+   - With from claude_gemini_mcp.helpers.gemini_api_client import execute_gemini_api
+   - Update all function imports to match new module structure
+   - Fix any broken test fixtures and mocks
+
+2. Create New Unit Test Files:
+   - tests/unit/test_api_key_manager.py - Test API key discovery strategies
+   - tests/unit/test_gemini_api_client.py - Test direct API calls and error handling
+   - tests/unit/test_gemini_cli_client.py - Test CLI execution and subprocess handling
+   - tests/unit/test_execution_orchestrator.py - Test orchestration logic and fallback
+
+3. Test Coverage Requirements:
+   # API Key Manager Tests
+   - test_get_api_key_from_env_var()
+   - test_get_api_key_from_json_config()
+   - test_api_key_validation()
+   - test_shared_mcp_path_detection()
+   
+   # API Client Tests  
+   - test_execute_gemini_api_success()
+   - test_execute_gemini_api_auth_failure()
+   - test_api_error_sanitization()
+   - test_model_validation()
+   
+   # CLI Client Tests
+   - test_execute_cli_streaming_success()
+   - test_cli_timeout_handling()
+   - test_subprocess_cleanup()
+   - test_command_sanitization()
+   
+   # Orchestrator Tests
+   - test_smart_execution_api_fallback()
+   - test_model_selection_logic()
+   - test_result_processing()
+
+4. Integration Testing:
+   - Test complete workflow from MCP server → orchestrator → clients
+   - Validate API-first, CLI-fallback strategy
+   - Test error propagation across module boundaries
+   - Verify configuration integration works correctly
+
+5. Architectural Validation:
+   - Run dependency analysis to ensure no circular imports
+   - Validate that server module has no direct AI API calls
+   - Check that helper modules maintain single responsibilities
+   - Verify all public interfaces are properly exposed
+
+6. Test Execution Commands:
+   # Run full test suite
+   python -m pytest -v
+   
+   # Run with coverage
+   python -m pytest --cov=src/claude_gemini_mcp --cov-report=html
+   
+   # Run specific module tests
+   python -m pytest tests/unit/test_api_key_manager.py -v
+
+Success Criteria:
+- All existing tests pass with updated imports
+- New unit tests achieve >90% code coverage for each module
+- Integration tests validate end-to-end functionality
+- No architectural violations (server calling AI APIs directly)
+- Performance benchmarks show no regression
+</info added on 2025-07-22T12:37:08.374Z>
+<info added on 2025-07-23T02:04:52.431Z>
+Progress Update: 2025-07-23
+COMPLETED:
+- Analyzed helper modules structure (api_key_manager.py, gemini_api_client.py, gemini_cli_client.py, execution_orchestrator.py)
+- Identified broken imports in test files due to refactoring
+- Fixed imports in tests/integration/test_gemini_api_mocked.py - updated from gemini_helper imports to individual helper modules
+- Fixed imports in tests/integration/test_mcp_server_integration.py - updated GEMINI_MODELS and MODEL_ASSIGNMENTS imports
+- Fixed imports in tests/unit/test_execute_gemini_cli_streaming_limits.py - updated to use helpers modules
+- Fixed imports in tests/e2e/test_full_workflow.py - updated API/CLI execution patches
+
+IN PROGRESS:
+- Fixing tests/unit/test_gemini_helper.py - converting sync API calls to async (execute_gemini_api is now async)
+- Need to create comprehensive unit tests for new helper modules
+
+REMAINING:
+- Complete async test fixes in test_gemini_helper.py
+- Create tests/unit/test_api_key_manager.py
+- Create tests/unit/test_gemini_api_client.py
+- Create tests/unit/test_gemini_cli_client.py
+- Run full test suite with coverage analysis
+- Validate architectural separation
+</info added on 2025-07-23T02:04:52.431Z>
 

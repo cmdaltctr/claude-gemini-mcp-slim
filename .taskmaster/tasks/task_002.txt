@@ -1,11 +1,109 @@
 # Task ID: 2
 # Title: Refactor Test Files for Correct Import Paths and Mocking
-# Status: pending
+# Status: done
 # Dependencies: None
 # Priority: medium
-# Description: Corrected import paths in test files (e.g., test_gemini_api_mocked.py, test_execute_gemini_cli_streaming_limits.py, test_gemini_helper.py, test_cli_fallback.py, test_mcp_server_integration.py, test_full_workflow.py) to point to the correct modules (gemini_helper.py instead of gemini_mcp_server.py). Standardized function names and introduced mock_google_api_key fixture and patched API/CLI calls to ensure tests are isolated and reliable.
+# Description: Task 2, encompassing both test file refactoring and critical configuration updates, has been successfully completed. The refactoring of test files for correct import paths and mocking, including addressing async/sync mismatches in `test_gemini_helper.py`, has been finalized. Additionally, all hardcoded configuration values have been replaced with centralized configuration system calls, ensuring architectural compliance and robust environment variable support.
 # Details:
+### Completed Test Refactoring Work:
+- **tests/integration/test_gemini_api_mocked.py:**
+  - Updated imports from `claude_gemini_mcp.gemini_helper` to individual helper modules.
+  - Fixed `genai` patching paths to point to `helpers.gemini_api_client`.
+  - Updated API key manager import paths.
+  - Fixed fallback discovery method patching.
+- **tests/integration/test_mcp_server_integration.py:**
+  - Updated imports for `GEMINI_MODELS` and `MODEL_ASSIGNMENTS` from `execution_orchestrator`.
+  - Fixed function imports to use new helper module structure.
+- **tests/unit/test_execute_gemini_cli_streaming_limits.py:**
+  - Updated imports to use `helpers.gemini_cli_client` and `helpers.security`.
+  - Fixed function import paths.
+- **tests/e2e/test_full_workflow.py:**
+  - Fixed API/CLI execution patching to use correct helper module paths.
+- **tests/unit/test_gemini_helper.py:**
+  - Addressed async/sync mismatch issue (`execute_gemini_api` is now async).
+  - Converted all sync test calls to async.
+- **General Test Suite:**
+  - Verified all test fixtures and mocks work with new structure.
+  - Added missing unit tests for new helper modules.
+  - Ensured standardized `mock_google_api_key` fixture usage across all tests.
 
+### Completed Configuration Work:
+- Added 3 new configurable limits to `config.py`:
+  - `max_codebase_analysis_size`: 300000 (replaces hardcoded 300_000)
+  - `sanitization_query_divisor`: 100 (replaces hardcoded //100)
+  - `sanitization_context_divisor`: 20 (replaces hardcoded //20)
+- Added environment variable support for all new limits:
+  - `MAX_CODEBASE_ANALYSIS_SIZE`
+  - `SANITIZATION_QUERY_DIVISOR`
+  - `SANITIZATION_CONTEXT_DIVISOR`
+- Replaced hardcoded values in both files:
+  - `gemini_helper.py`: `max_total_size` and division factors now use `cfg.get_limit()`
+  - `gemini_mcp_server.py`: division factors now use `cfg.get_limit()`
+- Created dedicated branch: `task-2-fix-configuration-violations`
+- Committed changes with proper conventional commit format
+- All tests pass and configuration integration verified
+
+### Architectural Compliance:
+- Rule 2.2 fully satisfied - no direct `os.getenv()` calls remain
+- All configuration values go through centralized `config.py` system
+- Maintains backward compatibility with existing default values
+- Supports environment variable overrides for DevOps flexibility
 
 # Test Strategy:
+All refactored tests pass, maintaining isolation and reliably mocking external dependencies. New helper modules are adequately covered by unit tests, and consistent usage of mocking fixtures is confirmed. Furthermore, the integration of the new centralized configuration system has been verified, ensuring all hardcoded values are replaced, environment variable overrides function correctly, and architectural Rule 2.2 is satisfied.
+
+# Subtasks:
+## 1. Update imports and patching in tests/integration/test_gemini_api_mocked.py [completed]
+### Dependencies: None
+### Description: 
+### Details:
+Updated imports from `claude_gemini_mcp.gemini_helper` to individual helper modules; Fixed `genai` patching paths to point to `helpers.gemini_api_client`; Updated API key manager import paths; Fixed fallback discovery method patching.
+
+## 2. Update imports in tests/integration/test_mcp_server_integration.py [completed]
+### Dependencies: None
+### Description: 
+### Details:
+Updated imports for `GEMINI_MODELS` and `MODEL_ASSIGNMENTS` from `execution_orchestrator`; Fixed function imports to use new helper module structure.
+
+## 3. Update imports and function paths in tests/unit/test_execute_gemini_cli_streaming_limits.py [completed]
+### Dependencies: None
+### Description: 
+### Details:
+Updated imports to use `helpers.gemini_cli_client` and `helpers.security`; Fixed function import paths.
+
+## 4. Fix API/CLI execution patching in tests/e2e/test_full_workflow.py [completed]
+### Dependencies: None
+### Description: 
+### Details:
+Fixed API/CLI execution patching to use correct helper module paths.
+
+## 5. Address async/sync mismatch in tests/unit/test_gemini_helper.py [completed]
+### Dependencies: None
+### Description: 
+### Details:
+Identified async/sync mismatch issue (`execute_gemini_api` is now async); Started converting sync test calls to async.
+
+## 6. Complete async fixes in test_gemini_helper.py [completed]
+### Dependencies: None
+### Description: 
+### Details:
+Finish converting all sync test calls to async in `tests/unit/test_gemini_helper.py` to align with the `execute_gemini_api` function's async nature.
+
+## 7. Verify test fixtures and mocks with new structure [completed]
+### Dependencies: None
+### Description: 
+### Details:
+Ensure all existing test fixtures and mocks (e.g., `mock_google_api_key`) function correctly with the refactored module structure and updated import paths.
+
+## 8. Add missing unit tests for new helper modules [completed]
+### Dependencies: None
+### Description: 
+### Details:
+Implement comprehensive unit tests for newly created or significantly refactored helper modules to ensure full test coverage.
+
+## 9. Standardize mock_google_api_key fixture usage [completed]
+### Dependencies: None
+### Description: 
+### Details:
+Review all relevant test files to ensure consistent and standardized usage of the `mock_google_api_key` fixture for API key mocking, improving test reliability and maintainability.
 
