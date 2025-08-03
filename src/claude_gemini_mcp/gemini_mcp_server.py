@@ -152,10 +152,10 @@ async def _handle_quick_query(arguments: Dict[str, Any]) -> List[TextContent]:
 
     # Sanitize inputs for security
     sanitized_query = sanitize_for_prompt(
-        query, max_length=cfg.get_limit("max_prompt_size", 10000) // 100
+        query, max_length=cfg.get_limit("max_prompt_size", 10000) // cfg.get_limit("sanitization_query_divisor", 100)
     )
     sanitized_context = sanitize_for_prompt(
-        context, max_length=cfg.get_limit("max_prompt_size", 50000) // 20
+        context, max_length=cfg.get_limit("max_prompt_size", 50000) // cfg.get_limit("sanitization_context_divisor", 20)
     )
 
     # Build prompt with context-aware formatting

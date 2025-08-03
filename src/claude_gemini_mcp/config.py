@@ -77,6 +77,9 @@ class GeminiConfig:
             "max_codebase_size": 500000,  # 500KB
             "max_context_window": 1048576,  # 1M tokens equivalent
             "sanitization_max_length": 100000,
+            "max_codebase_analysis_size": 300000,  # 300KB for codebase analysis
+            "sanitization_query_divisor": 100,  # Division factor for query sanitization
+            "sanitization_context_divisor": 20,  # Division factor for context sanitization
         },
         # Timeout configurations
         "timeouts": {
@@ -302,6 +305,36 @@ class GeminiConfig:
             except ValueError:
                 logger.warning(
                     f"Invalid SANITIZATION_MAX_LENGTH value: {os.getenv('SANITIZATION_MAX_LENGTH')}"
+                )
+
+        if os.getenv("MAX_CODEBASE_ANALYSIS_SIZE"):
+            try:
+                env_config.setdefault("limits", {})["max_codebase_analysis_size"] = int(
+                    os.getenv("MAX_CODEBASE_ANALYSIS_SIZE")
+                )
+            except ValueError:
+                logger.warning(
+                    f"Invalid MAX_CODEBASE_ANALYSIS_SIZE value: {os.getenv('MAX_CODEBASE_ANALYSIS_SIZE')}"
+                )
+
+        if os.getenv("SANITIZATION_QUERY_DIVISOR"):
+            try:
+                env_config.setdefault("limits", {})["sanitization_query_divisor"] = int(
+                    os.getenv("SANITIZATION_QUERY_DIVISOR")
+                )
+            except ValueError:
+                logger.warning(
+                    f"Invalid SANITIZATION_QUERY_DIVISOR value: {os.getenv('SANITIZATION_QUERY_DIVISOR')}"
+                )
+
+        if os.getenv("SANITIZATION_CONTEXT_DIVISOR"):
+            try:
+                env_config.setdefault("limits", {})["sanitization_context_divisor"] = int(
+                    os.getenv("SANITIZATION_CONTEXT_DIVISOR")
+                )
+            except ValueError:
+                logger.warning(
+                    f"Invalid SANITIZATION_CONTEXT_DIVISOR value: {os.getenv('SANITIZATION_CONTEXT_DIVISOR')}"
                 )
 
         # Boolean feature flags

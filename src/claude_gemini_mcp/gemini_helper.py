@@ -40,10 +40,10 @@ def quick_query(query: str, context: str = "") -> None:
 
     # Sanitize inputs to prevent prompt injection
     sanitized_query = sanitize_for_prompt(
-        query, max_length=cfg.get_limit("max_prompt_size", 10000) // 100
+        query, max_length=cfg.get_limit("max_prompt_size", 10000) // cfg.get_limit("sanitization_query_divisor", 100)
     )
     sanitized_context = sanitize_for_prompt(
-        context, max_length=cfg.get_limit("max_prompt_size", 50000) // 20
+        context, max_length=cfg.get_limit("max_prompt_size", 50000) // cfg.get_limit("sanitization_context_divisor", 20)
     )
 
     if sanitized_context:
@@ -193,7 +193,7 @@ def analyze_codebase(directory_path: str, analysis_scope: str = "all") -> None:
 
         # Step 1: Call the real analyze_codebase function
         analysis_result = real_analyze_codebase(
-            str(resolved_path), max_total_size=300_000
+            str(resolved_path), max_total_size=cfg.get_limit("max_codebase_analysis_size", 300000)
         )
 
         if analysis_result.error:
