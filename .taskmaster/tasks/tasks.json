@@ -7,7 +7,7 @@
         "description": "Remove execute_gemini_api() and execute_gemini_cli_streaming() functions from gemini_mcp_server.py and move all AI API interaction logic to gemini_helper.py to enforce proper architectural separation.",
         "details": "This is a critical architectural refactoring to enforce the decoupled module pattern. Move the execute_gemini_api() and execute_gemini_cli_streaming() functions from gemini_mcp_server.py to gemini_helper.py. Update gemini_mcp_server.py to only orchestrate workflows by calling appropriate functions in gemini_helper.py. Ensure all AI API interactions, streaming logic, and response processing are handled in the AI Specialist module. Update function signatures and error handling to maintain compatibility. Refactor any MCP request handlers in the server that directly call AI APIs to use the helper functions instead. Maintain all existing functionality while enforcing proper separation of concerns. Update imports and module dependencies accordingly.",
         "testStrategy": "Unit tests to verify no AI API calls remain in server module, integration tests to ensure functionality is preserved after refactoring, architectural compliance tests to validate separation of concerns, end-to-end tests for all MCP endpoints to ensure they still work correctly, mock tests to verify server only calls helper functions",
-        "status": "pending",
+        "status": "in-progress",
         "dependencies": [],
         "priority": "high",
         "subtasks": [
@@ -131,7 +131,7 @@
         "description": "Remove all direct os.getenv() calls and hardcoded configuration values from gemini_mcp_server.py and gemini_helper.py, replacing them with config.py accessor functions to enforce Rule 2.2 compliance.",
         "details": "This task addresses critical architectural violations where both gemini_mcp_server.py and gemini_helper.py directly use os.getenv() instead of the centralized configuration system. Specifically refactor lines 152-155 in gemini_mcp_server.py and lines 113-116 in gemini_helper.py to use proper config.py accessor functions like cfg.get_model(), cfg.get_limit(), cfg.get_timeout(), etc. Replace any hardcoded configuration values with appropriate configuration calls. Ensure all environment variable access goes through the centralized configuration system to maintain proper hierarchical precedence (function args > env vars > config.json > defaults). Update any related error handling to work with the configuration system's validation and fallback mechanisms. This refactoring is essential for maintaining architectural integrity and ensuring consistent configuration management across the entire codebase.",
         "testStrategy": "Create unit tests to verify no direct os.getenv() calls remain in either file by scanning for os.getenv patterns. Test that all configuration values are properly retrieved through config.py accessor functions. Validate that environment variable overrides still work correctly through the centralized system. Test error handling when configuration values are missing or invalid. Run integration tests to ensure functionality is preserved after refactoring. Add linting rules to prevent future direct os.getenv() usage. Verify that all existing configuration scenarios (default values, environment overrides, config file settings) continue to work as expected.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           11
         ],
@@ -143,7 +143,7 @@
             "description": "Identify and replace all direct `os.getenv()` calls in `gemini_mcp_server.py` and `gemini_helper.py` with appropriate `config.py` accessor functions (e.g., `cfg.get_model()`, `cfg.get_limit()`, `cfg.get_timeout()`).",
             "dependencies": [],
             "details": "Specifically refactor lines 152-155 in `gemini_mcp_server.py` and lines 113-116 in `gemini_helper.py`.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -152,7 +152,7 @@
             "description": "Scan `gemini_mcp_server.py` and `gemini_helper.py` for any hardcoded configuration values and replace them with calls to the centralized `config.py` system.",
             "dependencies": [],
             "details": "Ensure all configuration values are properly retrieved through `config.py` accessor functions.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -161,7 +161,7 @@
             "description": "Review and update existing error handling mechanisms for configuration validation to ensure robust behavior when configuration values are missing or invalid, aligning with the centralized `config.py` system.",
             "dependencies": [],
             "details": "Focus on error paths related to configuration loading and access.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -170,7 +170,7 @@
             "description": "Implement new linting rules to prevent future direct `os.getenv()` usage and to validate that environment variable overrides are correctly handled via the `config.py` system.",
             "dependencies": [],
             "details": "This is a preventative measure to enforce Rule 2.2 compliance going forward.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           }
         ]
@@ -956,12 +956,12 @@
       {
         "id": 2,
         "title": "Refactor Test Files for Correct Import Paths and Mocking",
-        "description": "Refactoring of test files for correct import paths and mocking is underway. Progress has been made on `test_gemini_api_mocked.py`, `test_mcp_server_integration.py`, `test_execute_gemini_cli_streaming_limits.py`, and `test_full_workflow.py`. Work is in progress on `test_gemini_helper.py` to address async/sync mismatches. Remaining tasks include completing async fixes, verifying fixtures, adding new unit tests, and standardizing `mock_google_api_key` usage.",
-        "status": "in-progress",
+        "description": "Task 2, encompassing both test file refactoring and critical configuration updates, has been successfully completed. The refactoring of test files for correct import paths and mocking, including addressing async/sync mismatches in `test_gemini_helper.py`, has been finalized. Additionally, all hardcoded configuration values have been replaced with centralized configuration system calls, ensuring architectural compliance and robust environment variable support.",
+        "status": "done",
         "dependencies": [],
         "priority": "medium",
-        "details": "### Progress Achieved:\n- **tests/integration/test_gemini_api_mocked.py:**\n  - Updated imports from `claude_gemini_mcp.gemini_helper` to individual helper modules.\n  - Fixed `genai` patching paths to point to `helpers.gemini_api_client`.\n  - Updated API key manager import paths.\n  - Fixed fallback discovery method patching.\n- **tests/integration/test_mcp_server_integration.py:**\n  - Updated imports for `GEMINI_MODELS` and `MODEL_ASSIGNMENTS` from `execution_orchestrator`.\n  - Fixed function imports to use new helper module structure.\n- **tests/unit/test_execute_gemini_cli_streaming_limits.py:**\n  - Updated imports to use `helpers.gemini_cli_client` and `helpers.security`.\n  - Fixed function import paths.\n- **tests/e2e/test_full_workflow.py:**\n  - Fixed API/CLI execution patching to use correct helper module paths.\n- **tests/unit/test_gemini_helper.py (In Progress):**\n  - Identified async/sync mismatch issue (`execute_gemini_api` is now async).\n  - Started converting sync test calls to async.\n\n### Remaining Work:\n- Complete async fixes in `test_gemini_helper.py`.\n- Verify all test fixtures and mocks work with new structure.\n- Add missing unit tests for new helper modules.\n- Ensure standardized `mock_google_api_key` fixture usage across all tests.",
-        "testStrategy": "Ensure all refactored tests pass, maintain isolation, and reliably mock external dependencies. Verify that new helper modules are adequately covered by unit tests. Confirm consistent usage of mocking fixtures across the test suite. Validate that the async/sync changes in `test_gemini_helper.py` correctly handle the updated `execute_gemini_api` function.",
+        "details": "### Completed Test Refactoring Work:\n- **tests/integration/test_gemini_api_mocked.py:**\n  - Updated imports from `claude_gemini_mcp.gemini_helper` to individual helper modules.\n  - Fixed `genai` patching paths to point to `helpers.gemini_api_client`.\n  - Updated API key manager import paths.\n  - Fixed fallback discovery method patching.\n- **tests/integration/test_mcp_server_integration.py:**\n  - Updated imports for `GEMINI_MODELS` and `MODEL_ASSIGNMENTS` from `execution_orchestrator`.\n  - Fixed function imports to use new helper module structure.\n- **tests/unit/test_execute_gemini_cli_streaming_limits.py:**\n  - Updated imports to use `helpers.gemini_cli_client` and `helpers.security`.\n  - Fixed function import paths.\n- **tests/e2e/test_full_workflow.py:**\n  - Fixed API/CLI execution patching to use correct helper module paths.\n- **tests/unit/test_gemini_helper.py:**\n  - Addressed async/sync mismatch issue (`execute_gemini_api` is now async).\n  - Converted all sync test calls to async.\n- **General Test Suite:**\n  - Verified all test fixtures and mocks work with new structure.\n  - Added missing unit tests for new helper modules.\n  - Ensured standardized `mock_google_api_key` fixture usage across all tests.\n\n### Completed Configuration Work:\n- Added 3 new configurable limits to `config.py`:\n  - `max_codebase_analysis_size`: 300000 (replaces hardcoded 300_000)\n  - `sanitization_query_divisor`: 100 (replaces hardcoded //100)\n  - `sanitization_context_divisor`: 20 (replaces hardcoded //20)\n- Added environment variable support for all new limits:\n  - `MAX_CODEBASE_ANALYSIS_SIZE`\n  - `SANITIZATION_QUERY_DIVISOR`\n  - `SANITIZATION_CONTEXT_DIVISOR`\n- Replaced hardcoded values in both files:\n  - `gemini_helper.py`: `max_total_size` and division factors now use `cfg.get_limit()`\n  - `gemini_mcp_server.py`: division factors now use `cfg.get_limit()`\n- Created dedicated branch: `task-2-fix-configuration-violations`\n- Committed changes with proper conventional commit format\n- All tests pass and configuration integration verified\n\n### Architectural Compliance:\n- Rule 2.2 fully satisfied - no direct `os.getenv()` calls remain\n- All configuration values go through centralized `config.py` system\n- Maintains backward compatibility with existing default values\n- Supports environment variable overrides for DevOps flexibility",
+        "testStrategy": "All refactored tests pass, maintaining isolation and reliably mocking external dependencies. New helper modules are adequately covered by unit tests, and consistent usage of mocking fixtures is confirmed. Furthermore, the integration of the new centralized configuration system has been verified, ensuring all hardcoded values are replaced, environment variable overrides function correctly, and architectural Rule 2.2 is satisfied.",
         "subtasks": [
           {
             "id": 1,
@@ -1003,7 +1003,7 @@
             "id": 5,
             "title": "Address async/sync mismatch in tests/unit/test_gemini_helper.py",
             "description": "",
-            "status": "in-progress",
+            "status": "completed",
             "dependencies": [],
             "details": "Identified async/sync mismatch issue (`execute_gemini_api` is now async); Started converting sync test calls to async.",
             "testStrategy": ""
@@ -1012,7 +1012,7 @@
             "id": 6,
             "title": "Complete async fixes in test_gemini_helper.py",
             "description": "",
-            "status": "pending",
+            "status": "completed",
             "dependencies": [],
             "details": "Finish converting all sync test calls to async in `tests/unit/test_gemini_helper.py` to align with the `execute_gemini_api` function's async nature.",
             "testStrategy": ""
@@ -1021,7 +1021,7 @@
             "id": 7,
             "title": "Verify test fixtures and mocks with new structure",
             "description": "",
-            "status": "pending",
+            "status": "completed",
             "dependencies": [],
             "details": "Ensure all existing test fixtures and mocks (e.g., `mock_google_api_key`) function correctly with the refactored module structure and updated import paths.",
             "testStrategy": ""
@@ -1030,7 +1030,7 @@
             "id": 8,
             "title": "Add missing unit tests for new helper modules",
             "description": "",
-            "status": "pending",
+            "status": "completed",
             "dependencies": [],
             "details": "Implement comprehensive unit tests for newly created or significantly refactored helper modules to ensure full test coverage.",
             "testStrategy": ""
@@ -1039,7 +1039,7 @@
             "id": 9,
             "title": "Standardize mock_google_api_key fixture usage",
             "description": "",
-            "status": "pending",
+            "status": "completed",
             "dependencies": [],
             "details": "Review all relevant test files to ensure consistent and standardized usage of the `mock_google_api_key` fixture for API key mocking, improving test reliability and maintainability.",
             "testStrategy": ""
@@ -1049,7 +1049,7 @@
     ],
     "metadata": {
       "created": "2025-07-22T04:31:53.696Z",
-      "updated": "2025-07-23T02:04:58.579Z",
+      "updated": "2025-08-03T00:44:41.991Z",
       "description": "Tasks for master context"
     }
   }
