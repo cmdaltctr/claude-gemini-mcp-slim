@@ -145,18 +145,17 @@ async def execute_gemini_smart(
     show_progress: bool = True,
     convert_markdown: bool = True,
 ) -> Dict:
-    """Smart execution: try API first, fall back to CLI if needed.
+    """Smart execution: try routing first, fall back to legacy pattern if needed.
 
     This is the central orchestration function implementing intelligent execution
-    strategy. It attempts API execution first for optimal performance, then
-    gracefully falls back to CLI execution if the API is unavailable or fails.
+    strategy. It first attempts to use the new routing middleware if enabled,
+    then gracefully falls back to the original API-first, CLI-fallback pattern.
 
-    Orchestration Strategy:
-    1. Model Resolution: Uses centralized config with backward compatibility
-    2. API Availability Check: Verifies API key presence before attempting API call
-    3. Primary Execution: Attempts API execution with full error handling
-    4. Fallback Strategy: Falls back to CLI execution on API failure
-    5. Result Processing: Applies markdown conversion pipeline to final output
+    Enhanced Orchestration Strategy:
+    1. Routing Check: Uses middleware router if routing is enabled in configuration
+    2. Legacy Fallback: Falls back to original API-first, CLI-fallback strategy
+    3. Model Resolution: Uses centralized config with backward compatibility
+    4. Result Processing: Applies markdown conversion pipeline to final output
 
     Args:
         prompt: Input prompt for the AI model
@@ -168,9 +167,111 @@ async def execute_gemini_smart(
         dict: Execution result with 'success' boolean and 'output'/'error' content
 
     Note:
-        This function embodies the Agentic Collaboration Protocol principle by
-        intelligently orchestrating the execution workflow rather than simply
-        passing requests through to backends.
+        This function now integrates the routing middleware while maintaining
+        full backward compatibility with existing execution patterns.
+    """
+    # Check if routing is enabled
+    if cfg.is_routing_enabled():
+        return await _execute_with_routing(prompt, task_type, show_progress, convert_markdown)
+    else:
+        return await _execute_legacy_pattern(prompt, task_type, show_progress, convert_markdown)
+
+
+async def _execute_with_routing(
+    prompt: str,
+    task_type: str,
+    show_progress: bool,
+    convert_markdown: bool,
+) -> Dict:
+    """Execute using the new routing middleware
+
+    This function uses the routing middleware to intelligently select
+    providers and models while maintaining the same result format.
+
+    Args:
+        prompt: Input prompt for the AI model
+        task_type: Type of task for model selection
+        show_progress: Whether to show progress indicators
+        convert_markdown: Whether to convert markdown output
+
+    Returns:
+        dict: Execution result compatible with legacy format
+    """
+    try:
+        # Import routing components
+        from claude_gemini_mcp.middleware import Router, RouteRequest
+
+        # Create router instance
+        router = Router()
+
+        # Build routing request
+        route_request = RouteRequest(
+            prompt=prompt,
+            tool_name=task_type,
+            metadata={
+                "show_progress": show_progress,
+                "convert_markdown": convert_markdown
+            }
+        )
+
+        if show_progress:
+            print(f"🔀 Using intelligent routing for task: {task_type}", file=sys.stderr)
+
+        # Execute routing
+        route_result = await router.route_request(route_request)
+
+        if show_progress and route_result.success:
+            print(f"✅ Routed to {route_result.provider_used}/{route_result.model_used}", file=sys.stderr)
+            print(f"📝 Routing reason: {route_result.routing_reason}", file=sys.stderr)
+
+        # Convert router result to legacy format
+        result = {
+            "success": route_result.success,
+            "output": route_result.content if route_result.success else "",
+            "error": route_result.error if not route_result.success else None,
+            "metadata": {
+                "provider_used": route_result.provider_used,
+                "model_used": route_result.model_used,
+                "routing_strategy": route_result.routing_strategy,
+                "routing_reason": route_result.routing_reason,
+                "execution_time": route_result.execution_time,
+                "fallback_attempts": route_result.fallback_attempts
+            }
+        }
+
+        # Apply markdown conversion if enabled and successful
+        if result["success"] and convert_markdown:
+            result = _process_result_output(result, convert_markdown, show_progress)
+
+        return result
+
+    except Exception as e:
+        if show_progress:
+            print(f"⚠️ Routing failed: {str(e)}, falling back to legacy pattern", file=sys.stderr)
+
+        # Fallback to legacy pattern if routing fails
+        return await _execute_legacy_pattern(prompt, task_type, show_progress, convert_markdown)
+
+
+async def _execute_legacy_pattern(
+    prompt: str,
+    task_type: str,
+    show_progress: bool,
+    convert_markdown: bool,
+) -> Dict:
+    """Execute using the original API-first, CLI-fallback pattern
+
+    This preserves the original execution logic exactly as it was,
+    maintaining full backward compatibility.
+
+    Args:
+        prompt: Input prompt for the AI model
+        task_type: Type of task for model selection
+        show_progress: Whether to show progress indicators
+        convert_markdown: Whether to convert markdown output
+
+    Returns:
+        dict: Execution result with original format
     """
     # Model selection with centralized configuration
     model_name = cfg.get_model(task_type, None)

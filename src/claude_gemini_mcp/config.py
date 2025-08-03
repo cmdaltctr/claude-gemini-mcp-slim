@@ -19,7 +19,7 @@ import logging
 import os
 import threading
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -138,6 +138,50 @@ class GeminiConfig:
             "enable_markdown_conversion": True,
             "enable_streaming": True,
             "max_parallel_processes": 4,
+        },
+        # Routing and provider configurations
+        "routing": {
+            "enabled": False,  # Disabled by default for backward compatibility
+            "providers": {
+                "gemini": {
+                    "name": "gemini",
+                    "api_base_url": "https://generativelanguage.googleapis.com/v1beta/models/",
+                    "api_key_env": "GEMINI_API_KEY",
+                    "models": ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.5-flash-8b", "gemini-2.5-flash-exp-0827", "gemini-2.5-pro-exp-0827"],
+                    "transformers": ["gemini"],
+                    "enabled": True,
+                },
+                "openrouter": {
+                    "name": "openrouter",
+                    "api_base_url": "https://openrouter.ai/api/v1/chat/completions",
+                    "api_key_env": "OPENROUTER_API_KEY",
+                    "models": ["google/gemini-2.5-pro-preview", "anthropic/claude-3.5-sonnet", "anthropic/claude-3-haiku"],
+                    "transformers": ["openrouter"],
+                    "enabled": False,
+                },
+                "deepseek": {
+                    "name": "deepseek",
+                    "api_base_url": "https://api.deepseek.com/chat/completions",
+                    "api_key_env": "DEEPSEEK_API_KEY",
+                    "models": ["deepseek-chat", "deepseek-reasoner"],
+                    "transformers": ["deepseek"],
+                    "enabled": False,
+                },
+            },
+            "scenarios": {
+                "default": "gemini,gemini-2.5-flash",
+                "background": "gemini,gemini-2.5-flash-8b",
+                "think": "gemini,gemini-2.5-pro",
+                "longContext": "gemini,gemini-2.5-pro",
+                "webSearch": "gemini,gemini-2.5-flash",
+            },
+            "thresholds": {
+                "long_context_tokens": 60000,  # Token count threshold for longContext scenario
+                "background_task_size": 1000,   # Content size threshold for background scenario
+            },
+            "fallback_strategy": "provider_cascade",  # "provider_cascade", "cli_fallback", "fail_fast"
+            "retry_attempts": 2,
+            "timeout_ms": 30000,
         },
     }
 
@@ -655,6 +699,43 @@ class GeminiConfig:
 
         return False
 
+    # Routing configuration accessors
+    def is_routing_enabled(self) -> bool:
+        """Check if routing is enabled"""
+        return self._config.get("routing", {}).get("enabled", False)
+
+    def get_routing_config(self) -> Dict[str, Any]:
+        """Get the complete routing configuration"""
+        return self._config.get("routing", {})
+
+    def get_provider_config(self, provider_name: str) -> Optional[Dict[str, Any]]:
+        """Get configuration for a specific provider"""
+        providers = self._config.get("routing", {}).get("providers", {})
+        return providers.get(provider_name)
+
+    def get_enabled_providers(self) -> List[str]:
+        """Get list of enabled provider names"""
+        providers = self._config.get("routing", {}).get("providers", {})
+        return [name for name, config in providers.items() if config.get("enabled", False)]
+
+    def get_scenario_config(self, scenario: str) -> Optional[str]:
+        """Get model configuration for a specific scenario"""
+        scenarios = self._config.get("routing", {}).get("scenarios", {})
+        return scenarios.get(scenario)
+
+    def get_routing_threshold(self, threshold_name: str) -> int:
+        """Get routing threshold value"""
+        thresholds = self._config.get("routing", {}).get("thresholds", {})
+        defaults = {
+            "long_context_tokens": 60000,
+            "background_task_size": 1000,
+        }
+        return thresholds.get(threshold_name, defaults.get(threshold_name, 0))
+
+    def get_fallback_strategy(self) -> str:
+        """Get the configured fallback strategy"""
+        return self._config.get("routing", {}).get("fallback_strategy", "provider_cascade")
+
 
 # Module-level singleton access functions
 def get_config() -> GeminiConfig:
@@ -751,6 +832,32 @@ def is_execution_enabled(
 ) -> bool:
     """Check if execution setting is enabled (convenience function)"""
     return get_config().get_execution_setting(setting_name, explicit_value)
+
+
+# Routing configuration convenience functions
+def is_routing_enabled() -> bool:
+    """Check if routing is enabled (convenience function)"""
+    return get_config().is_routing_enabled()
+
+
+def get_enabled_providers() -> List[str]:
+    """Get list of enabled providers (convenience function)"""
+    return get_config().get_enabled_providers()
+
+
+def get_provider_config(provider_name: str) -> Optional[Dict[str, Any]]:
+    """Get provider configuration (convenience function)"""
+    return get_config().get_provider_config(provider_name)
+
+
+def get_scenario_config(scenario: str) -> Optional[str]:
+    """Get scenario configuration (convenience function)"""
+    return get_config().get_scenario_config(scenario)
+
+
+def get_routing_threshold(threshold_name: str) -> int:
+    """Get routing threshold (convenience function)"""
+    return get_config().get_routing_threshold(threshold_name)
 
 
 # Context manager for temporary configuration override
