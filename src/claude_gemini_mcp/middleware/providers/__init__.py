@@ -21,10 +21,12 @@ Design Principles:
 
 from .base_provider import BaseProvider, ProviderError, ProviderResult
 from .gemini_provider import GeminiProvider
+from .openrouter_provider import OpenRouterProvider
 
 __all__ = [
     "BaseProvider",
     "ProviderError",
     "ProviderResult",
     "GeminiProvider",
+    "OpenRouterProvider",
 ]

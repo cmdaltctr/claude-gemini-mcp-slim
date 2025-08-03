@@ -37,9 +37,7 @@ class ResponseTransformer:
         """Initialize response transformer"""
         self.transformers = {
             "gemini": GeminiResponseTransformer(),
-            # Future transformers will be added here
-            # "openrouter": OpenRouterResponseTransformer(),
-            # "deepseek": DeepSeekResponseTransformer(),
+            "openrouter": OpenRouterResponseTransformer(),
         }
 
         logger.debug(f"Initialized response transformer with {len(self.transformers)} provider transformers")
@@ -165,3 +163,84 @@ class GeminiResponseTransformer(BaseResponseTransformer):
                     "transformation_error": str(e)
                 }
             }
+
+
+class OpenRouterResponseTransformer(BaseResponseTransformer):
+    """Response transformer for OpenRouter API responses
+
+    Normalizes OpenRouter responses to the standard format, handling
+    the OpenAI-compatible response structure from various providers.
+    """
+
+    def transform(self, raw_response: Dict[str, Any], model_used: str) -> Dict[str, Any]:
+        """Transform OpenRouter response to standard format
+
+        Args:
+            raw_response: Raw OpenRouter response (OpenAI-compatible)
+            model_used: OpenRouter model that generated the response
+
+        Returns:
+            Standardized response dictionary
+        """
+        try:
+            # Handle OpenAI-compatible response format
+            if "choices" in raw_response and len(raw_response["choices"]) > 0:
+                choice = raw_response["choices"][0]
+                content = choice.get("message", {}).get("content", "")
+                success = True
+                error = None
+            elif "error" in raw_response:
+                content = ""
+                success = False
+                error = raw_response["error"].get("message", "Unknown OpenRouter error")
+            else:
+                content = ""
+                success = False
+                error = "Invalid OpenRouter response format"
+
+            # Extract usage information
+            usage = raw_response.get("usage", {})
+
+            # Build standardized response
+            standardized = {
+                "success": success,
+                "content": content,
+                "error": error,
+                "metadata": {
+                    "model_used": model_used,
+                    "provider": "openrouter",
+                    "original_response": raw_response,
+                    "response_id": raw_response.get("id"),
+                    "created": raw_response.get("created")
+                }
+            }
+
+            # Add token usage information
+            if usage:
+                standardized["tokens_used"] = usage.get("total_tokens", 0)
+                standardized["metadata"]["input_tokens"] = usage.get("prompt_tokens", 0)
+                standardized["metadata"]["output_tokens"] = usage.get("completion_tokens", 0)
+
+            # Add finish reason if available
+            if "choices" in raw_response and len(raw_response["choices"]) > 0:
+                finish_reason = raw_response["choices"][0].get("finish_reason")
+                if finish_reason:
+                    standardized["metadata"]["finish_reason"] = finish_reason
+
+            logger.debug(f"Transformed OpenRouter response: success={success}, content_length={len(content)}")
+            return standardized
+
+        except Exception as e:
+            logger.error(f"Error transforming OpenRouter response: {str(e)}")
+            return {
+                "success": False,
+                "content": "",
+                "error": f"Response transformation failed: {str(e)}",
+                "metadata": {
+                    "model_used": model_used,
+                    "provider": "openrouter",
+                    "transformation_error": str(e)
+                }
+            }
+
+

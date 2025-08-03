@@ -202,6 +202,11 @@ class CostOptimizer:
             if cost_analysis["requires_quality"] and quality_score < 7.0:
                 continue
 
+            # Check content type compatibility
+            content_type = context.get("content_type", "text")
+            if content_type == "code" and "code" not in cost_info.get("capabilities", []):
+                continue
+
             suitable_models.append({
                 "key": model_key,
                 "estimated_cost": total_cost,

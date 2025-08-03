@@ -37,9 +37,7 @@ class RequestTransformer:
         """Initialize request transformer"""
         self.transformers = {
             "gemini": GeminiRequestTransformer(),
-            # Future transformers will be added here
-            # "openrouter": OpenRouterRequestTransformer(),
-            # "deepseek": DeepSeekRequestTransformer(),
+            "openrouter": OpenRouterRequestTransformer(),
         }
 
         logger.debug(f"Initialized request transformer with {len(self.transformers)} provider transformers")
@@ -240,3 +238,90 @@ class GeminiRequestTransformer(BaseRequestTransformer):
         except Exception as e:
             logger.error(f"Error validating Gemini request: {str(e)}")
             return False
+
+
+class OpenRouterRequestTransformer(BaseRequestTransformer):
+    """Request transformer for OpenRouter API
+
+    Transforms standardized requests into OpenRouter format, compatible
+    with OpenAI-style chat completions API.
+    """
+
+    def transform(self, prompt: str, model: str, **kwargs) -> Dict[str, Any]:
+        """Transform request to OpenRouter format
+
+        Args:
+            prompt: Input prompt text
+            model: OpenRouter model name
+            **kwargs: Additional parameters
+
+        Returns:
+            OpenRouter API request dictionary
+        """
+        # Build OpenRouter request (OpenAI-compatible format)
+        request_data = {
+            "model": model,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
+        }
+
+        # Map optional parameters
+        if "temperature" in kwargs:
+            temperature = kwargs["temperature"]
+            if isinstance(temperature, (int, float)) and 0.0 <= temperature <= 2.0:
+                request_data["temperature"] = temperature
+
+        if "max_tokens" in kwargs:
+            max_tokens = kwargs["max_tokens"]
+            if isinstance(max_tokens, int) and max_tokens > 0:
+                request_data["max_tokens"] = max_tokens
+
+        if "top_p" in kwargs:
+            top_p = kwargs["top_p"]
+            if isinstance(top_p, (int, float)) and 0.0 <= top_p <= 1.0:
+                request_data["top_p"] = top_p
+
+        # Add provider preferences if specified
+        if "provider_preferences" in kwargs:
+            request_data["provider"] = kwargs["provider_preferences"]
+
+        logger.debug(f"Transformed request for OpenRouter: {model}")
+        return request_data
+
+    def validate(self, request_data: Dict[str, Any]) -> bool:
+        """Validate OpenRouter request format
+
+        Args:
+            request_data: OpenRouter request data
+
+        Returns:
+            True if valid, False otherwise
+        """
+        try:
+            # Check required fields
+            if not isinstance(request_data.get("model"), str):
+                logger.warning("Invalid model field in OpenRouter request")
+                return False
+
+            messages = request_data.get("messages")
+            if not isinstance(messages, list) or len(messages) == 0:
+                logger.warning("Invalid messages field in OpenRouter request")
+                return False
+
+            # Validate message format
+            for msg in messages:
+                if not isinstance(msg, dict) or "role" not in msg or "content" not in msg:
+                    logger.warning("Invalid message format in OpenRouter request")
+                    return False
+
+            return True
+
+        except Exception as e:
+            logger.error(f"Error validating OpenRouter request: {str(e)}")
+            return False
+
+

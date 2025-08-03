@@ -15,7 +15,7 @@ Features:
 """
 
 import logging
-from typing import Dict, Any, List, Tuple, Optional
+from typing import Dict, Any, List, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -122,7 +122,7 @@ class TokenAwareRouter:
         buffer_tokens = max(int(estimated_tokens * 0.2), 1000)
         required_context = estimated_tokens + buffer_tokens
 
-        for model_key, model_info in self.model_capabilities.items():
+        for model_info in self.model_capabilities.values():
             context_window = model_info["context_window"]
             capabilities = model_info["capabilities"]
 
@@ -163,8 +163,18 @@ class TokenAwareRouter:
         if not suitable_models:
             return self._get_fallback_model()
 
-        # Simple selection: first suitable model (already sorted by preference)
-        return suitable_models[0]
+        # Consider context preferences for selection
+        priority = context.get("priority", "balanced")
+
+        if priority == "speed":
+            # Prefer models with smaller context windows (faster)
+            return min(suitable_models, key=lambda x: x["context_window"])
+        elif priority == "cost":
+            # Prefer most cost-effective models (smallest suitable context)
+            return suitable_models[0]  # Already sorted by preference
+        else:
+            # Balanced approach: first suitable model
+            return suitable_models[0]
 
     def _get_largest_context_model(self, reason: str) -> Tuple[str, str, str]:
         """Get model with largest context window
