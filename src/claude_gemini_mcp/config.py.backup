@@ -327,141 +327,62 @@ class GeminiConfig:
         """Load configuration from environment variables"""
         env_config: Dict[str, Any] = {}
 
-        # Model environment variables
-        if os.getenv("GEMINI_FLASH_MODEL"):
-            env_config.setdefault("models", {}).setdefault("nicknames", {})["flash"] = (
-                os.getenv("GEMINI_FLASH_MODEL")
-            )
+        # Define environment variable mappings
+        env_mappings = {
+            # Model variables (string values)
+            "GEMINI_FLASH_MODEL": ("models", "nicknames", "flash"),
+            "GEMINI_PRO_MODEL": ("models", "nicknames", "pro"),
+            
+            # Timeout variables (integer values)
+            "CLI_TIMEOUT": ("timeouts", "cli_timeout"),
+            "API_TIMEOUT": ("timeouts", "api_timeout"),
+            
+            # Limit variables (integer values)
+            "MAX_FILE_SIZE": ("limits", "max_file_size"),
+            "MAX_LINES": ("limits", "max_lines"),
+            "MAX_PROMPT_SIZE": ("limits", "max_prompt_size"),
+            "MAX_CODEBASE_SIZE": ("limits", "max_codebase_size"),
+            "MAX_CONTEXT_WINDOW": ("limits", "max_context_window"),
+            "SANITIZATION_MAX_LENGTH": ("limits", "sanitization_max_length"),
+            "MAX_CODEBASE_ANALYSIS_SIZE": ("limits", "max_codebase_analysis_size"),
+            "SANITIZATION_QUERY_DIVISOR": ("limits", "sanitization_query_divisor"),
+            "SANITIZATION_CONTEXT_DIVISOR": ("limits", "sanitization_context_divisor"),
+        }
 
-        if os.getenv("GEMINI_PRO_MODEL"):
-            env_config.setdefault("models", {}).setdefault("nicknames", {})["pro"] = (
-                os.getenv("GEMINI_PRO_MODEL")
-            )
+        # Process string and integer environment variables
+        for env_var, config_path in env_mappings.items():
+            value = os.getenv(env_var)
+            if not value:
+                continue
 
-        # Timeout overrides
-        if os.getenv("CLI_TIMEOUT"):
-            try:
-                env_config.setdefault("timeouts", {})["cli_timeout"] = int(
-                    os.getenv("CLI_TIMEOUT")
-                )
-            except ValueError:
-                logger.warning(f"Invalid CLI_TIMEOUT value: {os.getenv('CLI_TIMEOUT')}")
+            # Handle nested config structure
+            if len(config_path) == 3:  # models.nicknames.key
+                section, subsection, key = config_path
+                env_config.setdefault(section, {}).setdefault(subsection, {})[key] = value
+            elif len(config_path) == 2:  # section.key
+                section, key = config_path
+                # Determine if value should be int or string based on section
+                if section in ("timeouts", "limits"):
+                    try:
+                        env_config.setdefault(section, {})[key] = int(value)
+                    except ValueError:
+                        logger.warning(f"Invalid {env_var} value: {value}")
+                else:
+                    env_config.setdefault(section, {})[key] = value
 
-        if os.getenv("API_TIMEOUT"):
-            try:
-                env_config.setdefault("timeouts", {})["api_timeout"] = int(
-                    os.getenv("API_TIMEOUT")
-                )
-            except ValueError:
-                logger.warning(f"Invalid API_TIMEOUT value: {os.getenv('API_TIMEOUT')}")
+        # Handle boolean environment variables
+        boolean_mappings = {
+            "ENABLE_MARKDOWN_CONVERSION": ("execution", "enable_markdown_conversion"),
+            "ENABLE_SANITIZATION": ("security", "enable_sanitization"),
+        }
 
-        # Size limit overrides
-        if os.getenv("MAX_FILE_SIZE"):
-            try:
-                env_config.setdefault("limits", {})["max_file_size"] = int(
-                    os.getenv("MAX_FILE_SIZE")
-                )
-            except ValueError:
-                logger.warning(
-                    f"Invalid MAX_FILE_SIZE value: {os.getenv('MAX_FILE_SIZE')}"
-                )
-
-        if os.getenv("MAX_LINES"):
-            try:
-                env_config.setdefault("limits", {})["max_lines"] = int(
-                    os.getenv("MAX_LINES")
-                )
-            except ValueError:
-                logger.warning(f"Invalid MAX_LINES value: {os.getenv('MAX_LINES')}")
-
-        if os.getenv("MAX_PROMPT_SIZE"):
-            try:
-                env_config.setdefault("limits", {})["max_prompt_size"] = int(
-                    os.getenv("MAX_PROMPT_SIZE")
-                )
-            except ValueError:
-                logger.warning(
-                    f"Invalid MAX_PROMPT_SIZE value: {os.getenv('MAX_PROMPT_SIZE')}"
-                )
-
-        if os.getenv("MAX_CODEBASE_SIZE"):
-            try:
-                env_config.setdefault("limits", {})["max_codebase_size"] = int(
-                    os.getenv("MAX_CODEBASE_SIZE")
-                )
-            except ValueError:
-                logger.warning(
-                    f"Invalid MAX_CODEBASE_SIZE value: {os.getenv('MAX_CODEBASE_SIZE')}"
-                )
-
-        if os.getenv("MAX_CONTEXT_WINDOW"):
-            try:
-                env_config.setdefault("limits", {})["max_context_window"] = int(
-                    os.getenv("MAX_CONTEXT_WINDOW")
-                )
-            except ValueError:
-                logger.warning(
-                    f"Invalid MAX_CONTEXT_WINDOW value: {os.getenv('MAX_CONTEXT_WINDOW')}"
-                )
-
-        if os.getenv("SANITIZATION_MAX_LENGTH"):
-            try:
-                env_config.setdefault("limits", {})["sanitization_max_length"] = int(
-                    os.getenv("SANITIZATION_MAX_LENGTH")
-                )
-            except ValueError:
-                logger.warning(
-                    f"Invalid SANITIZATION_MAX_LENGTH value: {os.getenv('SANITIZATION_MAX_LENGTH')}"
-                )
-
-        if os.getenv("MAX_CODEBASE_ANALYSIS_SIZE"):
-            try:
-                env_config.setdefault("limits", {})["max_codebase_analysis_size"] = int(
-                    os.getenv("MAX_CODEBASE_ANALYSIS_SIZE")
-                )
-            except ValueError:
-                logger.warning(
-                    f"Invalid MAX_CODEBASE_ANALYSIS_SIZE value: {os.getenv('MAX_CODEBASE_ANALYSIS_SIZE')}"
-                )
-
-        if os.getenv("SANITIZATION_QUERY_DIVISOR"):
-            try:
-                env_config.setdefault("limits", {})["sanitization_query_divisor"] = int(
-                    os.getenv("SANITIZATION_QUERY_DIVISOR")
-                )
-            except ValueError:
-                logger.warning(
-                    f"Invalid SANITIZATION_QUERY_DIVISOR value: {os.getenv('SANITIZATION_QUERY_DIVISOR')}"
-                )
-
-        if os.getenv("SANITIZATION_CONTEXT_DIVISOR"):
-            try:
-                env_config.setdefault("limits", {})["sanitization_context_divisor"] = int(
-                    os.getenv("SANITIZATION_CONTEXT_DIVISOR")
-                )
-            except ValueError:
-                logger.warning(
-                    f"Invalid SANITIZATION_CONTEXT_DIVISOR value: {os.getenv('SANITIZATION_CONTEXT_DIVISOR')}"
-                )
-
-        # Boolean feature flags
-        if os.getenv("ENABLE_MARKDOWN_CONVERSION"):
-            value = os.getenv("ENABLE_MARKDOWN_CONVERSION", "").lower()
-            parsed_value = value in ("true", "1", "yes", "on")
-            # Only set if it's a recognized boolean value
-            if value in ("true", "1", "yes", "on", "false", "0", "no", "off"):
-                env_config.setdefault("execution", {})[
-                    "enable_markdown_conversion"
-                ] = parsed_value
-
-        if os.getenv("ENABLE_SANITIZATION"):
-            value = os.getenv("ENABLE_SANITIZATION", "").lower()
-            parsed_value = value in ("true", "1", "yes", "on")
-            # Only set if it's a recognized boolean value
-            if value in ("true", "1", "yes", "on", "false", "0", "no", "off"):
-                env_config.setdefault("security", {})[
-                    "enable_sanitization"
-                ] = parsed_value
+        for env_var, (section, key) in boolean_mappings.items():
+            value = os.getenv(env_var)
+            if value:
+                value_lower = value.lower()
+                if value_lower in ("true", "1", "yes", "on", "false", "0", "no", "off"):
+                    parsed_value = value_lower in ("true", "1", "yes", "on")
+                    env_config.setdefault(section, {})[key] = parsed_value
 
         return env_config
 
