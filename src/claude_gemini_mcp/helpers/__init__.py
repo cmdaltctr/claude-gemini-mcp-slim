@@ -17,6 +17,18 @@ from .security import (
     validate_path_security,
 )
 
+# Import agentic models for structured responses
+from .agentric_models import (
+    AgenticCodePatch,
+    AgenticResponse,
+    CodeAnalysisResult,
+    CodePatchStep,
+    Confidence,
+    PatchType,
+    SecurityConsideration,
+    TestStrategy,
+)
+
 # Import from tool modules
 from .tools.analyze_code import AnalysisResult, AnalysisType, CodeAnalyzer, analyze_code
 from .tools.codebase_analyzer import (
@@ -28,7 +40,16 @@ from .tools.codebase_analyzer import (
 )
 
 __all__ = [
+    # Utility functions
     "markdown_to_text",
+    "sanitize_for_prompt",
+    "validate_path_security",
+    "validate_file_security",
+    "sanitize_error_message",
+    "execute_gemini_smart",
+    "execute_gemini_smart_with_progress",
+    "split_into_chunks",
+    # Analysis tools
     "analyze_code",
     "CodeAnalyzer",
     "AnalysisType",
@@ -38,11 +59,13 @@ __all__ = [
     "discover_files",
     "aggregate_contents",
     "build_project_report",
-    "sanitize_for_prompt",
-    "validate_path_security",
-    "validate_file_security",
-    "sanitize_error_message",
-    "execute_gemini_smart",
-    "execute_gemini_smart_with_progress",
-    "split_into_chunks",
+    # Agentic models for structured responses
+    "AgenticCodePatch",
+    "AgenticResponse",
+    "CodeAnalysisResult",
+    "CodePatchStep",
+    "Confidence",
+    "PatchType",
+    "SecurityConsideration",
+    "TestStrategy",
 ]
