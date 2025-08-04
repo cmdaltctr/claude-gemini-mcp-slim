@@ -17,6 +17,7 @@ from .code_analyzer import (
     analyze_codebase,
 )
 from .codebase_analyzer import (
+    AnalysisScope,
     ArchitectureInfo,
     CodebaseAnalyzer,
     CodebaseStats,
@@ -38,6 +39,7 @@ __all__ = [
     "build_project_report",
     "CodebaseAnalysisResult",
     "CodebaseAnalysisError",
+    "AnalysisScope",
     "ArchitectureInfo",
     "CodebaseStats",
     "FileDiscoveryError",

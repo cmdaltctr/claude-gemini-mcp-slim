@@ -50,19 +50,9 @@ def run_command(cmd: List[str], timeout: Optional[int] = None) -> int:
 
 
 def install_dependencies() -> int:
-    """Install required test dependencies."""
-    print("Installing test dependencies...")
-    return run_command(
-        [
-            sys.executable,
-            "-m",
-            "pip",
-            "install",
-            "-r",
-            "requirements-dev.txt",
-            "--quiet",
-        ]
-    )
+    """Sync dependencies using uv."""
+    print("Syncing dependencies with uv...")
+    return run_command(["uv", "sync", "--dev"])
 
 
 def run_fast_tests() -> int:
@@ -70,8 +60,8 @@ def run_fast_tests() -> int:
     print("Running fast unit tests...")
     return run_command(
         [
-            sys.executable,
-            "-m",
+            "uv",
+            "run",
             "pytest",
             "tests/unit/",
             "-n",
@@ -90,8 +80,8 @@ def run_integration_tests_sequential() -> int:
     print("Running integration tests sequentially...")
     return run_command(
         [
-            sys.executable,
-            "-m",
+            "uv",
+            "run",
             "pytest",
             "tests/integration/",
             "-n",
@@ -111,8 +101,8 @@ def run_integration_tests_parallel() -> int:
     print("Running integration tests in parallel...")
     return run_command(
         [
-            sys.executable,
-            "-m",
+            "uv",
+            "run",
             "pytest",
             "tests/integration/",
             "-n",
@@ -133,8 +123,8 @@ def run_all_tests_with_coverage() -> int:
     print("Running all tests with coverage...")
     return run_command(
         [
-            sys.executable,
-            "-m",
+            "uv",
+            "run",
             "pytest",
             "tests/",
             "-n",
@@ -156,8 +146,8 @@ def run_specific_test(test_pattern: str) -> int:
     print(f"Running specific test: {test_pattern}")
     return run_command(
         [
-            sys.executable,
-            "-m",
+            "uv",
+            "run",
             "pytest",
             test_pattern,
             "-n",
@@ -175,8 +165,8 @@ def run_debug_mode(test_pattern: str) -> int:
     print(f"Running debug mode for: {test_pattern}")
     return run_command(
         [
-            sys.executable,
-            "-m",
+            "uv",
+            "run",
             "pytest",
             test_pattern,
             "-n",
@@ -196,8 +186,8 @@ def run_smoke_test() -> int:
     print("Running smoke test...")
     return run_command(
         [
-            sys.executable,
-            "-m",
+            "uv",
+            "run",
             "pytest",
             "tests/unit/test_basic_operations.py",
             "--timeout=10",

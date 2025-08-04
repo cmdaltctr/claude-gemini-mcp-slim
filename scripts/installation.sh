@@ -67,10 +67,15 @@ main() {
     OS=$(detect_os)
     print_status "Detected OS: $OS"
     
-    # Check Python
-    if ! command_exists python3 && ! command_exists python; then
-        print_error "Python is not installed. Please install Python 3.8+ first."
+    # Check for uv
+    if ! command_exists uv; then
+        print_error "uv is not installed. Please install uv first: curl -LsSf https://astral.sh/uv/install.sh | sh"
         exit 1
+    fi
+    
+    # Check Python (uv will handle Python installation if needed)
+    if ! command_exists python3 && ! command_exists python; then
+        print_warning "Python not found. uv will handle Python installation."
     fi
     
     PYTHON_VERSION=$(get_python_version)
@@ -90,37 +95,42 @@ main() {
     mkdir -p "$MCP_DIR"
     cd "$MCP_DIR"
     
-    # Create virtual environment for all MCP servers
+    # Create uv virtual environment for all MCP servers
     if [ -d "$SHARED_ENV_DIR" ]; then
         print_warning "Shared MCP environment already exists. Updating..."
+        cd "$MCP_DIR"
+        uv sync --project=shared-mcp-env
     else
-        print_status "Creating virtual environment..."
-        $PYTHON_CMD -m venv shared-mcp-env
+        print_status "Creating uv virtual environment..."
+        cd "$MCP_DIR"
+        uv venv shared-mcp-env --python 3.10
     fi
     
-    # Activate virtual environment based on OS
-    if [[ "$OS" == "windows" ]]; then
-        source shared-mcp-env/Scripts/activate
-    else
-        source shared-mcp-env/bin/activate
-    fi
+    # Create a minimal pyproject.toml for the shared environment
+    cat > "$MCP_DIR/pyproject.toml" << 'EOF'
+[project]
+name = "shared-mcp-env"
+version = "1.0.0"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=1.0.0",
+    "google-generativeai>=0.8.0",
+    "instructor[google-generativeai]>=0.6.0",
+    "pydantic>=2.0.0",
+    "requests",
+    "aiohttp",
+    "python-dotenv",
+]
+EOF
     
-    # Upgrade pip
-    print_status "Upgrading pip..."
-    pip install --upgrade pip
-    
-    # Install MCP dependencies
-    print_status "Installing MCP dependencies..."
-    pip install mcp google-generativeai python-dotenv
-    
-    # Install additional useful packages
-    print_status "Installing additional packages..."
-    pip install requests aiohttp
+    # Install dependencies using uv
+    print_status "Installing dependencies with uv..."
+    uv sync
     
     print_success "Shared MCP environment created at: $SHARED_ENV_DIR"
     
-    # Detect site-packages path
-    SITE_PACKAGES_PATH=$(python -c "import site; print(site.getsitepackages()[0])")
+    # Detect site-packages path using uv
+    SITE_PACKAGES_PATH=$(uv run python -c "import site; print(site.getsitepackages()[0])")
     print_success "Site-packages located at: $SITE_PACKAGES_PATH"
     
     # Create environment info file
@@ -163,7 +173,7 @@ EOF
     print_status "Testing installation..."
     
     # Test MCP import
-    if python -c "import mcp" 2>/dev/null; then
+    if uv run python -c "import mcp" 2>/dev/null; then
         print_success "MCP library installed correctly"
     else
         print_error "Failed to import MCP library"
@@ -171,15 +181,28 @@ EOF
     fi
     
     # Test Google GenerativeAI import
-    if python -c "import google.generativeai" 2>/dev/null; then
+    if uv run python -c "import google.generativeai" 2>/dev/null; then
         print_success "Google GenerativeAI library installed correctly"
     else
         print_error "Failed to import Google GenerativeAI library"
         exit 1
     fi
     
-    # Deactivate environment
-    deactivate
+    # Test instructor import
+    if uv run python -c "import instructor" 2>/dev/null; then
+        print_success "Instructor library installed correctly"
+    else
+        print_error "Failed to import Instructor library"
+        exit 1
+    fi
+    
+    # Test pydantic import
+    if uv run python -c "import pydantic" 2>/dev/null; then
+        print_success "Pydantic library installed correctly"
+    else
+        print_error "Failed to import Pydantic library"
+        exit 1
+    fi
     
     echo ""
     echo "🎉 Installation Complete!"
@@ -191,18 +214,18 @@ EOF
     print_success "✅ Ready to use! No activation required."
     echo ""
     echo "🚀 Try it now:"
-    echo "  python3 gemini_helper.py query 'What is Python?'"
+    echo "  # Test with your MCP client (Claude Desktop, Continue, etc.)"
+    echo "  # The MCP server will automatically use the shared environment"
     echo ""
     echo "📝 The MCP server automatically detects and uses the shared environment!"
     echo ""
-    echo "🔧 Manual environment activation (only for development):"
-    if [[ "$OS" == "windows" ]]; then
-        echo "  source ~/mcp-servers/shared-mcp-env/Scripts/activate"
-    else
-        echo "  source ~/mcp-servers/shared-mcp-env/bin/activate"
-    fi
-    echo "  # Or: source $ACTIVATE_SCRIPT"
-    echo "  # This is OPTIONAL - only needed for manual package installation"
+    echo "🔧 Manual environment usage (for development):"
+    echo "  cd ~/mcp-servers"
+    echo "  uv run python your_script.py  # Run Python scripts with uv"
+    echo "  uv add package_name          # Add new packages"
+    echo "  uv sync                      # Sync dependencies"
+    echo ""
+    echo "📦 uv manages the virtual environment automatically!"
 }
 
 # Run main function
