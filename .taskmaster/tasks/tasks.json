@@ -341,7 +341,7 @@
         "dependencies": [
           "4"
         ],
-        "status": "pending",
+        "status": "in-progress",
         "subtasks": [
           {
             "id": 1,
@@ -349,29 +349,25 @@
             "description": "Set up the basic security.py module file and directory structure with proper imports and documentation",
             "dependencies": [],
             "details": "Create src/claude_gemini_mcp/helpers/security.py file. Add module-level docstring explaining the security functions. Import necessary libraries (os, pathlib, re, logging). Set up basic module structure with proper type hints and error handling framework. Ensure the helpers directory has proper __init__.py imports.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Unit tests for module import and basic structure validation"
           },
           {
             "id": 2,
             "title": "Extract and Move sanitize_for_prompt Function",
             "description": "Locate, extract, and move the sanitize_for_prompt function to the new security module",
-            "dependencies": [
-              5.1
-            ],
+            "dependencies": [],
             "details": "Find sanitize_for_prompt function in existing codebase. Move it to security.py with proper docstring and type hints. Implement comprehensive input sanitization including removal of potentially dangerous patterns, encoding issues, and prompt injection attempts. Update all existing imports to reference the new location. Ensure no functionality is lost during the move.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Unit tests for prompt sanitization with malicious inputs, regression tests to ensure existing functionality works"
           },
           {
             "id": 3,
             "title": "Extract and Move validate_path_security Function",
             "description": "Locate, extract, and move the validate_path_security function to the new security module",
-            "dependencies": [
-              5.2
-            ],
+            "dependencies": [],
             "details": "Find validate_path_security function in existing codebase. Move it to security.py with enhanced path traversal protection. Implement additional checks for symlink attacks, absolute path validation, and directory traversal attempts using techniques like '../' patterns. Add proper error messages and logging. Update all existing imports to reference the new location.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Unit tests for path traversal attempts, symlink attack prevention tests, directory traversal validation"
           },
           {
@@ -379,10 +375,11 @@
             "title": "Implement Additional Security Validation Functions",
             "description": "Add new security functions for comprehensive input validation and secure code handling",
             "dependencies": [
-              5.3
+              "5.2",
+              "5.3"
             ],
             "details": "Implement validate_user_code function for scanning user-provided code for dangerous patterns. Add validate_file_access function with OWASP-compliant file access controls. Create sanitize_user_input function for general input validation. Implement secure_path_resolution function using pathlib for robust path handling. Add logging and monitoring capabilities for security events. Follow OWASP secure coding practices throughout.",
-            "status": "pending",
+            "status": "in-progress",
             "testStrategy": "Penetration tests for each security function, OWASP compliance validation, security scanning with bandit"
           },
           {
@@ -390,10 +387,13 @@
             "title": "Update Module Imports and Ensure Compatibility",
             "description": "Update all existing code to use the new security module and verify full functionality",
             "dependencies": [
-              5.4
+              "5.1",
+              "5.2",
+              "5.3",
+              "5.4"
             ],
             "details": "Update imports in gemini_helper.py, gemini_mcp_server.py, and any other modules that previously used the security functions. Ensure the helpers/__init__.py properly exports the security module. Add backward compatibility checks and error handling for import failures. Run comprehensive tests to verify no existing functionality is broken. Update documentation and type hints throughout the codebase to reflect the new module structure.",
-            "status": "pending",
+            "status": "in-progress",
             "testStrategy": "Integration tests for all dependent modules, backward compatibility tests, full regression test suite"
           }
         ]
@@ -424,7 +424,7 @@
             "title": "Implement Field Validation Rules",
             "description": "Add comprehensive validation logic for all fields based on action types and business rules",
             "dependencies": [
-              6.1
+              "6.1"
             ],
             "details": "Implement Pydantic validators using @field_validator and @model_validator decorators. Validate that REPLACE actions have start_line, end_line, and new_code. INSERT actions have start_line and new_code. NOTIFY actions only require explanation. Ensure file_path is valid, line numbers are positive integers, and end_line >= start_line for REPLACE actions.",
             "status": "pending",
@@ -435,7 +435,8 @@
             "title": "Add Field Documentation and Docstrings",
             "description": "Provide comprehensive documentation for the model and all its fields",
             "dependencies": [
-              6.2
+              "6.1",
+              "6.2"
             ],
             "details": "Add detailed docstrings to the AgenticCodePatch class and Field() descriptions for each attribute. Document the purpose of each action type, expected data formats, and validation rules. Include usage examples in the class docstring showing how to create patches for different scenarios.",
             "status": "pending",
@@ -446,7 +447,8 @@
             "title": "Implement Serialization and Deserialization Methods",
             "description": "Add methods for converting the model to/from JSON and dictionary formats",
             "dependencies": [
-              6.3
+              "6.1",
+              "6.2"
             ],
             "details": "Implement custom serialization methods if needed beyond Pydantic's built-in .model_dump() and .model_validate(). Add methods for converting to/from JSON strings, handling optional fields correctly, and preserving all data integrity during round-trip operations. Ensure compatibility with instructor library requirements.",
             "status": "pending",
@@ -457,7 +459,10 @@
             "title": "Add Error Handling and Edge Case Management",
             "description": "Implement comprehensive error handling for invalid data and edge cases",
             "dependencies": [
-              6.4
+              "6.1",
+              "6.2",
+              "6.3",
+              "6.4"
             ],
             "details": "Add custom exception classes for specific validation failures. Implement error handling for malformed data, missing required fields, and invalid combinations of fields. Add methods to provide helpful error messages for common validation failures. Ensure the model gracefully handles edge cases like empty files, single-line files, and boundary conditions.",
             "status": "pending",
@@ -473,8 +478,8 @@
         "testStrategy": "Integration tests with live Gemini API, mock tests for API responses, fallback mechanism tests, error handling validation",
         "priority": "high",
         "dependencies": [
-          4,
-          6
+          "4",
+          "6"
         ],
         "status": "pending",
         "subtasks": [
@@ -492,7 +497,7 @@
             "title": "Create instructor-wrapped Gemini client initialization",
             "description": "Modify the Gemini API client initialization to use instructor's patching mechanism for structured responses",
             "dependencies": [
-              7.1
+              "7.1"
             ],
             "details": "Wrap the existing Gemini GenerativeModel client with instructor.from_gemini() to enable structured response capabilities. Update the client initialization logic in relevant functions to use the instructor-patched client. Maintain backward compatibility by keeping the original client as a fallback option. Ensure proper error handling during client initialization.",
             "status": "pending",
@@ -503,7 +508,7 @@
             "title": "Implement structured response wrapper functions",
             "description": "Create wrapper functions that use instructor to enforce AgenticCodePatch schema responses from Gemini API calls",
             "dependencies": [
-              7.2
+              "7.2"
             ],
             "details": "Create new wrapper functions like 'generate_structured_response()' that use the instructor-patched client to enforce AgenticCodePatch schema responses. Implement proper prompt engineering within these wrappers to request structured output from Gemini. Add type hints and return type annotations specifying AgenticCodePatch or List[AgenticCodePatch]. Include validation logic to ensure responses conform to expected schema.",
             "status": "pending",
@@ -514,7 +519,8 @@
             "title": "Implement error handling and fallback mechanisms",
             "description": "Add comprehensive error handling for structured response failures with fallback to plain text responses",
             "dependencies": [
-              7.3
+              "7.2",
+              "7.3"
             ],
             "details": "Implement try-catch blocks around instructor API calls to handle parsing failures, network errors, and schema validation errors. Create fallback logic that switches to the original unstructured Gemini API when instructor fails. Add logging for debugging structured response issues. Implement retry logic with exponential backoff for transient failures. Ensure graceful degradation maintains existing functionality.",
             "status": "pending",
@@ -525,7 +531,8 @@
             "title": "Update existing prompt construction for structured responses",
             "description": "Modify existing prompt construction logic to be compatible with instructor's structured response requirements while maintaining current functionality",
             "dependencies": [
-              7.4
+              "7.3",
+              "7.4"
             ],
             "details": "Update prompt templates and construction logic to work effectively with instructor's structured response system. Add schema-aware prompt engineering that explicitly requests AgenticCodePatch formatted responses. Maintain existing prompt patterns for backward compatibility. Add conditional logic to use different prompt styles based on whether structured responses are enabled. Test that prompts work effectively with both structured and unstructured response modes.",
             "status": "pending",
@@ -560,7 +567,7 @@
             "title": "Update Gemini Prompts for Structured Output",
             "description": "Modify the prompt engineering in gemini_analyze_code to request structured AgenticCodePatch responses",
             "dependencies": [
-              8.1
+              "8.1"
             ],
             "details": "Update the system prompt and user prompts in the gemini_analyze_code function to explicitly request responses in AgenticCodePatch format. Include JSON schema examples in prompts. Add clear instructions for when to use each action_type. Ensure prompts guide Gemini to provide confidence scores and detailed explanations for each suggested change.",
             "status": "pending",
@@ -571,7 +578,8 @@
             "title": "Integrate Instructor Library for Response Parsing",
             "description": "Implement instructor-based structured response parsing in the gemini_analyze_code function",
             "dependencies": [
-              8.2
+              "8.1",
+              "8.2"
             ],
             "details": "Refactor gemini_analyze_code to use instructor.from_gemini() for enforcing structured responses. Wrap the existing Gemini client with instructor functionality. Implement proper error handling for when instructor parsing fails. Add retry logic with exponential backoff for parsing failures. Ensure the function can gracefully fall back to text responses when structured parsing consistently fails.",
             "status": "pending",
@@ -582,7 +590,7 @@
             "title": "Implement Backward Compatibility Layer",
             "description": "Create a compatibility layer that handles both structured and text responses to ensure existing functionality continues to work",
             "dependencies": [
-              8.3
+              "8.3"
             ],
             "details": "Add a response type detection mechanism that can identify whether the response is structured (AgenticCodePatch) or plain text. Implement a text-to-structure converter for legacy responses using regex parsing and heuristics. Add configuration options to control response format preferences. Ensure all existing MCP tools continue to function with both response types.",
             "status": "pending",
@@ -593,7 +601,10 @@
             "title": "Update Function Documentation and Type Hints",
             "description": "Update all documentation, type hints, and function signatures to reflect the new structured response capabilities",
             "dependencies": [
-              8.4
+              "8.1",
+              "8.2",
+              "8.3",
+              "8.4"
             ],
             "details": "Update function signature of gemini_analyze_code to return Union[AgenticCodeResponse, str]. Add comprehensive docstrings explaining the structured response format and fallback behavior. Update type hints throughout the codebase to handle the new return types. Create developer documentation explaining how to work with AgenticCodePatch objects. Update any existing usage examples in comments or documentation.",
             "status": "pending",
@@ -627,7 +638,7 @@
             "title": "Implement Diff Generation Engine",
             "description": "Create functions to generate unified diff format from AgenticCodePatch REPLACE actions",
             "dependencies": [
-              9.1
+              "9.1"
             ],
             "details": "Implement diff generation logic that reads the original file content and compares it with the proposed new_code from REPLACE actions. Use Python's difflib module to generate unified diff format. Handle line number ranges using start_line and end_line fields. Create functions to colorize diff output for terminal display and escape sequences for different MCP clients.",
             "status": "pending",
@@ -638,7 +649,7 @@
             "title": "Create Markdown Formatting System",
             "description": "Implement markdown formatters for different AgenticCodePatch action types",
             "dependencies": [
-              9.2
+              "9.1"
             ],
             "details": "Create separate formatting functions for each action type: format_replace_action() using diff blocks, format_insert_action() showing insertion point and new code, format_notify_action() for informational messages. Use consistent markdown syntax with code blocks, file path headers, and clear action indicators. Implement proper escaping for special characters in code content.",
             "status": "pending",
@@ -649,7 +660,8 @@
             "title": "Build MCP Client Compatibility Layer",
             "description": "Implement client-specific formatting and output optimization for different MCP clients",
             "dependencies": [
-              9.3
+              "9.2",
+              "9.3"
             ],
             "details": "Create client detection logic and format responses accordingly for IDEs (rich formatting), terminals (ANSI colors), and CLIs (plain text). Implement adaptive line length and color scheme selection. Add configuration options for output preferences. Create fallback formatting for unknown clients. Ensure proper unicode handling across different environments.",
             "status": "pending",
@@ -660,7 +672,10 @@
             "title": "Integrate Formatted Output into MCP Server Response System",
             "description": "Modify the main MCP server response functions to use the new formatting system",
             "dependencies": [
-              9.4
+              "9.1",
+              "9.2",
+              "9.3",
+              "9.4"
             ],
             "details": "Update the main tool response functions in gemini_mcp_server.py to use the new formatting pipeline. Replace existing plain text responses with formatted diff views. Implement error handling that gracefully falls back to original response format if formatting fails. Add configuration toggles to enable/disable diff formatting. Ensure backward compatibility with existing MCP clients.",
             "status": "pending",
@@ -694,7 +709,7 @@
             "title": "Develop Integration Tests for Instructor Library Usage",
             "description": "Create integration tests that verify the instructor library works correctly with Gemini API calls and structured response generation",
             "dependencies": [
-              10.1
+              "10.1"
             ],
             "details": "Create tests/integration/test_instructor_integration.py with test cases for: instructor.from_gemini() configuration, structured response generation with real API calls (using test API keys), error handling when API returns malformed responses, retry logic and timeout handling, compatibility with different Gemini model versions. Mock Gemini API responses for consistent testing.",
             "status": "pending",
@@ -705,7 +720,8 @@
             "title": "Implement End-to-End Workflow Tests for Agentic Collaboration",
             "description": "Create comprehensive end-to-end tests that validate the complete agentic workflow from code analysis request to structured patch generation",
             "dependencies": [
-              10.2
+              "10.1",
+              "10.2"
             ],
             "details": "Create tests/e2e/test_agentic_workflow.py with full workflow scenarios: analyze_code() with structured response enabled, code analysis to AgenticCodePatch generation, multi-file analysis workflows, error recovery and fallback mechanisms, integration with existing gemini_helper functions. Include test fixtures with sample codebases and expected outputs.",
             "status": "pending",
@@ -716,7 +732,9 @@
             "title": "Add Performance and Security Tests for New Features",
             "description": "Implement performance benchmarking tests for structured response generation and security tests for the enhanced security module",
             "dependencies": [
-              10.3
+              "10.1",
+              "10.2",
+              "10.3"
             ],
             "details": "Create tests/performance/test_structured_responses.py for response time benchmarking, memory usage profiling during large codebase analysis, concurrent request handling tests. Create tests/security/test_agentic_security.py for input validation security, prompt injection prevention, secure handling of code suggestions, dependency vulnerability scanning for new libraries.",
             "status": "pending",
@@ -727,7 +745,10 @@
             "title": "Ensure Multi-Python Version Compatibility Testing",
             "description": "Create compatibility test suite and update CI configuration to validate functionality across Python 3.10, 3.11, and 3.12",
             "dependencies": [
-              10.4
+              "10.1",
+              "10.2",
+              "10.3",
+              "10.4"
             ],
             "details": "Update tox.ini or create tests/compatibility/test_python_versions.py with version-specific test scenarios. Test async/await patterns, type hint compatibility, dependency version conflicts across Python versions. Update test matrix configuration, ensure all new pydantic and instructor features work consistently across versions. Add version-specific test markers.",
             "status": "pending",
@@ -761,7 +782,7 @@
             "title": "Extend Configuration Loading Infrastructure",
             "description": "Modify config.py to support loading and parsing of new agentic configuration sections",
             "dependencies": [
-              11.1
+              "11.1"
             ],
             "details": "Extend the existing configuration loading mechanism to include agentic settings. Add new configuration sections to the JSON schema and environment variable mappings. Implement parsing logic for complex nested configurations like timeout hierarchies and preference objects. Ensure all new settings integrate with the existing precedence system (function args > env vars > config.json > defaults).",
             "status": "pending",
@@ -772,7 +793,8 @@
             "title": "Implement Configuration Validation and Sanitization",
             "description": "Add comprehensive validation for all agentic configuration options with appropriate error handling",
             "dependencies": [
-              11.2
+              "11.1",
+              "11.2"
             ],
             "details": "Implement validation functions for each configuration category: validate timeout values are positive integers, ensure preference options match allowed values, verify fallback behavior settings are valid. Add configuration sanitization to normalize values (e.g., timeout ranges, boolean conversions). Implement clear error messages for invalid configurations with suggestions for fixes.",
             "status": "pending",
@@ -783,7 +805,9 @@
             "title": "Add Environment Variable Support for Agentic Settings",
             "description": "Implement environment variable mappings for all new agentic configuration options",
             "dependencies": [
-              11.3
+              "11.1",
+              "11.2",
+              "11.3"
             ],
             "details": "Create environment variable mappings following the existing naming convention (e.g., GEMINI_AGENTIC_STRUCTURED_RESPONSES, GEMINI_INSTRUCTOR_TIMEOUT, GEMINI_FALLBACK_BEHAVIOR). Implement proper type conversion for complex settings (JSON parsing for nested objects, boolean conversion, integer validation). Add support for environment variable overrides at the granular level while maintaining hierarchical precedence.",
             "status": "pending",
@@ -794,7 +818,10 @@
             "title": "Update Configuration Documentation and Examples",
             "description": "Create comprehensive documentation for all new configuration options with practical examples",
             "dependencies": [
-              11.4
+              "11.1",
+              "11.2",
+              "11.3",
+              "11.4"
             ],
             "details": "Update configuration documentation to include all new agentic settings with detailed descriptions, valid value ranges, and impact explanations. Create example configuration files showing different use cases (development, production, high-performance). Document environment variable equivalents and precedence rules. Add troubleshooting section for common configuration issues and provide migration guidance from default settings.",
             "status": "pending",
@@ -828,7 +855,7 @@
             "title": "Add Error Classification and Exception Hierarchy",
             "description": "Create a comprehensive exception hierarchy for different types of structured response failures",
             "dependencies": [
-              12.1
+              "12.1"
             ],
             "details": "Define custom exception classes in src/core/exceptions.py: StructuredResponseError, InstructorParsingError, GeminiAPIError, FallbackActivatedError. Each exception should include structured metadata (error_code, context, recovery_suggestions). Implement error classification logic to categorize failures. Add error context preservation for debugging while maintaining security.",
             "status": "pending",
@@ -839,7 +866,8 @@
             "title": "Implement Graceful Degradation Mechanism",
             "description": "Create fallback logic that gracefully degrades from structured to plain text responses",
             "dependencies": [
-              12.2
+              "12.1",
+              "12.2"
             ],
             "details": "Implement fallback decorator in src/core/fallback.py that wraps structured response functions. On StructuredResponseError, automatically retry with plain text prompts. Maintain response quality metrics and fallback frequency tracking. Implement configurable retry strategies (immediate, exponential backoff). Log fallback activations with context for monitoring.",
             "status": "pending",
@@ -850,7 +878,9 @@
             "title": "Add Comprehensive Error Handling to Agentic Workflow Functions",
             "description": "Integrate error handling and logging into all agentic workflow functions including gemini_analyze_code",
             "dependencies": [
-              12.3
+              "12.1",
+              "12.2",
+              "12.3"
             ],
             "details": "Wrap all agentic functions (gemini_analyze_code, gemini_codebase_analysis, gemini_quick_query) with try-catch blocks using the new exception hierarchy. Add pre-processing validation for inputs. Implement timeout handling for long-running operations. Add progress logging for multi-step operations. Ensure all errors are logged with appropriate context and severity levels.",
             "status": "pending",
@@ -861,7 +891,10 @@
             "title": "Implement Monitoring and Alerting for Production Readiness",
             "description": "Add monitoring capabilities and alerting for error rates and fallback frequency",
             "dependencies": [
-              12.4
+              "12.1",
+              "12.2",
+              "12.3",
+              "12.4"
             ],
             "details": "Create monitoring dashboard data collection in src/core/monitoring.py. Track key metrics: structured response success rate, fallback activation frequency, average response times, error distribution. Implement configurable alerting thresholds. Add health check endpoints for system monitoring. Create log aggregation utilities for debugging complex failures. Export metrics in standard formats (Prometheus, JSON).",
             "status": "pending",
@@ -895,7 +928,7 @@
             "title": "Implement Caching Layer for Code Analysis Patterns",
             "description": "Create a caching mechanism to store frequently requested code analysis patterns and their results to reduce redundant API calls",
             "dependencies": [
-              13.1
+              "13.1"
             ],
             "details": "Implement LRU cache using functools.lru_cache or custom cache implementation for frequently used prompt patterns. Create cache key generation based on code content hash and analysis type. Add cache persistence to disk for patterns that survive application restarts. Implement cache invalidation strategies based on code changes. Add cache hit/miss metrics to performance monitoring.",
             "status": "pending",
@@ -906,7 +939,8 @@
             "title": "Optimize Prompt Construction and Response Parsing",
             "description": "Streamline prompt generation and response parsing logic to reduce processing overhead and improve response times",
             "dependencies": [
-              13.2
+              "13.1",
+              "13.2"
             ],
             "details": "Optimize prompt template construction by pre-compiling templates and reducing string concatenation operations. Implement efficient JSON parsing with optimized libraries like orjson. Reduce prompt token count while maintaining effectiveness. Optimize instructor library usage to minimize validation overhead. Implement lazy evaluation for complex prompt components that may not always be needed.",
             "status": "pending",
@@ -917,7 +951,9 @@
             "title": "Add Streaming Progress Indicators for Complex Analysis",
             "description": "Implement streaming progress indicators to provide user feedback during long-running code analysis tasks",
             "dependencies": [
-              13.3
+              "13.1",
+              "13.2",
+              "13.3"
             ],
             "details": "Implement progress callback mechanisms in analysis functions. Add streaming response support using asyncio for non-blocking operations. Create progress indicators that show analysis stages (prompt construction, API call, response processing). Implement timeout handling with partial results. Add user cancellation support for long-running operations. Integrate with existing CLI and MCP interfaces.",
             "status": "pending",
@@ -928,7 +964,10 @@
             "title": "Memory Usage Optimization and Response Time Validation",
             "description": "Optimize memory usage during large codebase analysis and validate that performance meets the 95% of queries under 10 seconds NFR target",
             "dependencies": [
-              13.4
+              "13.1",
+              "13.2",
+              "13.3",
+              "13.4"
             ],
             "details": "Implement memory-efficient processing for large codebases using generators and lazy loading. Optimize object lifecycle management to prevent memory leaks. Add memory usage limits and cleanup mechanisms. Implement chunked processing for very large analysis tasks. Run comprehensive performance validation tests to ensure 95% of quick queries complete within 10 seconds. Add performance regression testing to CI/CD pipeline.",
             "status": "pending",
@@ -961,9 +1000,7 @@
             "id": 2,
             "title": "Add Security Scanning with Bandit and Pip-audit",
             "description": "Implement comprehensive security scanning in the CI pipeline to detect vulnerabilities in code and dependencies",
-            "dependencies": [
-              14.1
-            ],
+            "dependencies": [],
             "details": "Add bandit security linting step to scan Python code for common security issues. Integrate pip-audit to check for known vulnerabilities in dependencies. Configure both tools to fail the build on high-severity issues but allow warnings. Add exclusion rules for false positives if needed. Create separate job steps for security scanning with appropriate error handling.",
             "status": "pending",
             "testStrategy": "Test security scanning with intentionally vulnerable code, verify pip-audit detects known CVEs, ensure build fails on critical security issues"
@@ -973,7 +1010,7 @@
             "title": "Enhance Code Coverage for Agentic Features",
             "description": "Update code coverage reporting to include the new agentic modules and structured response features",
             "dependencies": [
-              14.2
+              "14.1"
             ],
             "details": "Configure pytest-cov to include coverage for AgenticCodePatch, structured response parsing, and instructor integration modules. Update coverage thresholds to account for new code. Add coverage reporting for integration tests with agentic features. Ensure coverage data is properly collected from all Python versions in the matrix. Update coverage badge and reporting format.",
             "status": "pending",
@@ -984,7 +1021,7 @@
             "title": "Implement Performance Regression Testing",
             "description": "Add performance benchmarking to detect regressions in response parsing and API interaction performance",
             "dependencies": [
-              14.3
+              "14.1"
             ],
             "details": "Create performance benchmark tests for structured response parsing with instructor. Add timing tests for AgenticCodePatch creation and validation. Implement baseline performance metrics storage and comparison logic. Configure performance tests to fail if response times degrade beyond acceptable thresholds. Add memory usage monitoring for large structured responses.",
             "status": "pending",
@@ -995,7 +1032,9 @@
             "title": "Add Integration Testing for Structured Response Features",
             "description": "Create comprehensive integration tests for agentic features including structured response handling and error scenarios",
             "dependencies": [
-              14.4
+              "14.1",
+              "14.3",
+              "14.4"
             ],
             "details": "Add integration tests for AgenticCodePatch parsing with real Gemini API responses. Test fallback behavior when structured parsing fails. Create tests for instructor integration with various response formats. Add tests for configuration loading and precedence with agentic settings. Ensure integration tests work across all supported Python versions and handle API rate limiting gracefully.",
             "status": "pending",
@@ -1028,7 +1067,9 @@
             "id": 2,
             "title": "Create Structured Response Migration Guide",
             "description": "Develop a comprehensive migration guide for users transitioning from text-based responses to the new structured response features.",
-            "dependencies": [],
+            "dependencies": [
+              "15.1"
+            ],
             "details": "The guide should cover steps, best practices, and common pitfalls when migrating existing integrations to utilize structured responses, including examples.",
             "status": "pending",
             "testStrategy": ""
@@ -1037,7 +1078,10 @@
             "id": 3,
             "title": "Update Troubleshooting and FAQ Sections",
             "description": "Revise the troubleshooting guides and FAQ sections to include new usage patterns and common issues related to agentic features and structured responses.",
-            "dependencies": [],
+            "dependencies": [
+              "15.1",
+              "15.2"
+            ],
             "details": "Add entries addressing potential problems, error messages, and frequently asked questions concerning the new agentic collaboration and structured response functionalities.",
             "status": "pending",
             "testStrategy": ""
@@ -1050,9 +1094,9 @@
         "description": "Incorporate the claude-code-router framework into the claude-gemini-mcp-slim project to enable intelligent, scenario-based model routing and multi-provider abstraction. Phase 1, focusing on core routing engine, scenario-based routing, and initial provider abstraction, is successfully completed, establishing a solid, extensible foundation. This integration is architecturally sound, aligns with industry best practices for extensible AI agent infrastructure, and preserves the existing MCP architecture and decoupled design principles.",
         "status": "done",
         "dependencies": [
-          7,
-          11,
-          12
+          "7",
+          "11",
+          "12"
         ],
         "priority": "medium",
         "details": "1. Analyze the claude-code-router repository to understand its architecture, focusing on model routing, multi-provider support, request/response transformation, and plugin systems as described in the official GitHub repository[1].\n2. **Phase 1 Completion**: The core routing engine, including dynamic model selection, scenario-based routing (default, background, think, longContext, webSearch), token-aware routing, and cost-optimization routing, has been successfully integrated into `execution_orchestrator.py`, establishing the intelligent orchestration layer. Backward compatibility is preserved, with routing disabled by default.\n3. **Phase 1 Completion**: The initial provider abstraction layer, including a base provider interface and Gemini provider implementation, has been established. This sets the stage for future multi-provider support (e.g., OpenRouter, DeepSeek, Ollama, Gemini, Volcengine, SiliconFlow).\n4. **Phase 1 Completion**: Request and response transformers from claude-code-router have been integrated to customize interactions per provider, maintaining compatibility with existing Gemini API client enhancements (e.g., instructor library integration from Task 7).\n5. **Phase 1 Completion**: The decoupled architecture has been preserved by implementing a middleware pattern for routing logic, enabling independent updates and testing, aligning with the CLAUDE.md module pattern.\n6. **Phase 1 Completion**: Configuration options have been implemented to support scenario-based routing and enable/disable routing features, aligning with existing configuration management patterns (see Task 11).\n7. Ensure robust error handling and logging for routing decisions and provider interactions, consistent with agentic workflow standards (see Task 12).\n8. Document the integration approach, configuration options, and usage examples to facilitate developer adoption and maintenance.\n9. Follow best practices for AI coding workflows and testing as outlined in Claude Code best practices and AI coding guides[3][4].\n10. The overall three-phase approach (Enhanced Model Routing, Multi-Provider Support, Advanced Routing Logic) has successfully completed Phase 1 (Enhanced Model Routing), establishing a solid foundation for multi-provider capabilities and advanced routing strategies, maintaining the existing 'Intelligent Orchestrator' philosophy. Reference implementation: https://github.com/musistudio/claude-code-router",
@@ -1064,7 +1108,7 @@
             "description": "Implement additional model provider integrations (e.g., OpenRouter, DeepSeek) leveraging the established provider abstraction layer and request/response transformation capabilities.",
             "status": "done",
             "dependencies": [
-              1
+              "16.1"
             ],
             "details": "Building upon the Phase 1 foundation:\n1. Create concrete provider implementations for OpenRouter and DeepSeek, following the established base provider interface and `claude-code-router` patterns.\n2. Extend the existing transformer layer to handle specific request/response adaptations for OpenRouter and DeepSeek APIs.\n3. Refine the provider-first, fallback-cascade architecture to seamlessly integrate new providers.\n4. Implement provider-specific authentication and configuration management for OpenRouter and DeepSeek.\n5. Enhance error handling and retry logic for multi-provider failures, ensuring robust fallback mechanisms.\n6. Maintain existing security and input validation through `helpers/security.py` for all new provider interactions.\n<info added on 2025-08-03T21:48:20.153Z>\nPhase 2: Multi-Provider Support Implementation Completed\n\nOpenRouter Integration as Multi-Provider Hub:\n- Successfully implemented OpenRouter provider as unified integrator for multiple AI platforms.\n- Added comprehensive model catalog supporting 10+ models from 7 different providers.\n- Implemented cost-aware routing with per-token pricing for optimal cost efficiency.\n\nChinese AI Models Successfully Integrated via OpenRouter:\n- DeepSeek models (deepseek-chat, deepseek-r1-0528) for cost-effective reasoning.\n- Qwen3 Coder models (30B, 480B) with advanced agentic coding capabilities.\n- Moonshot Kimi K2 with 200K context window for long document processing.\n- GLM-4.5 (standard and air variants) as state-of-the-art Chinese models competitive with Claude/GPT.\n- All integrated alongside OpenAI, Anthropic, and Google models via unified interface.\n\nProvider Infrastructure Completed:\n- OpenRouter provider with dynamic model loading and fallback capabilities.\n- Request/response transformers for OpenAI-compatible format normalization.\n- Cost estimation and model capability detection per provider.\n- Health checking and comprehensive error handling with retry logic.\n- Full BaseProvider interface compliance.\n\nEnhanced Routing System:\n- Fixed all diagnostic issues in cost optimizer and token-aware router.\n- Improved context-aware model selection with content type compatibility.\n- Enhanced provider abstraction following established architectural patterns.\n- Maintained backward compatibility with existing Gemini API/CLI fallback.\n\nTechnical Achievements:\n- 10 models across 7 providers: OpenAI, Anthropic, Google, DeepSeek, Qwen, Moonshot, ZhipuAI.\n- Context window optimization spanning from 16K to 2M+ tokens.\n- Cost-optimized routing with real-time per-token pricing awareness.\n- Agentic coding capabilities via specialized Qwen3 models.\n\nCode Quality & Integration:\n- All components tested and working correctly.\n- Comprehensive error handling and logging implemented.\n- Full backward compatibility maintained with existing patterns.\n- Successfully committed with proper conventional commit formatting.\n\nPhase 2 implementation is complete and ready for Phase 3 advanced routing logic or production deployment. OpenRouter now serves as the multi-provider hub enabling intelligent routing across global AI platforms while preserving the established Gemini API/CLI fallback architecture.\n</info added on 2025-08-03T21:48:20.153Z>",
             "testStrategy": ""
@@ -1075,7 +1119,7 @@
             "description": "Implement advanced routing strategies for performance optimization, cost efficiency, and enhanced telemetry, building on the multi-provider foundation.",
             "status": "done",
             "dependencies": [
-              2
+              "16.2"
             ],
             "details": "Building upon the multi-provider support from Phase 2:\n1. Enhance performance-based routing to dynamically select faster models for quick queries and more capable models for complex analysis.\n2. Refine cost-optimization routing to intelligently select cheaper models for background tasks and premium models for critical operations, considering real-time cost data if available.\n3. Deepen request context analysis to determine optimal routing strategy based on content type, size, complexity, and user preferences.\n4. Implement comprehensive routing telemetry and analytics for real-time performance monitoring, cost tracking, and decision-making insights.\n5. Add granular configuration options for routing strategy preferences (e.g., prioritizing cost, speed, or accuracy).\n6. Ensure advanced routing logic seamlessly integrates while maintaining existing MCP architecture and orchestration patterns.\n<info added on 2025-08-04T02:21:28.699Z>\nPhase 3: Advanced Routing Logic implementation completed successfully.\n\nImplemented comprehensive advanced routing features:\n\nPERFORMANCE OPTIMIZATION:\n- Created PerformanceOptimizer class with real-time performance tracking\n- Dynamic model selection based on response time, success rate, and throughput\n- Performance metrics recording and analysis\n- Adaptive routing based on historical performance patterns\n- Performance-based alerting and degradation detection\n\nROUTING TELEMETRY AND ANALYTICS:\n- Comprehensive RoutingTelemetry system with detailed decision tracking\n- Real-time analytics and monitoring dashboard capabilities\n- Alert system for performance degradation and system issues\n- Routing decision tracking with detailed context and alternatives\n- Data export and retention management\n- Performance vs prediction accuracy analysis\n\nADVANCED ROUTING STRATEGIES:\n- Performance-optimized routing for speed-critical tasks\n- Cost-optimized routing with real-time cost analysis\n- Quality-focused routing for highest quality results\n- Balanced routing combining performance, cost, and quality considerations\n- Adaptive routing that learns from performance patterns\n\nGRANULAR CONFIGURATION:\n- Enhanced config.py with comprehensive routing preferences\n- 26 new configuration accessor methods for fine-tuned control\n- Performance monitoring thresholds and settings\n- Cost optimization parameters and budget constraints\n- Telemetry configuration and alert thresholds\n- Routing strategy selection (performance, cost, quality, balanced)\n\nENHANCED ROUTER IMPLEMENTATION:\n- Advanced routing decision engine with telemetry integration\n- Real-time performance tracking and metric recording\n- Health status monitoring and system diagnostics\n- Analytics export and data management capabilities\n- Backward compatibility maintained with legacy routing\n\nTESTING AND VALIDATION:\n- Comprehensive test suite covering all advanced features\n- All 26 configuration methods tested and verified\n- Performance optimizer functionality validated\n- Telemetry system tested with data export capabilities\n- Router health monitoring confirmed working\n\nThe implementation successfully integrates claude-code-router concepts with advanced performance optimization, comprehensive telemetry, and intelligent routing strategies while maintaining full backward compatibility with existing patterns.\n\nPhase 3 implementation is complete and ready for production deployment.\n</info added on 2025-08-04T02:21:28.699Z>",
             "testStrategy": ""
@@ -1094,7 +1138,7 @@
     ],
     "metadata": {
       "created": "2025-07-22T04:31:53.696Z",
-      "updated": "2025-08-04T03:30:20.662Z",
+      "updated": "2025-08-04T20:20:21.196Z",
       "description": "Tasks for master context"
     }
   }
