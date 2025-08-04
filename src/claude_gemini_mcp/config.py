@@ -182,6 +182,69 @@ class GeminiConfig:
             "fallback_strategy": "provider_cascade",  # "provider_cascade", "cli_fallback", "fail_fast"
             "retry_attempts": 2,
             "timeout_ms": 30000,
+            # Advanced routing configurations
+            "preferences": {
+                "routing_strategy": "balanced",  # "performance", "cost", "quality", "balanced"
+                "speed_priority": 0.7,          # 0.0-1.0, weight for speed vs quality
+                "cost_sensitivity": 0.5,        # 0.0-1.0, sensitivity to cost differences
+                "quality_threshold": 6.0,       # Minimum quality score (0-10)
+                "max_acceptable_response_time": 30.0,  # Maximum response time in seconds
+                "enable_adaptive_routing": True,       # Learn from performance patterns
+                "enable_load_balancing": False,        # Distribute load across providers
+            },
+            "performance": {
+                "max_response_time": 30.0,       # Global max response time
+                "min_success_rate": 0.85,        # Minimum acceptable success rate
+                "metrics_window_size": 100,      # Number of recent requests to track
+                "performance_weight": 0.7,       # Weight for performance vs quality
+                "quality_weight": 0.3,           # Weight for quality vs performance
+                "enable_performance_monitoring": True,  # Track real-time performance
+                "alert_on_degradation": True,    # Alert when performance degrades
+                "degradation_threshold": 0.8,    # Threshold for performance alerts
+            },
+            "cost_optimization": {
+                "enable_cost_tracking": True,    # Track actual costs
+                "budget_constraints": {
+                    "daily_budget": None,         # Daily budget limit (None = no limit)
+                    "request_budget": None,       # Per-request budget limit
+                    "warn_at_percentage": 80,     # Warn when reaching % of budget
+                },
+                "cost_models": {
+                    # Cost per 1K tokens (relative units, not actual pricing)
+                    "gemini/gemini-2.5-flash": {"input": 0.075, "output": 0.3},
+                    "gemini/gemini-2.5-pro": {"input": 1.25, "output": 5.0},
+                    "gemini/gemini-2.5-flash-8b": {"input": 0.037, "output": 0.15},
+                    "openrouter/openai/gpt-4o-mini": {"input": 0.15, "output": 0.6},
+                    "openrouter/anthropic/claude-3-haiku": {"input": 0.25, "output": 1.25},
+                    "openrouter/deepseek/deepseek-chat": {"input": 0.14, "output": 0.28},
+                },
+                "quality_scores": {
+                    # Quality scores for cost-quality trade-offs (0-10 scale)
+                    "gemini/gemini-2.5-pro": 9.0,
+                    "gemini/gemini-2.5-flash": 7.0,
+                    "gemini/gemini-2.5-flash-8b": 6.0,
+                    "openrouter/anthropic/claude-3-haiku": 8.0,
+                    "openrouter/openai/gpt-4o-mini": 7.5,
+                    "openrouter/deepseek/deepseek-chat": 6.5,
+                },
+            },
+            "telemetry": {
+                "enabled": True,                  # Enable telemetry collection
+                "max_records": 10000,            # Maximum records to keep in memory
+                "analytics_window_hours": 24,    # Hours of data for analytics
+                "enable_detailed_logging": True, # Log detailed routing decisions
+                "enable_alerts": True,           # Enable alert system
+                "alert_thresholds": {
+                    "success_rate_warning": 0.90,    # Success rate warning threshold
+                    "success_rate_critical": 0.80,   # Success rate critical threshold
+                    "response_time_warning": 15.0,   # Response time warning (seconds)
+                    "response_time_critical": 30.0,  # Response time critical (seconds)
+                    "cost_increase_warning": 1.5,    # 50% cost increase warning
+                    "cost_increase_critical": 2.0,   # 100% cost increase critical
+                },
+                "export_formats": ["json"],       # Supported export formats
+                "retention_days": 7,              # Days to retain telemetry data
+            },
         },
     }
 
@@ -735,6 +798,111 @@ class GeminiConfig:
     def get_fallback_strategy(self) -> str:
         """Get the configured fallback strategy"""
         return self._config.get("routing", {}).get("fallback_strategy", "provider_cascade")
+
+    # Advanced routing configuration accessors
+    def get_routing_preferences(self) -> Dict[str, Any]:
+        """Get routing preferences configuration"""
+        return self._config.get("routing", {}).get("preferences", {})
+
+    def get_routing_strategy(self) -> str:
+        """Get the configured routing strategy"""
+        return self._config.get("routing", {}).get("preferences", {}).get("routing_strategy", "balanced")
+
+    def get_speed_priority(self) -> float:
+        """Get speed priority weight (0.0-1.0)"""
+        return self._config.get("routing", {}).get("preferences", {}).get("speed_priority", 0.7)
+
+    def get_cost_sensitivity(self) -> float:
+        """Get cost sensitivity (0.0-1.0)"""
+        return self._config.get("routing", {}).get("preferences", {}).get("cost_sensitivity", 0.5)
+
+    def get_quality_threshold(self) -> float:
+        """Get minimum quality threshold (0-10)"""
+        return self._config.get("routing", {}).get("preferences", {}).get("quality_threshold", 6.0)
+
+    def get_max_acceptable_response_time(self) -> float:
+        """Get maximum acceptable response time in seconds"""
+        return self._config.get("routing", {}).get("preferences", {}).get("max_acceptable_response_time", 30.0)
+
+    def is_adaptive_routing_enabled(self) -> bool:
+        """Check if adaptive routing is enabled"""
+        return self._config.get("routing", {}).get("preferences", {}).get("enable_adaptive_routing", True)
+
+    def is_load_balancing_enabled(self) -> bool:
+        """Check if load balancing is enabled"""
+        return self._config.get("routing", {}).get("preferences", {}).get("enable_load_balancing", False)
+
+    def get_performance_config(self) -> Dict[str, Any]:
+        """Get performance monitoring configuration"""
+        return self._config.get("routing", {}).get("performance", {})
+
+    def get_max_response_time(self) -> float:
+        """Get maximum response time in seconds"""
+        return self._config.get("routing", {}).get("performance", {}).get("max_response_time", 30.0)
+
+    def get_min_success_rate(self) -> float:
+        """Get minimum success rate"""
+        return self._config.get("routing", {}).get("performance", {}).get("min_success_rate", 0.85)
+
+    def get_metrics_window_size(self) -> int:
+        """Get metrics window size for performance tracking"""
+        return self._config.get("routing", {}).get("performance", {}).get("metrics_window_size", 100)
+
+    def is_performance_monitoring_enabled(self) -> bool:
+        """Check if performance monitoring is enabled"""
+        return self._config.get("routing", {}).get("performance", {}).get("enable_performance_monitoring", True)
+
+    def get_cost_optimization_config(self) -> Dict[str, Any]:
+        """Get cost optimization configuration"""
+        return self._config.get("routing", {}).get("cost_optimization", {})
+
+    def is_cost_tracking_enabled(self) -> bool:
+        """Check if cost tracking is enabled"""
+        return self._config.get("routing", {}).get("cost_optimization", {}).get("enable_cost_tracking", True)
+
+    def get_cost_models(self) -> Dict[str, Dict[str, float]]:
+        """Get cost models configuration"""
+        return self._config.get("routing", {}).get("cost_optimization", {}).get("cost_models", {})
+
+    def get_quality_scores(self) -> Dict[str, float]:
+        """Get quality scores configuration"""
+        return self._config.get("routing", {}).get("cost_optimization", {}).get("quality_scores", {})
+
+    def get_daily_budget(self) -> Optional[float]:
+        """Get daily budget limit"""
+        return self._config.get("routing", {}).get("cost_optimization", {}).get("budget_constraints", {}).get("daily_budget")
+
+    def get_request_budget(self) -> Optional[float]:
+        """Get per-request budget limit"""
+        return self._config.get("routing", {}).get("cost_optimization", {}).get("budget_constraints", {}).get("request_budget")
+
+    def get_telemetry_config(self) -> Dict[str, Any]:
+        """Get telemetry configuration"""
+        return self._config.get("routing", {}).get("telemetry", {})
+
+    def is_telemetry_enabled(self) -> bool:
+        """Check if telemetry is enabled"""
+        return self._config.get("routing", {}).get("telemetry", {}).get("enabled", True)
+
+    def get_telemetry_max_records(self) -> int:
+        """Get maximum telemetry records to keep"""
+        return self._config.get("routing", {}).get("telemetry", {}).get("max_records", 10000)
+
+    def get_analytics_window_hours(self) -> int:
+        """Get analytics window in hours"""
+        return self._config.get("routing", {}).get("telemetry", {}).get("analytics_window_hours", 24)
+
+    def is_detailed_logging_enabled(self) -> bool:
+        """Check if detailed logging is enabled"""
+        return self._config.get("routing", {}).get("telemetry", {}).get("enable_detailed_logging", True)
+
+    def are_alerts_enabled(self) -> bool:
+        """Check if alerts are enabled"""
+        return self._config.get("routing", {}).get("telemetry", {}).get("enable_alerts", True)
+
+    def get_alert_thresholds(self) -> Dict[str, float]:
+        """Get alert thresholds configuration"""
+        return self._config.get("routing", {}).get("telemetry", {}).get("alert_thresholds", {})
 
 
 # Module-level singleton access functions

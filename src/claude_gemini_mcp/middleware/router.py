@@ -31,6 +31,8 @@ from enum import Enum
 
 from .providers.base_provider import BaseProvider, ProviderError, ProviderResult, ProviderStatus
 from .providers.gemini_provider import GeminiProvider
+from .routing_strategies.performance_optimizer import PerformanceOptimizer
+from .routing_strategies.routing_telemetry import RoutingTelemetry, RoutingDecisionType, AlertSeverity
 from ..config import get_config
 
 logger = logging.getLogger(__name__)
@@ -143,8 +145,11 @@ class Router:
         # Initialize providers if routing is enabled
         if self.routing_enabled:
             self._initialize_providers()
+            self._initialize_advanced_systems()
         else:
             logger.info("Routing disabled, router in legacy compatibility mode")
+            self.performance_optimizer = None
+            self.telemetry = None
 
         # Routing statistics
         self.stats = {
@@ -180,6 +185,33 @@ class Router:
 
             except Exception as e:
                 logger.error(f"Failed to initialize {provider_name} provider: {str(e)}")
+
+    def _initialize_advanced_systems(self) -> None:
+        """Initialize advanced routing systems (performance optimizer and telemetry)"""
+        try:
+            # Initialize performance optimizer
+            if self.config.is_performance_monitoring_enabled():
+                perf_config = self.config.get_performance_config()
+                self.performance_optimizer = PerformanceOptimizer(self.providers, perf_config)
+                logger.info("Performance optimizer initialized")
+            else:
+                self.performance_optimizer = None
+                logger.info("Performance monitoring disabled")
+
+            # Initialize telemetry system
+            if self.config.is_telemetry_enabled():
+                telemetry_config = self.config.get_telemetry_config()
+                self.telemetry = RoutingTelemetry(telemetry_config)
+                logger.info("Routing telemetry initialized")
+            else:
+                self.telemetry = None
+                logger.info("Routing telemetry disabled")
+
+        except Exception as e:
+            logger.error(f"Failed to initialize advanced routing systems: {str(e)}")
+            # Fallback to basic functionality
+            self.performance_optimizer = None
+            self.telemetry = None
 
     def estimate_token_count(self, text: str) -> int:
         """Estimate token count for text
@@ -424,6 +456,280 @@ class Router:
 
         return provider_name, model_name, reason, strategy
 
+    def _select_provider_and_model_advanced(self, request: RouteRequest, request_id: str) -> Tuple[str, str, str, RoutingStrategy]:
+        """Advanced provider and model selection with performance optimization and telemetry
+
+        Enhanced routing logic that incorporates performance metrics, cost optimization,
+        and telemetry tracking for intelligent decision making.
+
+        Args:
+            request: Routing request
+            request_id: Unique request identifier for telemetry
+
+        Returns:
+            Tuple of (provider_name, model_name, routing_reason, strategy_used)
+        """
+        decision_start_time = time.time()
+
+        # Analyze request context
+        context = self.analyze_request_context(request)
+
+        # Get routing strategy from configuration
+        routing_strategy_config = self.config.get_routing_strategy()
+
+        # Initialize decision variables
+        provider_name = "gemini"
+        model_name = "gemini-2.5-flash"
+        routing_reason = "Default fallback"
+        strategy = RoutingStrategy.SCENARIO_BASED
+        alternatives_considered = []
+
+        try:
+            # Performance-optimized routing
+            if routing_strategy_config == "performance" and self.performance_optimizer:
+                try:
+                    speed_priority = self.config.get_speed_priority()
+                    quality_threshold = self.config.get_quality_threshold()
+                    max_response_time = self.config.get_max_acceptable_response_time()
+
+                    provider_name, model_name, routing_reason = self.performance_optimizer.route_by_performance(
+                        context=context,
+                        speed_priority=speed_priority,
+                        quality_threshold=quality_threshold,
+                        max_response_time=max_response_time
+                    )
+                    strategy = RoutingStrategy.PERFORMANCE_OPTIMIZED
+                    alternatives_considered = list(self.providers.keys())
+
+                except Exception as e:
+                    logger.warning(f"Performance routing failed, falling back to scenario routing: {str(e)}")
+                    provider_name, model_name, routing_reason = self.route_by_scenario(request, context)
+                    strategy = RoutingStrategy.SCENARIO_BASED
+
+            # Cost-optimized routing
+            elif routing_strategy_config == "cost":
+                # Use existing cost optimizer from previous phase
+                from .routing_strategies.cost_optimizer import CostOptimizer
+                try:
+                    cost_config = self.config.get_cost_optimization_config()
+                    cost_optimizer = CostOptimizer(self.providers, cost_config)
+
+                    estimated_tokens = self.estimate_token_count(request.prompt)
+                    quality_threshold = self.config.get_quality_threshold()
+
+                    provider_name, model_name, routing_reason = cost_optimizer.route_by_cost(
+                        estimated_tokens=estimated_tokens,
+                        context=context,
+                        quality_threshold=quality_threshold
+                    )
+                    strategy = RoutingStrategy.COST_OPTIMIZED
+                    alternatives_considered = list(self.providers.keys())
+
+                except Exception as e:
+                    logger.warning(f"Cost routing failed, falling back to scenario routing: {str(e)}")
+                    provider_name, model_name, routing_reason = self.route_by_scenario(request, context)
+                    strategy = RoutingStrategy.SCENARIO_BASED
+
+            # Balanced routing (combines performance and cost considerations)
+            elif routing_strategy_config == "balanced":
+                try:
+                    # Use both performance and cost considerations
+                    context_with_preferences = context.copy()
+                    context_with_preferences["routing_strategy"] = "balanced"
+                    context_with_preferences["speed_priority"] = self.config.get_speed_priority()
+                    context_with_preferences["cost_sensitivity"] = self.config.get_cost_sensitivity()
+
+                    # Start with scenario-based routing
+                    provider_name, model_name, routing_reason = self.route_by_scenario(request, context_with_preferences)
+                    strategy = RoutingStrategy.SCENARIO_BASED
+
+                    # Apply performance considerations if available
+                    if self.performance_optimizer:
+                        # Check if selected model has acceptable performance
+                        performance_summary = self.performance_optimizer.get_performance_summary()
+                        model_key = f"{provider_name}/{model_name}"
+
+                        if model_key in performance_summary:
+                            model_perf = performance_summary[model_key]
+                            max_response_time = self.config.get_max_acceptable_response_time()
+
+                            if model_perf["average_response_time"] > max_response_time:
+                                # Try to find a faster alternative
+                                faster_choice = self.performance_optimizer.route_by_performance(
+                                    context=context,
+                                    speed_priority=0.8,  # Prioritize speed for balance
+                                    quality_threshold=self.config.get_quality_threshold() - 1.0,  # Lower quality bar
+                                    max_response_time=max_response_time
+                                )
+                                provider_name, model_name = faster_choice[0], faster_choice[1]
+                                routing_reason = f"Balanced routing (performance override): {faster_choice[2]}"
+                                strategy = RoutingStrategy.PERFORMANCE_OPTIMIZED
+
+                    alternatives_considered = list(self.providers.keys())
+
+                except Exception as e:
+                    logger.warning(f"Balanced routing failed, falling back to scenario routing: {str(e)}")
+                    provider_name, model_name, routing_reason = self.route_by_scenario(request, context)
+                    strategy = RoutingStrategy.SCENARIO_BASED
+
+            # Quality-focused routing
+            elif routing_strategy_config == "quality":
+                # Select highest quality model regardless of cost/speed
+                quality_scores = self.config.get_quality_scores()
+                if quality_scores:
+                    best_model = max(quality_scores.keys(), key=quality_scores.get)
+                    if "/" in best_model:
+                        provider_name, model_name = best_model.split("/", 1)
+                        routing_reason = f"Quality-optimized routing: selected highest quality model (score: {quality_scores[best_model]})"
+                        strategy = RoutingStrategy.SCENARIO_BASED  # No specific quality strategy enum
+                        alternatives_considered = list(quality_scores.keys())
+                    else:
+                        # Fallback to scenario routing
+                        provider_name, model_name, routing_reason = self.route_by_scenario(request, context)
+                        strategy = RoutingStrategy.SCENARIO_BASED
+                else:
+                    # No quality scores available, use scenario routing
+                    provider_name, model_name, routing_reason = self.route_by_scenario(request, context)
+                    strategy = RoutingStrategy.SCENARIO_BASED
+
+            # Default: scenario-based routing
+            else:
+                provider_name, model_name, routing_reason = self.route_by_scenario(request, context)
+                strategy = RoutingStrategy.SCENARIO_BASED
+                alternatives_considered = list(self.providers.keys())
+
+            # Handle user preferences (override advanced routing if specified)
+            if request.preferred_provider and request.preferred_provider in self.providers:
+                provider_name = request.preferred_provider
+                routing_reason += f" (user override: {request.preferred_provider})"
+
+            if request.preferred_model:
+                # Validate model is supported by selected provider
+                provider = self.providers.get(provider_name)
+                if provider and provider.validate_model(request.preferred_model):
+                    model_name = request.preferred_model
+                    routing_reason += f" (user model: {request.preferred_model})"
+
+        except Exception as e:
+            logger.error(f"Advanced routing failed: {str(e)}")
+            # Final fallback to basic scenario routing
+            provider_name, model_name, routing_reason = self.route_by_scenario(request, context)
+            strategy = RoutingStrategy.FALLBACK_CASCADE
+            routing_reason = f"Emergency fallback after routing error: {routing_reason}"
+
+        # Record routing decision in telemetry
+        if self.telemetry:
+            decision_latency_ms = (time.time() - decision_start_time) * 1000
+
+            # Map strategy to telemetry enum
+            decision_type_map = {
+                RoutingStrategy.PERFORMANCE_OPTIMIZED: RoutingDecisionType.PERFORMANCE_OPTIMIZED,
+                RoutingStrategy.COST_OPTIMIZED: RoutingDecisionType.COST_OPTIMIZED,
+                RoutingStrategy.SCENARIO_BASED: RoutingDecisionType.SCENARIO_BASED,
+                RoutingStrategy.TOKEN_AWARE: RoutingDecisionType.TOKEN_AWARE,
+                RoutingStrategy.FALLBACK_CASCADE: RoutingDecisionType.FALLBACK
+            }
+
+            decision_type = decision_type_map.get(strategy, RoutingDecisionType.SCENARIO_BASED)
+
+            self.telemetry.record_routing_decision(
+                request_id=request_id,
+                decision_type=decision_type,
+                selected_provider=provider_name,
+                selected_model=model_name,
+                routing_reason=routing_reason,
+                context=context,
+                alternatives_considered=alternatives_considered,
+                decision_latency_ms=decision_latency_ms
+            )
+
+        return provider_name, model_name, routing_reason, strategy
+
+    # Advanced routing features access methods
+    def get_routing_analytics(self, hours_back: Optional[int] = None) -> Dict[str, Any]:
+        """Get comprehensive routing analytics
+
+        Args:
+            hours_back: Hours of data to analyze (default: configured window)
+
+        Returns:
+            Analytics dictionary or empty dict if telemetry disabled
+        """
+        if not self.telemetry:
+            return {"error": "Telemetry not enabled"}
+
+        return self.telemetry.get_routing_analytics(hours_back)
+
+    def get_performance_summary(self) -> Dict[str, Dict[str, Any]]:
+        """Get performance summary for all tracked models
+
+        Returns:
+            Performance summary dictionary or empty dict if performance monitoring disabled
+        """
+        if not self.performance_optimizer:
+            return {"error": "Performance monitoring not enabled"}
+
+        return self.performance_optimizer.get_performance_summary()
+
+    def export_telemetry_data(self, format_type: str = "json") -> str:
+        """Export telemetry data
+
+        Args:
+            format_type: Export format
+
+        Returns:
+            Formatted telemetry data or error message
+        """
+        if not self.telemetry:
+            return '{"error": "Telemetry not enabled"}'
+
+        return self.telemetry.export_telemetry_data(format_type)
+
+    def reset_performance_metrics(self, model_key: Optional[str] = None) -> None:
+        """Reset performance metrics
+
+        Args:
+            model_key: Specific model to reset, or None for all
+        """
+        if self.performance_optimizer:
+            self.performance_optimizer.reset_performance_metrics(model_key)
+
+    def clear_telemetry_data(self, data_type: Optional[str] = None) -> None:
+        """Clear telemetry data
+
+        Args:
+            data_type: Type of data to clear or None for all
+        """
+        if self.telemetry:
+            self.telemetry.clear_telemetry_data(data_type)
+
+    def get_routing_health_status(self) -> Dict[str, Any]:
+        """Get overall routing system health status
+
+        Returns:
+            Health status dictionary with system information
+        """
+        status = {
+            "routing_enabled": self.routing_enabled,
+            "providers_available": len(self.providers),
+            "performance_monitoring": self.performance_optimizer is not None,
+            "telemetry_enabled": self.telemetry is not None,
+            "total_requests_processed": self.stats["total_requests"],
+            "success_rate": (self.stats["successful_routes"] / max(self.stats["total_requests"], 1)) * 100,
+            "average_execution_time": self.stats["average_execution_time"]
+        }
+
+        if self.performance_optimizer:
+            perf_summary = self.performance_optimizer.get_performance_summary()
+            status["performance_models_tracked"] = len(perf_summary)
+
+        if self.telemetry:
+            analytics = self.telemetry.get_routing_analytics(1)  # Last hour
+            if "alerts_summary" in analytics:
+                status["recent_alerts"] = analytics["alerts_summary"].get("total_alerts", 0)
+
+        return status
+
     async def route_request(self, request: RouteRequest) -> RouteResult:
         """Route and execute a request
 
@@ -444,17 +750,40 @@ class Router:
             return await self._legacy_route(request, start_time)
 
         try:
-            # Select provider and model
-            provider_name, model_name, routing_reason, strategy = self.select_provider_and_model(request)
+            # Generate unique request ID for telemetry
+            request_id = f"req_{int(time.time() * 1000)}_{self.stats['total_requests']}"
+
+            # Select provider and model with advanced routing
+            provider_name, model_name, routing_reason, strategy = self._select_provider_and_model_advanced(request, request_id)
 
             # Update statistics
             strategy_name = strategy.value
             self.stats["routing_strategies_used"][strategy_name] = self.stats["routing_strategies_used"].get(strategy_name, 0) + 1
 
-            # Execute request with fallback
+            # Execute request with fallback and performance tracking
             result = await self._execute_with_fallback(
-                request, provider_name, model_name, routing_reason, strategy_name, start_time
+                request, provider_name, model_name, routing_reason, strategy_name, start_time, request_id
             )
+
+            # Record performance outcome in telemetry
+            if self.telemetry and result.execution_time:
+                self.telemetry.record_performance_outcome(
+                    request_id=request_id,
+                    provider=result.provider_used,
+                    model=result.model_used,
+                    actual_response_time=result.execution_time,
+                    success=result.success,
+                    error_message=result.error
+                )
+
+            # Update performance optimizer metrics
+            if self.performance_optimizer and result.execution_time:
+                self.performance_optimizer.record_performance_metrics(
+                    provider_name=result.provider_used,
+                    model_name=result.model_used,
+                    response_time=result.execution_time,
+                    success=result.success
+                )
 
             # Update statistics
             if result.success:
@@ -485,7 +814,8 @@ class Router:
         model_name: str,
         routing_reason: str,
         strategy_name: str,
-        start_time: float
+        start_time: float,
+        request_id: Optional[str] = None
     ) -> RouteResult:
         """Execute request with intelligent fallback
 
