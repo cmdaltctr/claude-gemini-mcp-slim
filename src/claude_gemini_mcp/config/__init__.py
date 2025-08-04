@@ -105,6 +105,11 @@ class GeminiConfig:
                 "think": "gemini,gemini-2.5-pro",
                 "longContext": "gemini,gemini-2.5-pro",
                 "webSearch": "gemini,gemini-2.5-flash",
+                # Additional scenarios for specialized routing
+                "coding": "openrouter,qwen/qwen3-coder-30b-instruct",
+                "analysis": "openrouter,zai/glm-4.5",
+                "multimodal": "openrouter,moonshot/moonshot-kimi-k2-instruct",
+                "reasoning": "openrouter,deepseek/deepseek-r1-0528",
             },
             "thresholds": {
                 "long_context_tokens": 60000,

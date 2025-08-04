@@ -41,6 +41,20 @@ class EnvironmentConfigLoader:
             "GEMINI_FLASH_MODEL": ("models", "nicknames", "flash"),
             "GEMINI_PRO_MODEL": ("models", "nicknames", "pro"),
 
+            # OpenRouter routing scenario models - you can choose any OpenRouter model
+            "OPENROUTER_DEFAULT_MODEL": ("routing", "scenarios", "default"),
+            "OPENROUTER_BACKGROUND_MODEL": ("routing", "scenarios", "background"),
+            "OPENROUTER_THINK_MODEL": ("routing", "scenarios", "think"),
+            "OPENROUTER_LONGCONTEXT_MODEL": ("routing", "scenarios", "longContext"),
+            "OPENROUTER_WEBSEARCH_MODEL": ("routing", "scenarios", "webSearch"),
+            "OPENROUTER_CODING_MODEL": ("routing", "scenarios", "coding"),
+            "OPENROUTER_ANALYSIS_MODEL": ("routing", "scenarios", "analysis"),
+            "OPENROUTER_MULTIMODAL_MODEL": ("routing", "scenarios", "multimodal"),
+            "OPENROUTER_REASONING_MODEL": ("routing", "scenarios", "reasoning"),
+
+            # OpenRouter provider configuration
+            "OPENROUTER_API_BASE_URL": ("routing", "providers", "openrouter", "api_base_url"),
+
             # Timeout variables (integer values)
             "CLI_TIMEOUT": ("timeouts", "cli_timeout"),
             "API_TIMEOUT": ("timeouts", "api_timeout"),
@@ -61,6 +75,13 @@ class EnvironmentConfigLoader:
         self._boolean_mappings = {
             "ENABLE_MARKDOWN_CONVERSION": ("execution", "enable_markdown_conversion"),
             "ENABLE_SANITIZATION": ("security", "enable_sanitization"),
+
+            # Routing feature toggles
+            "ENABLE_ROUTING": ("routing", "enabled"),
+            "ENABLE_OPENROUTER": ("routing", "providers", "openrouter", "enabled"),
+            "ENABLE_PERFORMANCE_MONITORING": ("routing", "performance", "enable_performance_monitoring"),
+            "ENABLE_COST_TRACKING": ("routing", "cost_optimization", "enable_cost_tracking"),
+            "ENABLE_TELEMETRY": ("routing", "telemetry", "enabled"),
         }
 
         # Define sections that should have integer values
@@ -95,7 +116,7 @@ class EnvironmentConfigLoader:
 
             parsed_value = self._parse_boolean_value(env_var, value)
             if parsed_value is not None:
-                self._set_nested_config(env_config, config_path, parsed_value)
+                self._set_nested_config_boolean(env_config, config_path, parsed_value)
 
         return env_config
 
@@ -107,17 +128,52 @@ class EnvironmentConfigLoader:
             path: Tuple representing nested path (e.g., ("models", "nicknames", "flash"))
             value: Value to set
         """
-        if len(path) == 3:  # models.nicknames.key
-            section, subsection, key = path
-            config.setdefault(section, {}).setdefault(subsection, {})[key] = value
-
-        elif len(path) == 2:  # section.key
+        if len(path) == 2:  # section.key
             section, key = path
             processed_value = self._process_value_by_section(section, key, value)
             config.setdefault(section, {})[key] = processed_value
 
+        elif len(path) == 3:  # models.nicknames.key OR routing.scenarios.key
+            section, subsection, key = path
+            config.setdefault(section, {}).setdefault(subsection, {})[key] = value
+
+        elif len(path) == 4:  # routing.providers.openrouter.key
+            section, subsection, subsubsection, key = path
+            config.setdefault(section, {}).setdefault(subsection, {}).setdefault(subsubsection, {})[key] = value
+
+        elif len(path) == 5:  # routing.providers.openrouter.section.key
+            section, subsection, subsubsection, subsubsubsection, key = path
+            config.setdefault(section, {}).setdefault(subsection, {}).setdefault(subsubsection, {}).setdefault(subsubsubsection, {})[key] = value
+
         else:
-            raise ValueError(f"Invalid config path length: {path}")
+            raise ValueError(f"Invalid config path length: {path} (supported: 2-5 levels)")
+
+    def _set_nested_config_boolean(self, config: Dict[str, Any], path: Tuple[str, ...], value: bool) -> None:
+        """Set nested boolean configuration value using path tuple
+
+        Args:
+            config: Configuration dictionary to update
+            path: Tuple representing nested path
+            value: Boolean value to set
+        """
+        if len(path) == 2:  # section.key
+            section, key = path
+            config.setdefault(section, {})[key] = value
+
+        elif len(path) == 3:  # routing.section.key
+            section, subsection, key = path
+            config.setdefault(section, {}).setdefault(subsection, {})[key] = value
+
+        elif len(path) == 4:  # routing.providers.openrouter.enabled
+            section, subsection, subsubsection, key = path
+            config.setdefault(section, {}).setdefault(subsection, {}).setdefault(subsubsection, {})[key] = value
+
+        elif len(path) == 5:  # routing.providers.openrouter.section.key
+            section, subsection, subsubsection, subsubsubsection, key = path
+            config.setdefault(section, {}).setdefault(subsection, {}).setdefault(subsubsection, {}).setdefault(subsubsubsection, {})[key] = value
+
+        else:
+            raise ValueError(f"Invalid boolean config path length: {path} (supported: 2-5 levels)")
 
     def _process_value_by_section(self, section: str, key: str, value: str) -> Union[str, int]:
         """Process value based on section type

@@ -26,9 +26,15 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
-# Import single code analyzer for individual file analysis
+# Import polyglot code analyzer for individual file analysis
 try:
-    from ..analyze_code import AnalysisResult, AnalysisType, analyze_code
+    from ..analyze_code import (
+        AnalysisResult,
+        AnalysisType,
+        analyze_code,
+        get_supported_languages,
+        detect_language
+    )
 
     CODE_ANALYZER_AVAILABLE = True
 except ImportError:
@@ -1135,6 +1141,10 @@ class CodebaseAnalyzer:
                     aggregated_content, analysis_scope
                 )
 
+                # Stage 6: Enhance tech stack with polyglot analysis insights
+                if result.file_analyses:
+                    self._enhance_tech_stack_with_analysis(result.tech_stack, result.file_analyses)
+
             result.stats.analysis_time = time.time() - analysis_start
 
             # Build project report
@@ -1161,7 +1171,7 @@ class CodebaseAnalyzer:
     def _analyze_individual_files(
         self, aggregated_content: Dict[str, Any], analysis_scope: AnalysisScope
     ) -> List[AnalysisResult]:
-        """Analyze individual files using the single-file analyzer"""
+        """Analyze individual files using the polyglot analyzer"""
         file_analyses = []
 
         # Convert analysis scope to individual analysis type
@@ -1172,26 +1182,144 @@ class CodebaseAnalyzer:
         else:
             analysis_type = AnalysisType.COMPREHENSIVE
 
+        # Get supported languages from polyglot system
+        if CODE_ANALYZER_AVAILABLE:
+            try:
+                supported_languages = set(get_supported_languages())
+            except Exception:
+                # Fallback to known languages if function fails
+                supported_languages = {"python", "typescript", "javascript"}
+        else:
+            supported_languages = {"python", "typescript", "javascript"}
+
         # Analyze a subset of important files to avoid overwhelming the results
-        files_to_analyze = list(aggregated_content.get("files", {}).items())[:10]
+        # Prioritize non-test files in supported languages
+        files_to_analyze = []
+
+        for file_path, file_data in aggregated_content.get("files", {}).items():
+            if (file_data["language"] in supported_languages and
+                not file_data.get("is_test", False) and
+                not file_data.get("is_config", False)):
+                files_to_analyze.append((file_path, file_data))
+
+        # Limit to top 15 files to avoid overwhelming results
+        files_to_analyze = files_to_analyze[:15]
 
         for file_path, file_data in files_to_analyze:
-            if file_data["language"] == "python" and not file_data.get(
-                "is_test", False
-            ):
-                try:
-                    result = analyze_code(
-                        file_data["content"], analysis_type, file_path=file_path
-                    )
-                    file_analyses.append(result)
-                except Exception as e:
-                    logger.warning(f"Failed to analyze {file_path}: {e}")
+            try:
+                # Use polyglot analyzer with automatic language detection
+                result = analyze_code(
+                    code=file_data["content"],
+                    analysis_type=analysis_type,
+                    file_path=file_path
+                )
 
+                # Add additional metadata from file discovery
+                if hasattr(result, 'language_specific'):
+                    if result.language_specific is None:
+                        result.language_specific = {}
+                    result.language_specific.update({
+                        'file_size': file_data.get('size', 0),
+                        'line_count': file_data.get('lines', 0),
+                        'detected_from_codebase': True
+                    })
+
+                file_analyses.append(result)
+                logger.debug(f"Successfully analyzed {file_path} ({result.language})")
+
+            except Exception as e:
+                logger.warning(f"Failed to analyze {file_path}: {e}")
+
+        logger.info(f"Analyzed {len(file_analyses)} individual files using polyglot system")
         return file_analyses
+
+    def _enhance_tech_stack_with_analysis(
+        self, tech_stack: TechStackInfo, file_analyses: List[AnalysisResult]
+    ) -> None:
+        """Enhance tech stack information using polyglot analysis insights"""
+        try:
+            # Track language usage from actual analysis results
+            languages_analyzed = set()
+            framework_indicators = set()
+
+            for analysis in file_analyses:
+                if not analysis.error:
+                    # Track confirmed languages
+                    languages_analyzed.add(analysis.language)
+
+                    # Extract framework information from language-specific metadata
+                    if hasattr(analysis, 'language_specific') and analysis.language_specific:
+                        lang_specific = analysis.language_specific
+
+                        # JavaScript/TypeScript framework detection
+                        if analysis.language in ['javascript', 'typescript']:
+                            frameworks_detected = lang_specific.get('frameworks_detected', [])
+                            for framework in frameworks_detected:
+                                tech_stack.frameworks[framework.lower()] = 'detected_via_analysis'
+                                framework_indicators.add(framework.lower())
+
+                        # Python framework detection from imports and patterns
+                        elif analysis.language == 'python':
+                            # Look for framework-specific issues or patterns in analysis results
+                            for issue in analysis.issues:
+                                if 'django' in issue.message.lower():
+                                    tech_stack.frameworks['django'] = 'detected_via_analysis'
+                                elif 'flask' in issue.message.lower():
+                                    tech_stack.frameworks['flask'] = 'detected_via_analysis'
+                                elif 'fastapi' in issue.message.lower():
+                                    tech_stack.frameworks['fastapi'] = 'detected_via_analysis'
+
+                    # Analyze issues for additional tech insights
+                    for issue in analysis.issues:
+                        issue_msg = issue.message.lower()
+
+                        # Database-related issues
+                        if any(db in issue_msg for db in ['sql', 'database', 'query']):
+                            if 'postgresql' in issue_msg or 'psycopg' in issue_msg:
+                                tech_stack.databases.add('postgresql')
+                            elif 'mysql' in issue_msg:
+                                tech_stack.databases.add('mysql')
+                            elif 'sqlite' in issue_msg:
+                                tech_stack.databases.add('sqlite')
+
+                        # Security-related patterns might indicate specific technologies
+                        if issue.type == 'security':
+                            if 'cors' in issue_msg:
+                                framework_indicators.add('web_framework')
+                            elif 'jwt' in issue_msg or 'token' in issue_msg:
+                                framework_indicators.add('authentication')
+
+            # Update language information with confirmed analysis results
+            for lang in languages_analyzed:
+                if lang not in tech_stack.languages:
+                    tech_stack.languages[lang] = 'confirmed_via_analysis'
+
+            # Add testing frameworks based on analysis patterns
+            testing_indicators = []
+            for analysis in file_analyses:
+                if not analysis.error:
+                    for issue in analysis.issues:
+                        if 'test' in issue.message.lower():
+                            if analysis.language == 'python':
+                                testing_indicators.extend(['pytest', 'unittest'])
+                            elif analysis.language == 'javascript':
+                                testing_indicators.extend(['jest', 'mocha'])
+                            elif analysis.language == 'typescript':
+                                testing_indicators.extend(['jest', 'vitest'])
+
+            for test_framework in set(testing_indicators):
+                tech_stack.testing_frameworks.add(test_framework)
+
+            logger.debug(f"Enhanced tech stack with insights from {len(file_analyses)} analyzed files")
+            logger.debug(f"Confirmed languages: {', '.join(languages_analyzed)}")
+            logger.debug(f"Detected frameworks: {', '.join(framework_indicators)}")
+
+        except Exception as e:
+            logger.warning(f"Failed to enhance tech stack with analysis insights: {e}")
 
     def _build_project_report(self, result: CodebaseAnalysisResult) -> Dict[str, Any]:
         """Build comprehensive project report"""
-        return {
+        report = {
             "summary": {
                 "total_files": result.structure.total_files,
                 "total_lines": result.structure.total_lines,
@@ -1214,11 +1342,139 @@ class CodebaseAnalyzer:
                 "databases": list(result.tech_stack.databases),
                 "build_tools": list(result.tech_stack.build_tools),
                 "deployment_tools": list(result.tech_stack.deployment_tools),
+                "testing_frameworks": list(result.tech_stack.testing_frameworks),
                 "dependency_count": len(result.tech_stack.dependencies),
             },
             "quality_insights": self._generate_quality_insights(result),
             "recommendations": self._generate_recommendations(result),
         }
+
+        # Add polyglot analysis insights if available
+        if result.file_analyses:
+            polyglot_insights = self._generate_polyglot_insights(result.file_analyses)
+            report["polyglot_analysis"] = polyglot_insights
+
+        return report
+
+    def _generate_polyglot_insights(self, file_analyses: List[AnalysisResult]) -> Dict[str, Any]:
+        """Generate insights from polyglot code analysis results"""
+        insights = {
+            "languages_analyzed": {},
+            "overall_scores": {
+                "security": 0.0,
+                "quality": 0.0,
+                "performance": 0.0
+            },
+            "issues_by_language": {},
+            "issues_by_severity": {"critical": 0, "high": 0, "medium": 0, "low": 0},
+            "issues_by_type": {},
+            "top_issues": [],
+            "analysis_summary": {
+                "total_files_analyzed": len(file_analyses),
+                "files_with_errors": 0,
+                "total_issues_found": 0
+            }
+        }
+
+        try:
+            valid_analyses = [a for a in file_analyses if not a.error]
+            insights["analysis_summary"]["files_with_errors"] = len(file_analyses) - len(valid_analyses)
+
+            if not valid_analyses:
+                return insights
+
+            # Aggregate scores by language
+            language_scores = {}
+            language_counts = {}
+
+            for analysis in valid_analyses:
+                lang = analysis.language
+
+                # Initialize language tracking
+                if lang not in language_scores:
+                    language_scores[lang] = {"security": 0, "quality": 0, "performance": 0}
+                    language_counts[lang] = 0
+                    insights["issues_by_language"][lang] = []
+
+                language_counts[lang] += 1
+
+                # Aggregate scores
+                language_scores[lang]["security"] += analysis.security_score
+                language_scores[lang]["quality"] += analysis.quality_score
+                language_scores[lang]["performance"] += analysis.performance_score
+
+                # Collect issues
+                for issue in analysis.issues:
+                    insights["issues_by_language"][lang].append({
+                        "message": issue.message,
+                        "severity": issue.severity.value,
+                        "line": issue.line,
+                        "type": issue.type,
+                        "file": analysis.file_path
+                    })
+
+                    # Count by severity
+                    severity = issue.severity.value
+                    if severity in insights["issues_by_severity"]:
+                        insights["issues_by_severity"][severity] += 1
+
+                    # Count by type
+                    issue_type = issue.type
+                    if issue_type not in insights["issues_by_type"]:
+                        insights["issues_by_type"][issue_type] = 0
+                    insights["issues_by_type"][issue_type] += 1
+
+            # Calculate average scores by language
+            for lang in language_scores:
+                count = language_counts[lang]
+                insights["languages_analyzed"][lang] = {
+                    "files_analyzed": count,
+                    "average_security_score": round(language_scores[lang]["security"] / count, 1),
+                    "average_quality_score": round(language_scores[lang]["quality"] / count, 1),
+                    "average_performance_score": round(language_scores[lang]["performance"] / count, 1),
+                    "total_issues": len(insights["issues_by_language"][lang])
+                }
+
+            # Calculate overall scores
+            total_files = len(valid_analyses)
+            insights["overall_scores"]["security"] = round(
+                sum(a.security_score for a in valid_analyses) / total_files, 1
+            )
+            insights["overall_scores"]["quality"] = round(
+                sum(a.quality_score for a in valid_analyses) / total_files, 1
+            )
+            insights["overall_scores"]["performance"] = round(
+                sum(a.performance_score for a in valid_analyses) / total_files, 1
+            )
+
+            # Get top issues (highest severity, most common)
+            all_issues = []
+            for analysis in valid_analyses:
+                for issue in analysis.issues:
+                    all_issues.append({
+                        "message": issue.message,
+                        "severity": issue.severity.value,
+                        "type": issue.type,
+                        "file": analysis.file_path,
+                        "language": analysis.language,
+                        "line": issue.line
+                    })
+
+            # Sort by severity priority and take top 10
+            severity_priority = {"critical": 4, "high": 3, "medium": 2, "low": 1}
+            insights["top_issues"] = sorted(
+                all_issues,
+                key=lambda x: severity_priority.get(x["severity"], 0),
+                reverse=True
+            )[:10]
+
+            insights["analysis_summary"]["total_issues_found"] = len(all_issues)
+
+            return insights
+
+        except Exception as e:
+            logger.warning(f"Failed to generate polyglot insights: {e}")
+            return insights
 
     def _build_prompt_payload(
         self, result: CodebaseAnalysisResult, aggregated_content: Dict[str, Any]
@@ -1311,7 +1567,11 @@ class CodebaseAnalyzer:
         if not result.tech_stack.deployment_tools:
             recommendations.append("Consider adding CI/CD pipeline configuration")
 
-        # Code quality
+        # Code quality recommendations based on polyglot analysis
+        if result.file_analyses:
+            self._add_polyglot_recommendations(recommendations, result)
+
+        # Language-specific recommendations
         if "python" in result.structure.languages:
             quality_tools = ["black", "flake8", "mypy", "pre-commit"]
             missing_tools = [
@@ -1321,10 +1581,99 @@ class CodebaseAnalyzer:
             ]
             if missing_tools:
                 recommendations.append(
-                    f"Consider adding code quality tools: {', '.join(missing_tools)}"
+                    f"Consider adding Python code quality tools: {', '.join(missing_tools)}"
+                )
+
+        if "javascript" in result.structure.languages or "typescript" in result.structure.languages:
+            js_tools = ["eslint", "prettier"]
+            missing_js_tools = [
+                tool for tool in js_tools
+                if tool not in result.tech_stack.dependencies and tool not in result.tech_stack.dev_dependencies
+            ]
+            if missing_js_tools:
+                recommendations.append(
+                    f"Consider adding JavaScript/TypeScript quality tools: {', '.join(missing_js_tools)}"
                 )
 
         return recommendations
+
+    def _add_polyglot_recommendations(self, recommendations: List[str], result: CodebaseAnalysisResult) -> None:
+        """Add recommendations based on polyglot analysis results"""
+        try:
+            # Analyze overall quality scores
+            valid_analyses = [a for a in result.file_analyses if not a.error]
+            if not valid_analyses:
+                return
+
+            avg_security = sum(a.security_score for a in valid_analyses) / len(valid_analyses)
+            avg_quality = sum(a.quality_score for a in valid_analyses) / len(valid_analyses)
+            avg_performance = sum(a.performance_score for a in valid_analyses) / len(valid_analyses)
+
+            # Security recommendations
+            if avg_security < 70:
+                recommendations.append("⚠️ Low security score detected - review security vulnerabilities")
+
+                # Check for specific security patterns
+                security_issues = []
+                for analysis in valid_analyses:
+                    for issue in analysis.issues:
+                        if issue.type == "security" and issue.severity.value in ["high", "critical"]:
+                            if "eval" in issue.message.lower():
+                                security_issues.append("eval() usage")
+                            elif "sql" in issue.message.lower():
+                                security_issues.append("SQL injection risks")
+                            elif "command" in issue.message.lower():
+                                security_issues.append("command injection risks")
+
+                if security_issues:
+                    recommendations.append(f"Address critical security issues: {', '.join(set(security_issues))}")
+
+            # Quality recommendations
+            if avg_quality < 75:
+                recommendations.append("📝 Code quality could be improved - review naming conventions and documentation")
+
+                # Count missing docstrings across languages
+                missing_docs = sum(1 for a in valid_analyses for issue in a.issues
+                                 if "docstring" in issue.message.lower())
+                if missing_docs > 5:
+                    recommendations.append(f"Add documentation - {missing_docs} missing docstrings found")
+
+            # Performance recommendations
+            if avg_performance < 80:
+                recommendations.append("🚀 Performance optimizations recommended")
+
+                # Check for specific performance patterns
+                perf_issues = []
+                for analysis in valid_analyses:
+                    for issue in analysis.issues:
+                        if issue.type == "performance":
+                            if "loop" in issue.message.lower():
+                                perf_issues.append("inefficient loops")
+                            elif "string" in issue.message.lower() and "concat" in issue.message.lower():
+                                perf_issues.append("string concatenation")
+                            elif "nested" in issue.message.lower():
+                                perf_issues.append("nested operations")
+
+                if perf_issues:
+                    recommendations.append(f"Optimize performance issues: {', '.join(set(perf_issues))}")
+
+            # Language-specific recommendations based on analysis
+            languages_with_issues = {}
+            for analysis in valid_analyses:
+                lang = analysis.language
+                if lang not in languages_with_issues:
+                    languages_with_issues[lang] = []
+
+                for issue in analysis.issues:
+                    if issue.severity.value in ["high", "critical"]:
+                        languages_with_issues[lang].append(issue.type)
+
+            for lang, issue_types in languages_with_issues.items():
+                if len(set(issue_types)) > 3:  # Multiple types of issues
+                    recommendations.append(f"Review {lang} code quality - multiple issue types detected")
+
+        except Exception as e:
+            logger.warning(f"Failed to generate polyglot recommendations: {e}")
 
 
 def discover_files(
