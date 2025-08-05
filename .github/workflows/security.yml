@@ -32,6 +32,12 @@ jobs:
   dependency-check:
     name: Dependency Vulnerability Scan
     runs-on: ubuntu-latest
+    env:
+      CHANGES_MADE: "false"
+      BRANCH_NAME: ""
+      UPDATE_TYPE: ""
+      UPDATE_ARGS: ""
+      TESTS_PASS: "false"
 
     steps:
       - name: Checkout code
@@ -113,6 +119,12 @@ jobs:
   secret-scan:
     name: Secret Detection
     runs-on: ubuntu-latest
+    env:
+      CHANGES_MADE: "false"
+      BRANCH_NAME: ""
+      UPDATE_TYPE: ""
+      UPDATE_ARGS: ""
+      TESTS_PASS: "false"
 
     steps:
       - name: Checkout code
@@ -140,6 +152,12 @@ jobs:
       actions: read
       contents: read
       security-events: write
+    env:
+      CHANGES_MADE: "false"
+      BRANCH_NAME: ""
+      UPDATE_TYPE: ""
+      UPDATE_ARGS: ""
+      TESTS_PASS: "false"
 
     steps:
       - name: Checkout code
@@ -161,6 +179,12 @@ jobs:
   bandit-scan:
     name: Bandit Security Linting
     runs-on: ubuntu-latest
+    env:
+      CHANGES_MADE: "false"
+      BRANCH_NAME: ""
+      UPDATE_TYPE: ""
+      UPDATE_ARGS: ""
+      TESTS_PASS: "false"
 
     steps:
       - name: Checkout code
@@ -262,6 +286,12 @@ jobs:
   license-check:
     name: License Compliance
     runs-on: ubuntu-latest
+    env:
+      CHANGES_MADE: "false"
+      BRANCH_NAME: ""
+      UPDATE_TYPE: ""
+      UPDATE_ARGS: ""
+      TESTS_PASS: "false"
 
     steps:
       - name: Checkout code
@@ -348,6 +378,12 @@ jobs:
   security-hardening-check:
     name: Security Hardening Verification
     runs-on: ubuntu-latest
+    env:
+      CHANGES_MADE: "false"
+      BRANCH_NAME: ""
+      UPDATE_TYPE: ""
+      UPDATE_ARGS: ""
+      TESTS_PASS: "false"
 
     steps:
       - name: Checkout code
@@ -422,6 +458,12 @@ jobs:
         security-hardening-check,
       ]
     if: always()
+    env:
+      CHANGES_MADE: "false"
+      BRANCH_NAME: ""
+      UPDATE_TYPE: ""
+      UPDATE_ARGS: ""
+      TESTS_PASS: "false"
 
     steps:
       - name: Security scan summary
