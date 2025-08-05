@@ -21,7 +21,6 @@ This document provides comprehensive rules to ensure consistency, security, and 
 *   **Context7 (e.g., `resolve-library-id`, `get-library-docs`):** Used for comprehensive documentation and knowledge retrieval, enabling the agent to access and understand vast amounts of technical information.
 *   **Perplexity (e.g., `perplexity-ask`, `perplexity-research`, `perplexity-reason`):** Leveraged for advanced reasoning, deep research, and conversational AI, providing the agent with sophisticated analytical capabilities.
 *   **Git and GitHub MCP (e.g., `git-status`, `github-create-pull-request`, `github-list-issues`):** Essential for version control, code management, and collaborative development, allowing the agent to interact seamlessly with Git repositories and GitHub workflows.
-*   **JetBrains MCP (e.g., `execute-action-by-id`, `get-file-text-by-path`, `replace-current-file-text`):** Provides direct interaction with the JetBrains IDE environment, enabling the agent to perform in-editor code modifications, run commands, and access project context.
 *   **Pieces MCP (e.g., `create-pieces-memory`, `ask-pieces-ltm`):** Used for long-term memory management and contextual recall, allowing the agent to store and retrieve critical information and past experiences.
 *   **Sequential Thinking MCP (e.g., `sequentialthinking`):** Facilitates complex problem-solving through structured, iterative thought processes, enabling the agent to break down tasks, revise approaches, and verify hypotheses.
 
