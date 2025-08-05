@@ -1,0 +1,21 @@
+{
+  "default": true,
+  "MD003": { "style": "consistent" },
+  "MD004": { "style": "consistent" },
+  "MD013": false,
+  "MD024": { "siblings_only": true },
+  "MD025": true,
+  "MD026": true,
+  "MD033": false,
+  "MD041": false,
+  "no-hard-tabs": true,
+  "no-trailing-spaces": true,
+  "no-multiple-blanks": true,
+  "no-missing-space-atx": true,
+  "no-multiple-space-atx": true,
+  "blanks-around-headings": true,
+  "heading-start-left": true,
+  "no-duplicate-heading": { "siblings_only": true },
+  "no-trailing-punctuation": true,
+  "no-bare-urls": false
+}

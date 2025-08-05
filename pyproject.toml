@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=45", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "claude-gemini-mcp-slim"
@@ -30,8 +30,14 @@ dependencies = [
     "pydantic>=2.0.0",
 ]
 
-[tool.setuptools.packages.find]
-where = ["src"]
+# ============================================================================
+# UV Configuration
+# ============================================================================
+
+[tool.uv]
+# UV-specific settings for faster dependency resolution
+preview = true  # Enable preview features
+managed = true  # Use uv for managing Python versions and dependencies
 
 [project.optional-dependencies]
 dev = [

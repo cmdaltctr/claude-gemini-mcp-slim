@@ -1,7 +1,7 @@
 # Makefile for Claude Gemini MCP Slim Testing
 # ==========================================
 
-.PHONY: help install test-fast test-integration test-integration-parallel test-all test-smoke test-debug clean
+.PHONY: help install test-fast test-integration test-integration-parallel test-all test-smoke test-debug clean format-black format-isort lint-flake8 check-format lint format
 
 # Default target
 help:
@@ -16,6 +16,12 @@ help:
 	@echo "  test-specific          - Run specific test pattern"
 	@echo "  clean                  - Clean test artifacts"
 	@echo "  ci                     - Run CI pipeline tests"
+	@echo "  format-black           - Run black formatter"
+	@echo "  format-isort           - Run isort formatter"
+	@echo "  lint-flake8            - Run flake8 linter"
+	@echo "  check-format           - Check formatting with black and isort"
+	@echo "  lint                   - Run all linters"
+	@echo "  format                 - Run all formatters"
 	@echo ""
 	@echo "Environment variables:"
 	@echo "  TEST_PATTERN           - Specific test pattern for debug/specific modes"
@@ -28,27 +34,27 @@ help:
 
 # Install dependencies
 install:
-	python3 scripts/run_tests.py install
+	uv sync --dev
 
 # Fast unit tests
 test-fast:
-	python3 scripts/run_tests.py fast
+	uv run python scripts/run_tests.py fast
 
 # Integration tests (sequential)
 test-integration:
-	python3 scripts/run_tests.py integration
+	uv run python scripts/run_tests.py integration
 
 # Integration tests (parallel)
 test-integration-parallel:
-	python3 scripts/run_tests.py integration-parallel
+	uv run python scripts/run_tests.py integration-parallel
 
 # All tests with coverage
 test-all:
-	python3 scripts/run_tests.py all
+	uv run python scripts/run_tests.py all
 
 # Smoke test
 test-smoke:
-	python3 scripts/run_tests.py smoke
+	uv run python scripts/run_tests.py smoke
 
 # Debug mode
 test-debug:
@@ -57,7 +63,7 @@ test-debug:
 		echo "Usage: make test-debug TEST_PATTERN=tests/integration/test_cli_fallback.py"; \
 		exit 1; \
 	fi
-	python3 scripts/run_tests.py debug --test-pattern="$(TEST_PATTERN)"
+	uv run python scripts/run_tests.py debug --test-pattern="$(TEST_PATTERN)"
 
 # Specific test
 test-specific:
@@ -66,7 +72,7 @@ test-specific:
 		echo "Usage: make test-specific TEST_PATTERN=tests/unit/test_basic_operations.py"; \
 		exit 1; \
 	fi
-	python3 scripts/run_tests.py specific --test-pattern="$(TEST_PATTERN)"
+	uv run python scripts/run_tests.py specific --test-pattern="$(TEST_PATTERN)"
 
 # Clean test artifacts
 clean:
@@ -96,6 +102,23 @@ coverage: test-all
 smoke: test-smoke
 debug: test-debug
 specific: test-specific
+
+# Formatting and linting
+format-black:
+	uv run black .
+
+format-isort:
+	uv run isort .
+
+lint-flake8:
+	uv run flake8 .
+
+check-format:
+	uv run black --check . && uv run isort --check .
+
+lint: check-format lint-flake8
+
+format: format-isort format-black
 
 # Help for specific test patterns
 test-help:
