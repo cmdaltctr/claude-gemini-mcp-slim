@@ -2,12 +2,27 @@ name: Validate Commit Messages
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
   push:
-    branches: [ main ]
+    branches: [main]
+
+env:
+  CHANGES_MADE: "false"
+  BRANCH_NAME: ""
+  UPDATE_TYPE: ""
+  UPDATE_ARGS: ""
+  TESTS_PASS: "false"
+  NODE_VERSION: '18'
+  VALIDATION_SUCCESS: 'false'
 
 jobs:
   validate-commits:
+    env:
+      CHANGES_MADE: "false"
+      BRANCH_NAME: ""
+      UPDATE_TYPE: ""
+      UPDATE_ARGS: ""
+      TESTS_PASS: "false"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -18,7 +33,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: Install commitlint
         run: |
@@ -60,7 +75,8 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             # For pull requests, validate all commits in the PR
-            npx commitlint --from=${{ github.event.pull_request.base.sha }} --to=${{ github.event.pull_request.head.sha }} --verbose
+            npx commitlint --from=${{ github.event.pull_request.base.sha }} \
+              --to=${{ github.event.pull_request.head.sha }} --verbose
           else
             # For push events, validate the last commit
             npx commitlint --from=HEAD~1 --to=HEAD --verbose

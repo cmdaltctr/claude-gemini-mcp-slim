@@ -1,0 +1,12 @@
+---
+extends: default
+
+rules:
+  line-length:
+    max: 120  # Allow longer lines for GitHub Actions
+  truthy:
+    allowed-values: ['true', 'false', 'on', 'off', 'yes', 'no']
+  document-start:
+    present: false  # Don't require document start for all files
+  comments:
+    min-spaces-from-content: 1  # Allow single space before comments

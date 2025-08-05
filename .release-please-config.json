@@ -2,7 +2,7 @@
   "release-type": "python",
   "packages": {
     ".": {
-      "package-name": "claude-gemini-mcp-slim",
+      "package-name": "claude-ai-orchestrator-mcp",
       "changelog-path": "docs/CHANGELOG.md",
       "changelog-sections": [
         {"type": "feat", "section": "Features", "hidden": false},

@@ -1,523 +1,591 @@
+---
 name: Test Suite
 
 on:
   push:
-    branches: [ main, feature/*, dev ]
+    branches: [main, feature/*, dev]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
     inputs:
       run_e2e_with_real_api:
-        description: 'Run E2E tests with real API'
+        description: "Run E2E tests with real API"
         required: false
-        default: 'false'
+        default: "false"
         type: choice
         options:
-          - 'true'
-          - 'false'
+          - "true"
+          - "false"
 
 env:
-  PYTHON_VERSION: '3.11'
+  CHANGES_MADE: "false"
+  BRANCH_NAME: ""
+  UPDATE_TYPE: ""
+  UPDATE_ARGS: ""
+  TESTS_PASS: "false"
+  PYTHON_VERSION: "3.11"
   CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
 jobs:
   code-quality:
     name: Code Quality
     runs-on: ubuntu-latest
+    env:
+      CHANGES_MADE: "false"
+      BRANCH_NAME: ""
+      UPDATE_TYPE: ""
+      UPDATE_ARGS: ""
+      TESTS_PASS: "false"
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6.4.3
-      with:
-        enable-cache: true
-        cache-dependency-glob: "uv.lock"
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
-    - name: Install dependencies
-      run: |
-        uv sync --dev
+      - name: Install dependencies
+        run: |
+          uv sync --dev
 
-    - name: Run Black formatter check
-      run: |
-        black --check --diff .
+      - name: Run Black formatter check
+        run: |
+          black --check --diff .
 
-    - name: Run flake8 linter
-      run: |
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+      - name: Run flake8 linter
+        run: |
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
 
-    - name: Run isort import checker
-      run: |
-        isort --check-only --diff .
+      - name: Run isort import checker
+        run: |
+          isort --check-only --diff .
 
-    - name: Run mypy type checker
-      run: |
-        mypy gemini_mcp_server.py gemini_helper.py tests/test_security.py --ignore-missing-imports --no-strict-optional
+      - name: Run mypy type checker
+        run: |
+          mypy gemini_mcp_server.py gemini_helper.py tests/test_security.py \
+            --ignore-missing-imports --no-strict-optional
 
-    - name: Run bandit security linter
-      run: |
-        bandit -r . -x tests/ -f json -o bandit-report.json --exit-zero
-        bandit -r . -x tests/ -ll --exit-zero
+      - name: Run bandit security linter
+        run: |
+          bandit -r . -x tests/ -f json -o bandit-report.json --exit-zero
+          bandit -r . -x tests/ -ll --exit-zero
 
-    - name: Upload bandit report
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: bandit-security-report
-        path: bandit-report.json
+      - name: Upload bandit report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bandit-security-report
+          path: bandit-report.json
 
   unit-tests:
     name: Unit Tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    env:
+      CHANGES_MADE: "false"
+      BRANCH_NAME: ""
+      UPDATE_TYPE: ""
+      UPDATE_ARGS: ""
+      TESTS_PASS: "false"
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.11', '3.12']
+        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6.4.3
-      with:
-        enable-cache: true
-        cache-dependency-glob: "uv.lock"
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
-    - name: Install dependencies
-      run: |
-        uv sync --dev
+      - name: Install dependencies
+        run: |
+          uv sync --dev
 
-    - name: Run unit tests
-      env:
-        PYTHONPATH: .
-      run: |
-        pytest tests/unit/ -v --tb=short --cov=. --cov-report=xml --cov-report=html --cov-report=term
+      - name: Run unit tests
+        env:
+          PYTHONPATH: .
+        run: |
+          pytest tests/unit/ -v --tb=short --cov=. --cov-report=xml --cov-report=html --cov-report=term
 
-    - name: Upload coverage to Codecov (with retry)
-      uses: codecov/codecov-action@v3
-      if: matrix.python-version == '3.11'
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: false
-        token: ${{ env.CODECOV_TOKEN }}
-      continue-on-error: true
+      - name: Upload coverage to Codecov (with retry)
+        uses: codecov/codecov-action@v3
+        if: matrix.python-version == '3.11'
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+          token: ${{ env.CODECOV_TOKEN }}
+        continue-on-error: true
 
-    # Retry Codecov upload up to 3 times if it fails
-    - name: Retry Codecov upload (attempt 2)
-      if: matrix.python-version == '3.11' && failure()
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella-retry-2
-        fail_ci_if_error: false
-        token: ${{ env.CODECOV_TOKEN }}
-      continue-on-error: true
+      # Retry Codecov upload up to 3 times if it fails
+      - name: Retry Codecov upload (attempt 2)
+        if: matrix.python-version == '3.11' && failure()
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella-retry-2
+          fail_ci_if_error: false
+          token: ${{ env.CODECOV_TOKEN }}
+        continue-on-error: true
 
-    - name: Retry Codecov upload (attempt 3)
-      if: matrix.python-version == '3.11' && failure()
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella-retry-3
-        fail_ci_if_error: false
-        token: ${{ env.CODECOV_TOKEN }}
-      continue-on-error: true
+      - name: Retry Codecov upload (attempt 3)
+        if: matrix.python-version == '3.11' && failure()
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella-retry-3
+          fail_ci_if_error: false
+          token: ${{ env.CODECOV_TOKEN }}
+        continue-on-error: true
 
-    - name: Upload coverage HTML report
-      uses: actions/upload-artifact@v4
-      if: matrix.python-version == '3.11'
-      with:
-        name: coverage-report-html
-        path: htmlcov/
+      - name: Upload coverage HTML report
+        uses: actions/upload-artifact@v4
+        if: matrix.python-version == '3.11'
+        with:
+          name: coverage-report-html
+          path: htmlcov/
 
   integration-tests:
     name: Integration Tests
     runs-on: ubuntu-latest
     needs: [code-quality, unit-tests]
+    env:
+      CHANGES_MADE: "false"
+      BRANCH_NAME: ""
+      UPDATE_TYPE: ""
+      UPDATE_ARGS: ""
+      TESTS_PASS: "false"
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6.4.3
-      with:
-        enable-cache: true
-        cache-dependency-glob: "uv.lock"
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
-    - name: Install dependencies
-      run: |
-        uv sync --dev
+      - name: Install dependencies
+        run: |
+          uv sync --dev
 
-    - name: Install Gemini CLI (for integration tests)
-      run: |
-        npm install -g @google/gemini-cli
+      - name: Install Gemini CLI (for integration tests)
+        run: |
+          npm install -g @google/gemini-cli
 
-    - name: Run integration tests
-      env:
-        PYTHONPATH: .
-      run: |
-        pytest tests/integration/ -v --tb=short --cov=. --cov-report=xml
+      - name: Run integration tests
+        env:
+          PYTHONPATH: .
+        run: |
+          pytest tests/integration/ -v --tb=short --cov=. --cov-report=xml
 
-    - name: Upload integration coverage (with retry)
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
-        flags: integration
-        name: codecov-integration
-        fail_ci_if_error: false
-        token: ${{ env.CODECOV_TOKEN }}
-      continue-on-error: true
+      - name: Upload integration coverage (with retry)
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: integration
+          name: codecov-integration
+          fail_ci_if_error: false
+          token: ${{ env.CODECOV_TOKEN }}
+        continue-on-error: true
 
-    # Retry integration coverage upload up to 3 times if it fails
-    - name: Retry integration coverage upload (attempt 2)
-      if: failure()
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
-        flags: integration
-        name: codecov-integration-retry-2
-        fail_ci_if_error: false
-        token: ${{ env.CODECOV_TOKEN }}
-      continue-on-error: true
+      # Retry integration coverage upload up to 3 times if it fails
+      - name: Retry integration coverage upload (attempt 2)
+        if: failure()
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: integration
+          name: codecov-integration-retry-2
+          fail_ci_if_error: false
+          token: ${{ env.CODECOV_TOKEN }}
+        continue-on-error: true
 
-    - name: Retry integration coverage upload (attempt 3)
-      if: failure()
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
-        flags: integration
-        name: codecov-integration-retry-3
-        fail_ci_if_error: false
-        token: ${{ env.CODECOV_TOKEN }}
-      continue-on-error: true
+      - name: Retry integration coverage upload (attempt 3)
+        if: failure()
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: integration
+          name: codecov-integration-retry-3
+          fail_ci_if_error: false
+          token: ${{ env.CODECOV_TOKEN }}
+        continue-on-error: true
 
   configuration-matrix-tests:
     name: Configuration Matrix Tests
     runs-on: ubuntu-latest
     needs: [code-quality, unit-tests]
+    env:
+      CHANGES_MADE: "false"
+      BRANCH_NAME: ""
+      UPDATE_TYPE: ""
+      UPDATE_ARGS: ""
+      TESTS_PASS: "false"
     strategy:
       fail-fast: false
       matrix:
-        config-scenario: ['with-config', 'without-config']
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+        config-scenario: ["with-config", "without-config"]
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6.4.3
-      with:
-        enable-cache: true
-        cache-dependency-glob: "uv.lock"
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
-    - name: Install dependencies
-      run: |
-        uv sync --dev
-        
+      - name: Install dependencies
+        run: |
+          uv sync --dev
 
-    - name: Create test config file (with-config scenario)
-      if: matrix.config-scenario == 'with-config'
-      run: |
-        cat > config.json << EOF
-        {
-          "models": {
-            "nicknames": {
-              "flash": "gemini-2.5-flash-test",
-              "pro": "gemini-2.5-pro-test"
+      - name: Create test config file (with-config scenario)
+        if: matrix.config-scenario == 'with-config'
+        run: |
+          cat > config.json << EOF
+          {
+            "models": {
+              "nicknames": {
+                "flash": "gemini-2.5-flash-test",
+                "pro": "gemini-2.5-pro-test"
+              },
+              "assignments": {
+                "quick_query": "flash",
+                "analyze_code": "pro"
+              }
             },
-            "assignments": {
-              "quick_query": "flash",
-              "analyze_code": "pro"
+            "limits": {
+              "max_file_size": 65536,
+              "max_lines": 500
+            },
+            "timeouts": {
+              "cli_timeout": 45,
+              "api_timeout": 20
             }
-          },
-          "limits": {
-            "max_file_size": 65536,
-            "max_lines": 500
-          },
-          "timeouts": {
-            "cli_timeout": 45,
-            "api_timeout": 20
           }
-        }
-        EOF
-        echo "✅ Created config.json for with-config scenario"
-        
-    - name: Ensure no config file exists (without-config scenario)
-      if: matrix.config-scenario == 'without-config'
-      run: |
-        rm -f config.json gemini_config.json .config/gemini.json
-        echo "✅ Ensured no config files exist for without-config scenario"
-        
-    - name: Run configuration matrix tests
-      env:
-        PYTHONPATH: .
-        CONFIG_SCENARIO: ${{ matrix.config-scenario }}
-      run: |
-        echo "Running tests for scenario: ${{ matrix.config-scenario }}"
-        pytest tests/unit/test_config.py -v --tb=short -k "test_default_model_assignments or test_force_model_override or test_complex_permutation_scenario"
-        pytest tests/integration/test_mcp_server_integration.py -v --tb=short -k "test_model_selection_integration"
-        
-    - name: Run stress tests for limit enforcement
-      env:
-        PYTHONPATH: .
-      run: |
-        pytest tests/stress/ -v --tb=short --maxfail=5 || echo "⚠️ Some stress tests failed, continuing..."
-        
-    - name: Validate configuration behavior
-      env:
-        PYTHONPATH: .
-        CONFIG_SCENARIO: ${{ matrix.config-scenario }}
-      run: |
-        python -c "
-        from config import get_config
-        cfg = get_config()
-        print(f'Config scenario: ${{ matrix.config-scenario }}')
-        print(f'Flash model: {cfg.get_model(\"quick_query\")}')
-        print(f'Pro model: {cfg.get_model(\"analyze_code\")}')
-        print(f'Max file size: {cfg.get_limit(\"max_file_size\")}')
-        print(f'CLI timeout: {cfg.get_timeout(\"cli_timeout\")}')
-        print('✅ Configuration validation completed')
-        "
+          EOF
+          echo "✅ Created config.json for with-config scenario"
+
+      - name: Ensure no config file exists (without-config scenario)
+        if: matrix.config-scenario == 'without-config'
+        run: |
+          rm -f config.json gemini_config.json .config/gemini.json
+          echo "✅ Ensured no config files exist for without-config scenario"
+
+      - name: Run configuration matrix tests
+        env:
+          PYTHONPATH: .
+          CONFIG_SCENARIO: ${{ matrix.config-scenario }}
+        run: |
+          echo "Running tests for scenario: ${{ matrix.config-scenario }}"
+          pytest tests/unit/test_config.py -v --tb=short \
+            -k "test_default_model_assignments or test_force_model_override or test_complex_permutation_scenario"
+          pytest tests/integration/test_mcp_server_integration.py -v --tb=short -k "test_model_selection_integration"
+
+      - name: Run stress tests for limit enforcement
+        env:
+          PYTHONPATH: .
+        run: |
+          pytest tests/stress/ -v --tb=short --maxfail=5 || echo "⚠️ Some stress tests failed, continuing..."
+
+      - name: Validate configuration behavior
+        env:
+          PYTHONPATH: .
+          CONFIG_SCENARIO: ${{ matrix.config-scenario }}
+        run: |
+          python -c "
+          from config import get_config
+          cfg = get_config()
+          print(f'Config scenario: ${{ matrix.config-scenario }}')
+          print(f'Flash model: {cfg.get_model(\"quick_query\")}')
+          print(f'Pro model: {cfg.get_model(\"analyze_code\")}')
+          print(f'Max file size: {cfg.get_limit(\"max_file_size\")}')
+          print(f'CLI timeout: {cfg.get_timeout(\"cli_timeout\")}')
+          print('✅ Configuration validation completed')
+          "
 
   security-tests:
     name: Security Tests
     runs-on: ubuntu-latest
     needs: [code-quality]
+    env:
+      CHANGES_MADE: "false"
+      BRANCH_NAME: ""
+      UPDATE_TYPE: ""
+      UPDATE_ARGS: ""
+      TESTS_PASS: "false"
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6.4.3
-      with:
-        enable-cache: true
-        cache-dependency-glob: "uv.lock"
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
-    - name: Install dependencies
-      run: |
-        uv sync --dev
-        
+      - name: Install dependencies
+        run: |
+          uv sync --dev
 
-    - name: Run security-focused tests
-      env:
-        PYTHONPATH: .
-      run: |
-        pytest tests/test_security.py -v --tb=short
+      - name: Run security-focused tests
+        env:
+          PYTHONPATH: .
+        run: |
+          pytest tests/test_security.py -v --tb=short
 
-    - name: Run pip-audit for vulnerability scanning
-      run: |
-        pip-audit --format=json --output=pip-audit-report.json
-        pip-audit
+      - name: Run pip-audit for vulnerability scanning
+        run: |
+          pip-audit --format=json --output=pip-audit-report.json
+          pip-audit
 
-    - name: Upload security reports
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: security-reports
-        path: |
-          pip-audit-report.json
-          bandit-report.json
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-reports
+          path: |
+            pip-audit-report.json
+            bandit-report.json
 
   e2e-tests:
     name: End-to-End Tests
     runs-on: ubuntu-latest
     needs: [integration-tests]
+    env:
+      CHANGES_MADE: "false"
+      BRANCH_NAME: ""
+      UPDATE_TYPE: ""
+      UPDATE_ARGS: ""
+      TESTS_PASS: "false"
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6.4.3
-      with:
-        enable-cache: true
-        cache-dependency-glob: "uv.lock"
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
-    - name: Install dependencies
-      run: |
-        uv sync --dev
-        
+      - name: Install dependencies
+        run: |
+          uv sync --dev
 
-    - name: Install Gemini CLI
-      run: |
-        npm install -g @google/gemini-cli
+      - name: Install Gemini CLI
+        run: |
+          npm install -g @google/gemini-cli
 
-    - name: Run E2E tests (mocked)
-      env:
-        PYTHONPATH: .
-      run: |
-        pytest tests/e2e/ -v --tb=short -k "not TestRealAPIWorkflow"
+      - name: Run E2E tests (mocked)
+        env:
+          PYTHONPATH: .
+        run: |
+          pytest tests/e2e/ -v --tb=short -k "not TestRealAPIWorkflow"
 
-    - name: Run E2E tests with real API (conditional)
-      if: github.event.inputs.run_e2e_with_real_api == 'true' || (github.ref == 'refs/heads/main' && github.event_name == 'push')
-      env:
-        TEST_WITH_REAL_API: 'true'
-        TEST_GOOGLE_API_KEY: ${{ secrets.TEST_GOOGLE_API_KEY }}
-        PYTHONPATH: .
-      run: |
-        if [ -n "$TEST_GOOGLE_API_KEY" ]; then
-          echo "Running E2E tests with real API..."
-          pytest tests/e2e/ -v --tb=short -k "TestRealAPIWorkflow" --maxfail=3
-        else
-          echo "⚠️ TEST_GOOGLE_API_KEY not set, skipping real API tests"
-        fi
+      - name: Run E2E tests with real API (conditional)
+        if: >
+          github.event.inputs.run_e2e_with_real_api == 'true' ||
+          (github.ref == 'refs/heads/main' && github.event_name == 'push')
+        env:
+          TEST_WITH_REAL_API: "true"
+          TEST_GOOGLE_API_KEY: ${{ secrets.TEST_GOOGLE_API_KEY }}
+          PYTHONPATH: .
+        run: |
+          if [ -n "$TEST_GOOGLE_API_KEY" ]; then
+            echo "Running E2E tests with real API..."
+            pytest tests/e2e/ -v --tb=short -k "TestRealAPIWorkflow" --maxfail=3
+          else
+            echo "⚠️ TEST_GOOGLE_API_KEY not set, skipping real API tests"
+          fi
 
   performance-tests:
     name: Performance Tests
     runs-on: ubuntu-latest
     needs: [integration-tests]
     if: github.ref == 'refs/heads/main' || contains(github.event.pull_request.labels.*.name, 'performance')
+    env:
+      CHANGES_MADE: "false"
+      BRANCH_NAME: ""
+      UPDATE_TYPE: ""
+      UPDATE_ARGS: ""
+      TESTS_PASS: "false"
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6.4.3
-      with:
-        enable-cache: true
-        cache-dependency-glob: "uv.lock"
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
-    - name: Install dependencies
-      run: |
-        uv sync --dev
-        uv add pytest-benchmark
+      - name: Install dependencies
+        run: |
+          uv sync --dev
+          uv add pytest-benchmark
 
-    - name: Run performance benchmarks
-      env:
-        PYTHONPATH: .
-      run: |
-        pytest tests/ -v --benchmark-only --benchmark-json=benchmark-results.json
+      - name: Run performance benchmarks
+        env:
+          PYTHONPATH: .
+        run: |
+          pytest tests/ -v --benchmark-only --benchmark-json=benchmark-results.json
 
-    - name: Upload benchmark results
-      uses: actions/upload-artifact@v4
-      with:
-        name: performance-benchmarks
-        path: benchmark-results.json
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-benchmarks
+          path: benchmark-results.json
 
   coverage-report:
     name: Coverage Report
     runs-on: ubuntu-latest
     needs: [unit-tests, integration-tests]
     if: always() && needs.unit-tests.result == 'success'
+    env:
+      CHANGES_MADE: "false"
+      BRANCH_NAME: ""
+      UPDATE_TYPE: ""
+      UPDATE_ARGS: ""
+      TESTS_PASS: "false"
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Download coverage artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: coverage-report-html
-        path: ./htmlcov/
-      continue-on-error: true
+      - name: Download coverage artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report-html
+          path: ./htmlcov/
+        continue-on-error: true
 
-    - name: Coverage Comment
-      uses: py-cov-action/python-coverage-comment-action@v3
-      if: github.event_name == 'pull_request'
-      continue-on-error: true
-      with:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        coverage-xml-path: coverage.xml
+      - name: Coverage Comment
+        uses: py-cov-action/python-coverage-comment-action@v3
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          coverage-xml-path: coverage.xml
 
-    - name: Upload combined coverage
-      uses: actions/upload-artifact@v4
-      with:
-        name: final-coverage-report
-        path: htmlcov/
-      continue-on-error: true
+      - name: Upload combined coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-coverage-report
+          path: htmlcov/
+        continue-on-error: true
 
   build-summary:
     name: Build Summary
     runs-on: ubuntu-latest
-    needs: [code-quality, unit-tests, integration-tests, security-tests, e2e-tests]
+    needs:
+      [code-quality, unit-tests, integration-tests, security-tests, e2e-tests]
     if: always()
+    env:
+      CHANGES_MADE: "false"
+      BRANCH_NAME: ""
+      UPDATE_TYPE: ""
+      UPDATE_ARGS: ""
+      TESTS_PASS: "false"
 
     steps:
-    - name: Check all jobs status
-      run: |
-        echo "Code Quality: ${{ needs.code-quality.result }}"
-        echo "Unit Tests: ${{ needs.unit-tests.result }}"
-        echo "Integration Tests: ${{ needs.integration-tests.result }}"
-        echo "Security Tests: ${{ needs.security-tests.result }}"
-        echo "E2E Tests: ${{ needs.e2e-tests.result }}"
+      - name: Check all jobs status
+        run: |
+          echo "Code Quality: ${{ needs.code-quality.result }}"
+          echo "Unit Tests: ${{ needs.unit-tests.result }}"
+          echo "Integration Tests: ${{ needs.integration-tests.result }}"
+          echo "Security Tests: ${{ needs.security-tests.result }}"
+          echo "E2E Tests: ${{ needs.e2e-tests.result }}"
 
-        # Fail if any critical job failed
-        if [[ "${{ needs.code-quality.result }}" == "failure" || \
-              "${{ needs.unit-tests.result }}" == "failure" || \
-              "${{ needs.integration-tests.result }}" == "failure" || \
-              "${{ needs.security-tests.result }}" == "failure" ]]; then
-          echo "❌ Critical tests failed"
-          exit 1
-        elif [[ "${{ needs.integration-tests.result }}" == "skipped" || \
-               "${{ needs.security-tests.result }}" == "skipped" ]]; then
-          echo "⚠️ Some critical tests were skipped due to dependency failures"
-          # Treat skipped as success if it's due to dependency failures
-          echo "✅ Workflow completed with warnings"
-        else
-          echo "✅ All critical tests passed"
-        fi
+          # Fail if any critical job failed
+          if [[ "${{ needs.code-quality.result }}" == "failure" || \
+                "${{ needs.unit-tests.result }}" == "failure" || \
+                "${{ needs.integration-tests.result }}" == "failure" || \
+                "${{ needs.security-tests.result }}" == "failure" ]]; then
+            echo "❌ Critical tests failed"
+            exit 1
+          elif [[ "${{ needs.integration-tests.result }}" == "skipped" || \
+                 "${{ needs.security-tests.result }}" == "skipped" ]]; then
+            echo "⚠️ Some critical tests were skipped due to dependency failures"
+            # Treat skipped as success if it's due to dependency failures
+            echo "✅ Workflow completed with warnings"
+          else
+            echo "✅ All critical tests passed"
+          fi
 
-    - name: Notify on failure
-      if: failure() && (github.ref == 'refs/heads/main' || github.event_name == 'pull_request')
-      run: |
-        echo "🚨 Test suite failed for ${{ github.ref }}"
-        echo "Please check the failed jobs and fix the issues."
+      - name: Notify on failure
+        if: failure() && (github.ref == 'refs/heads/main' || github.event_name == 'pull_request')
+        run: |
+          echo "🚨 Test suite failed for ${{ github.ref }}"
+          echo "Please check the failed jobs and fix the issues."
 
   deploy-check:
     name: Deployment Readiness
     runs-on: ubuntu-latest
     needs: [build-summary]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    env:
+      CHANGES_MADE: "false"
+      BRANCH_NAME: ""
+      UPDATE_TYPE: ""
+      UPDATE_ARGS: ""
+      TESTS_PASS: "false"
 
     steps:
-    - name: Deployment ready
-      run: |
-        echo "🚀 All tests passed - ready for deployment"
-        echo "Branch: ${{ github.ref }}"
-        echo "Commit: ${{ github.sha }}"
-        echo "Author: ${{ github.actor }}"
+      - name: Deployment ready
+        run: |
+          echo "🚀 All tests passed - ready for deployment"
+          echo "Branch: ${{ github.ref }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Author: ${{ github.actor }}"

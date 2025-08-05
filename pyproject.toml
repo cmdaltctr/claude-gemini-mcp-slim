@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "claude-gemini-mcp-slim"
+name = "claude-ai-orchestrator-mcp"
 version = "2.0.0"
-description = "Streamlined Gemini API & CLI MCP integration for Claude Code"
+description = "AI Orchestrator MCP Server for Claude with Gemini API & CLI integration"
 authors = [
     {name = "Claude Gemini MCP Team"}
 ]
@@ -34,6 +34,9 @@ dependencies = [
 # UV Configuration
 # ============================================================================
 
+[tool.hatch.build.targets.wheel]
+packages = ["src/claude_gemini_mcp"]
+
 [tool.uv]
 # UV-specific settings for faster dependency resolution
 preview = true  # Enable preview features
@@ -53,10 +56,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/your-org/claude-gemini-mcp-slim"
-Repository = "https://github.com/your-org/claude-gemini-mcp-slim.git"
-Documentation = "https://github.com/your-org/claude-gemini-mcp-slim#readme"
-"Bug Tracker" = "https://github.com/your-org/claude-gemini-mcp-slim/issues"
+Homepage = "https://github.com/your-org/claude-ai-orchestrator-mcp"
+Repository = "https://github.com/your-org/claude-ai-orchestrator-mcp.git"
+Documentation = "https://github.com/your-org/claude-ai-orchestrator-mcp#readme"
+"Bug Tracker" = "https://github.com/your-org/claude-ai-orchestrator-mcp/issues"
 
 # ============================================================================
 # Tool Configuration
@@ -218,3 +221,8 @@ skips = ["*/test_*.py", "*/tests/*"]
 desc = "Audit Python packages for known vulnerabilities"
 require-hashes = false
 output = "json"
+
+[dependency-groups]
+dev = [
+    "yamllint>=1.37.1",
+]
