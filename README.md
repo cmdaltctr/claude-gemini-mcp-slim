@@ -1,481 +1,697 @@
-# Claude Gemini MCP Integration
+# Claude Gemini MCP Slim v3.2 - Complete Feature Guide
 
-<!-- CI workflow trigger -->
-![Version](https://img.shields.io/badge/version-1.3.1-blue.svg)
-![Security](https://img.shields.io/badge/security-hardened-green.svg)
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Python](https://img.shields.io/badge/python-3.10+-brightgreen.svg)
-![Status](https://img.shields.io/badge/status-production%20ready-green.svg)
-![Slash Commands](https://img.shields.io/badge/slash%20commands-20+-orange.svg)
+> **Intelligent AI Orchestrator with Advanced Routing & Multi-Provider Support**
 
-> **🚀 What's Coming Next:**
-> I'm building an **AI Agent Feedback Loop System** that enables intelligent collaboration between Claude Code and Gemini AI. This will create a continuous improvement cycle where both AI agents learn from each other's suggestions, creating smarter code analysis and more contextual development assistance. Starting with Claude Code, then expanding to other IDEs. Stay tuned!
-
-**A lightweight integration that brings Google's Gemini AI capabilities to Claude Code through MCP (Model Context Protocol)**
-
-This project connects Claude Code (your coding assistant) with Google's Gemini AI models. Think of it as adding a second AI expert to your development team - one that can read and understand massive amounts of code at once (1M+ tokens, which is like reading hundreds of code files simultaneously).
-
-With this integration, you can ask Gemini questions about your code, get security reviews, performance suggestions, and architectural advice - all without leaving your coding environment. It automatically chooses the right AI model for each task: fast responses for quick questions, deeper analysis for complex problems.
-
-## Table of Contents
-
-- [Key Features](#key-features)
-- [How It Works](#how-it-works)
-- [Architecture Overview](#architecture-overview)
-  - [Key Benefits](#key-benefits)
-  - [File Structure](#file-structure)
-  - [Project Structure](#project-structure-with-hooks-enabled)
-  - [Multi-Client Support](#multi-client-support)
-- [Quick Start](#quick-start)
-- [Usage Examples](#usage-examples)
-  - [Quick Development Questions](#quick-development-questions)
-  - [Code Analysis](#code-analysis)
-  - [Full Project Analysis](#full-project-analysis)
-  - [Automated Hooks System](#automated-hooks-system)
-- [Benefits](#benefits)
-  - [For Developers](#for-developers)
-  - [For Code Quality](#for-code-quality)
-  - [For Productivity](#for-productivity)
-- [Usage Examples with Slash Commands](#usage-examples-with-slash-commands)
-- [What's Next?](#whats-next)
-- [Need Help?](#need-help)
-- [Further Documentation](#further-documentation)
-- [Changelog](#changelog)
-- [Contributing](#contributing)
-- [License](#license)
-- [Credits](#credits)
-
-## Key Features
-
-- **Quick Query** - Ask Gemini any development question instantly
-- **Code Analysis** - Deep analysis with security, performance, and architecture insights
-- **Codebase Analysis** - Full project analysis using Gemini's massive context window
-- **Automated Hooks** - Pre-edit analysis, pre-commit review, and session summaries
-- **20+ Slash Commands** - Simple shortcuts like `/g`, `/analyze`, `/security`
-- **Smart Model Selection** - Flash for speed, Pro for depth, automatic fallback
-- **Real-time Streaming** - Live output with progress indicators
-
-## How It Works
-
-```
-Claude Code ←→ MCP Server ←→ Gemini CLI/API ←→ Google Gemini Models
-                    ↓
-            Smart Model Selection
-            (Flash for speed, Pro for depth)
-```
-
-## Architecture Overview
-
-The Gemini MCP server uses a shared architecture where one installation serves multiple AI clients and projects:
-
-```
-    Claude Desktop  │  Claude Code  │  Cursor IDE  │  VS Code + Extensions
-                    │              │             │
-                    └──────────────┼─────────────┘
-                                   │
-                      ┌─────────────────────────┐
-                      │     MCP Protocol        │
-                      │   (Tool Requests)       │
-                      └─────────────────────────┘
-                                   │
-                          ┌─────────────────┐
-                          │  Gemini MCP     │
-                          │    Server       │
-                          │ (Python/Shell)  │
-                          └─────────────────┘
-                                   │
-                    ┌───────────────┼───────────────┐
-                    │               │               │
-          ┌─────────────────┐  ┌─────────────────┐  │
-          │  Gemini API     │  │  Gemini CLI     │  │
-          │  (Direct HTTP)  │  │  (Shell Command)│  │
-          └─────────────────┘  └─────────────────┘  │
-                    │               │               │
-                    └───────────────┼───────────────┘
-                                   │
-                      ┌─────────────────────────┐
-                      │   Google Gemini AI      │
-                      │   (1M+ Token Context)   │
-                      └─────────────────────────┘
-```
-
-### Key Benefits
-
-- **One installation** serves all AI clients and projects
-- **No project pollution** - keeps your projects clean
-- **Easy maintenance** - update once, benefits everywhere
-- **Smart fallbacks** - API-first approach with CLI backup
-
-### File Structure
-
-```
-~/mcp-servers/                              ← Central location for all MCP servers
-├── shared-mcp-env/                         ← Shared virtual environment
-│   ├── bin/python                         ← Python interpreter for all MCPs
-│   └── lib/python3.x/site-packages/       ← Shared dependencies (mcp, google-generativeai, etc.)
-└── gemini-mcp/                             ← Complete Gemini MCP package
-    ├── gemini_mcp_server.py                ← Main MCP server
-    └── .claude/                            ← Complete slash commands system
-        ├── hooks.json                      ← Hook definitions
-        ├── commands/                       ← Native slash commands (10+ commands)
-        │   ├── gemini.md                   ← /gemini command
-        │   ├── analyze.md                  ← /analyze command
-        │   └── ...                         ← Other command definitions
-        └── scripts/
-            └── slim_gemini_hook.py         ← Hook execution script
-```
-
-### Project Structure (with hooks enabled)
-
-```
-your-project/
-├── .claude → ~/mcp-servers/gemini-mcp/.claude  ← Symlink to shared hooks
-├── src/                                    ← Your project files
-├── README.md
-└── (no venv or MCP files needed!)           ← Clean project structure
-```
-
-### Multi-Client Support
-
-The shared MCP architecture supports multiple AI clients simultaneously:
-
-**Supported Clients:**
-- Claude Desktop - Core MCP tools only
-- Claude Code - Core MCP tools + hooks (if configured)
-- VS Code with Claude Code extension - Core MCP tools + hooks (if configured)
-- Cursor IDE - Core MCP tools only
-- Windsurf - Core MCP tools only
-- VS Code with other MCP extensions - Core MCP tools only
-- Any MCP-compatible client - Core MCP tools only
-
-**Important:** Hook functionality (.claude/hooks.json) is exclusive to Claude Code ecosystem (Claude Code standalone + VS Code with Claude Code extension). No other AI client currently supports this automation system.
-
-## Quick Start
-
-**New to this project?** Here's what you need to do:
-
-1. **Get your Google API key** from [Google AI Studio](https://makersuite.google.com/)
-2. **Follow the complete setup guide** in [docs/SETUP/SETUP.md](docs/SETUP/SETUP.md)
-3. **Test the integration** with a simple query
-4. **Explore the 20+ slash commands** in [docs/README-SLASH-COMMANDS.md](docs/README-SLASH-COMMANDS.md)
-
-**Installation time:** ~5 minutes | **Prerequisites:** Python 3.10+, Node.js 16+
-
-## Usage Examples
-
-### Quick Development Questions
-
-```
-Use gemini_quick_query for:
-- "How do I implement JWT authentication in Node.js?"
-- "What's the difference between useEffect and useLayoutEffect?"
-- "Best practices for error handling in Python async functions"
-```
-
-### Code Analysis
-
-```
-Use gemini_analyze_code for:
-- Security review of authentication functions
-- Performance analysis of database queries
-- Architecture review before major refactoring
-```
-
-### Codebase Analysis with Code Analyzer
-
-```
-Use analyze_codebase from helpers.code_analyzer for:
-- Comprehensive project analysis
-- Structure and tech stack inspection
-- Architecture patterns and design insights
-
-Example:
-
-result = analyze_codebase('/path/to/project')
-print(f"Total files: {result.structure.total_files}")
-print(f"Primary language: {result.project_report['summary']['primary_language']}")
-```
-
-### Full Project Analysis
-
-```
-Use gemini_codebase_analysis for:
-- Overall architecture assessment
-- Security vulnerability scanning
-- Performance bottleneck identification
-```
-
-### Hybrid Progress Streaming
-
-The system includes a sophisticated hybrid progress utility that provides visual feedback during operations:
-
-```python
-# Quick operations with spinner
-from hybrid_progress import create_spinner_progress
-
-progress = create_spinner_progress("🤖 Gemini Query")
-progress.start("Processing request")
-
-# Your operation here...
-time.sleep(2)
-
-# Stream response in chunks
-response_chunks = ["Here's", "your", "detailed", "response"]
-for chunk in response_chunks:
-    progress.stream_chunk(chunk + " ")
-    time.sleep(0.1)
-
-progress.complete("Query completed")
-```
-
-```python
-# Code analysis with pulse indicator
-from hybrid_progress import create_pulse_progress
-
-progress = create_pulse_progress("📊 Code Analysis")
-progress.start("Analyzing structure")
-
-# Analysis phases
-phases = ["Security scan", "Performance check", "Best practices"]
-for phase in phases:
-    progress.config.prefix = f"🔍 {phase} "
-    # Your analysis logic here
-    time.sleep(1)
-
-progress.stream_chunk("Analysis complete!\n")
-progress.complete("Code analysis finished")
-```
-
-```python
-# Long operations with progress bar
-from hybrid_progress import create_bar_progress
-
-progress = create_bar_progress("📈 Codebase Scan", width=30, show_elapsed=True)
-progress.start("Initializing scan")
-
-# Multi-phase operation
-for phase_name in ["Structure", "Security", "Performance", "Report"]:
-    progress.config.prefix = f"🔍 {phase_name} "
-    # Your processing here
-    time.sleep(1.5)
-
-# Stream final results
-for line in final_report.split('\n'):
-    progress.stream_chunk(line + "\n")
-    time.sleep(0.05)
-
-progress.complete("Comprehensive scan completed")
-```
-
-### Automated Hooks System
-
-```
-The hooks system provides intelligent automation that runs at key development moments:
-
-Pre-edit Analysis:
-- Automatically analyzes files before Claude Code edits them
-- Provides context about security, performance, and architecture concerns
-- Helps prevent issues by informing Claude Code before changes are made
-
-Pre-commit Review:
-- Analyzes staged changes before git commits
-- Reviews code for critical bugs, security vulnerabilities, and quality issues
-- Provides final quality check before code enters version control
-
-Session Summary:
-- Generates brief recap when Claude Code session ends
-- Highlights key changes made and potential next steps
-- Maintains development context between sessions
-```
-
-## Benefits
-
-### For Developers
-
-- **Instant access** to Gemini's advanced AI capabilities
-- **Seamless integration** within Claude Code workflow
-- **Smart model selection** - fast responses when speed matters, deep analysis when needed
-- **Real-time feedback** during long analysis tasks
-
-### For Code Quality
-
-- **Security analysis** using Gemini's latest training data
-- **Performance insights** from large-scale pattern recognition
-- **Architecture guidance** based on current best practices
-- **Error prevention** through pre-edit analysis
-
-### For Productivity
-
-- **Reduced context switching** - stay in Claude Code
-- **Faster debugging** with AI-powered error analysis
-- **Better decisions** through comprehensive code review
-- **Learning acceleration** via instant expert guidance
-
-## Usage Examples with Slash Commands
-
-The slash commands provide a much simpler way to access Gemini's powerful analysis without remembering the full MCP tool syntax:
-
-```
-# Instead of typing:
-/mcp__gemini-mcp__gemini_quick_query "How do I implement JWT authentication in Node.js?"
-
-# You can simply use:
-/gemini How do I implement JWT authentication in Node.js?
-# or even shorter:
-/g How do I implement JWT authentication in Node.js?
-```
-
-```
-# Instead of typing:
-/mcp__gemini-mcp__gemini_codebase_analysis "./src" security
-
-# You can simply use:
-/codebase ./src security
-# or even shorter:
-/c ./src security
-```
-
-See [docs/README-SLASH-COMMANDS.md](docs/README-SLASH-COMMANDS.md) for all available shortcuts.
-
-## What's Next?
-
-Once everything is working:
-
-1. **Try the tools** - Start with simple queries: `/mcp__gemini-mcp__gemini_quick_query "How do I optimize React performance?"`
-2. **Analyze some code** - Analyze specific functions: `/mcp__gemini-mcp__gemini_analyze_code "your function code here" security`
-3. **Review your project** - Get architectural insights: `/mcp__gemini-mcp__gemini_codebase_analysis "./src" architecture`
-4. **Explore slash commands** - Check `docs/README-SLASH-COMMANDS.md` for 20+ shortcuts
-
-## Need Help?
-
-- **Submit an Issue:** If you encounter any problems, please submit an issue on our [GitHub repository](https://github.com/cmdaltctr/claude-gemini-mcp-slim/issues) with details about your environment, steps to reproduce, and any error messages you received.
-- **Use Labels:** When submitting issues, please use appropriate labels/tags such as `bug`, `feature-request`, `documentation`, and so on ([available labels](https://github.com/cmdaltctr/claude-gemini-mcp-slim/labels)) to help us categorize and address your concerns more efficiently.
-- **Test files:** Check the `tests/` folder for examples and testing scripts
-- **Slash commands:** See `docs/README-SLASH-COMMANDS.md` for comprehensive command reference
-- **Console Logs:** Check your Claude Desktop/Code console for detailed error messages that can help diagnose issues
-
-## Further Documentation
-
-- [docs/SETUP/SETUP.md](docs/SETUP/SETUP.md) - Complete installation and configuration guide
-- [docs/README-SLASH-COMMANDS.md](docs/README-SLASH-COMMANDS.md) - Slash commands reference
-- [docs/SECURITY.md](docs/SECURITY.md) - Security documentation and hardening details
-- [docs/TESTING.md](docs/TESTING.md) - Testing guide and best practices
-
-## Changelog
-
-**📋 Complete Changelog:** For detailed release notes and full version history, see [docs/CHANGELOG.md](docs/CHANGELOG.md)
-
-## Contributing
-
-This project is designed to be lightweight and focused. The core functionality is complete, but contributions are welcome for:
-
-- Additional analysis types
-- Better error handling
-- Performance optimizations
-- Documentation improvements
-
-### How to Contribute
-
-1. **Fork the repository**
-2. **Create a feature branch**: `git checkout -b feature/your-feature-name`
-3. **Make your changes**: Implement your feature or bug fix
-4. **Test with MCP integration**: Ensure your changes work with this repo's MCP server
-5. **Submit a pull request**: Push to your fork and submit a PR to the main repository
-
-### Development Guidelines
-
-- **Clean Python Code**: Use type hints, docstrings, and follow the existing code structure
-- **Security-First Approach**: Implement proper input sanitization and API key protection
-- **Modular Design**: Keep functions focused and reusable with clear error handling
-- **MCP Protocol Compliance**: Follow the MCP server specifications for all tools
-- **Comprehensive Documentation**: Document all tools with clear descriptions and schemas
-- **Concise Code Comments**: Add brief comments to explain code blocks' purpose and functionality
-- **Fallback Mechanisms**: Implement API with CLI fallbacks for resilience
-- **Testing**: Verify changes work with both direct API and CLI integrations
-
-### Development Setup
-
-To set up a local development environment for this MCP server:
-
-#### Quick Setup (Recommended)
-
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/claude-gemini-mcp-slim.git
-cd claude-gemini-mcp-slim
-
-# Run the automated setup script
-./setup-dev.sh
-```
-
-The setup script will:
-- Create a Python virtual environment (`.venv`)
-- Install all production and development dependencies
-- Set up unified Husky hooks for code quality and commit validation
-- Run a quick test to verify everything is working
-
-#### Manual Setup
-
-If you prefer to set up manually:
-
-```bash
-# Create virtual environment
-python3 -m venv .venv
-source .venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
-
-# Set up unified Husky hooks (handled by setup-dev.sh)
-# This includes pre-commit formatting/linting and commit-msg validation
-
-# Run tests
-python -m pytest
-```
-
-#### Development Workflow
-
-Once set up, your typical development workflow will be:
-
-```bash
-# Activate virtual environment
-source .venv/bin/activate
-
-# Make your changes
-# ...
-
-# Run tests
-python -m pytest
-
-# Run Husky hooks manually (optional, they run automatically on commit)
-.husky/pre-commit  # Run formatting, linting, and tests
-.husky/commit-msg  # Validate commit message format
-
-# Commit changes (pre-commit hooks will run automatically)
-git add .
-git commit -m "Your commit message"
-```
-
-**Important Notes:**
-- The virtual environment (`.venv`) is automatically ignored by git
-- Husky hooks will run automatically on every commit to ensure code quality and enforce conventional commit messages
-- If you're using an IDE like Windsurf, make sure it's configured to use the virtual environment
-
-## License
-
-MIT License
-
-Copyright (c) 2025 Dr Muhammad Aizat Hawari
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+A sophisticated Model Context Protocol (MCP) server that provides intelligent orchestration between Claude Code and Google's Gemini AI models, featuring advanced routing capabilities, structured response handling, and comprehensive development tools.
 
 ---
 
-## Credits
+## 🌟 Core Philosophy: Intelligent Orchestration
 
-Special thanks to the following tools and platforms that assisted during the research and development of this MCP:
+This MCP server operates as an **Intelligent Orchestrator**, not a simple bridge. It adds significant value through:
 
-- **[Claude](https://claude.ai/)** - AI assistant for code development and documentation
-- **[Perplexity](https://www.perplexity.ai/)** - AI-powered research and information gathering
-- **[Warp Terminal](https://www.warp.dev/)** - Modern terminal for enhanced development workflow
+- **Agentic Process**: Perception → Reasoning → Orchestration → Transformation → Action
+- **Multi-Contextual Platform Integration**: Leveraging specialized MCP servers for enhanced capabilities
+- **Structured Data Exchange**: Evolution from plain text to validated, structured responses using Pydantic
+- **Decoupled Architecture**: Specialized components working in harmony
+
+---
+
+## 🏗️ Architecture Overview
+
+### **Decoupled Module Pattern**
+
+- **`gemini_mcp_server.py`** - *The Communicator*: MCP request/response handling
+- **`gemini_helper.py`** - *The AI Specialist*: Gemini backend interactions
+- **`helpers/`** - *Pre/Post-Processing Engines*: Specialized task handlers
+- **`config/`** - *Configuration Registry*: Intelligent orchestrator for settings
+- **`middleware/`** - *Advanced Routing Engine*: Multi-provider orchestration
+
+### **Key Technologies & Frameworks**
+
+- **MCP (Model Context Protocol)**: Core communication framework
+- **Pydantic v2**: Structured data validation and serialization
+- **Google Generative AI**: Primary AI backend integration
+- **Instructor**: Enhanced structured LLM responses
+- **Advanced Router**: Intelligent model selection and provider routing
+- **Comprehensive Testing**: pytest with multiple test categories
+
+---
+
+## 🚀 Available MCP Tools
+
+### **1. gemini_quick_query**
+Quick development questions and simple tasks.
+
+```json
+{
+  "query": "How do I implement a Python decorator?",
+  "context": "Working on a Flask application"
+}
+```
+
+**Features:**
+- Context-aware responses
+- Markdown conversion
+- Security sanitization
+- Configurable limits
+
+### **2. gemini_analyze_code**
+Detailed code analysis with multiple focus areas.
+
+```json
+{
+  "code_content": "def process_data(data): return data.upper()",
+  "analysis_type": "comprehensive" // or "security", "performance", "architecture"
+}
+```
+
+**Analysis Types:**
+- **Comprehensive**: Full code review
+- **Security**: Vulnerability assessment
+- **Performance**: Optimization opportunities
+- **Architecture**: Design patterns and structure
+
+### **3. gemini_codebase_analysis**
+Large-scale codebase analysis using Gemini's 1M token context.
+
+```json
+{
+  "directory_path": "/path/to/project",
+  "analysis_scope": "all" // or "structure", "security", "performance", "patterns"
+}
+```
+
+**Capabilities:**
+- Technology stack detection
+- Directory structure analysis
+- Security scanning
+- Performance pattern identification
+- Project health assessment
+
+---
+
+## ⚙️ Configuration System
+
+### **Intelligent Configuration Registry**
+
+The system uses a sophisticated configuration architecture with specialized components:
+
+#### **Core Configuration Components:**
+
+1. **CoreConfigManager**: Foundation settings and limits
+2. **RoutingConfigManager**: Advanced routing with 26+ methods
+3. **ModelConfigManager**: Model resolution and assignments
+4. **EnvironmentConfigLoader**: Environment variable processing
+
+#### **Configuration File Structure (`config.json`)**
+
+```json
+{
+  "models": {
+    "nicknames": {
+      "flash": "gemini-2.5-flash",
+      "pro": "gemini-2.5-pro",
+      "flash-8b": "gemini-2.5-flash-8b"
+    },
+    "assignments": {
+      "quick_query": "flash",
+      "analyze_code": "pro",
+      "analyze_codebase": "pro"
+    }
+  },
+  "limits": {
+    "max_file_size": 81920,
+    "max_lines": 800,
+    "max_prompt_size": 50000
+  },
+  "routing": {
+    "enabled": false,
+    "providers": {
+      "gemini": {
+        "enabled": true,
+        "models": ["gemini-2.5-flash", "gemini-2.5-pro"],
+        "api_key_env": "GEMINI_API_KEY"
+      }
+    }
+  }
+}
+```
+
+### **Environment Variables**
+
+- `GEMINI_API_KEY`: Required for Gemini access
+- `GEMINI_FORCE_MODEL`: Override model selection
+- `MCP_DEBUG`: Enable debug logging
+- `OPENROUTER_API_KEY`: For OpenRouter provider (when enabled)
+
+---
+
+## 🧠 Advanced Routing Engine
+
+### **Router Architecture**
+
+The routing system provides intelligent model selection and provider orchestration:
+
+#### **Routing Strategies:**
+
+1. **Scenario-Based**: Predefined scenarios (background, think, longContext, webSearch)
+2. **Token-Aware**: Context window optimization
+3. **Performance-Optimized**: Speed and reliability focus
+4. **Cost-Optimized**: Economic efficiency
+5. **Balanced**: Combines multiple factors
+
+#### **Multi-Provider Support:**
+
+- **Gemini Provider**: Primary Google AI integration
+- **OpenRouter Provider**: Access to multiple model providers
+- **Extensible Architecture**: Easy addition of new providers
+
+#### **Advanced Features:**
+
+```json
+{
+  "routing": {
+    "preferences": {
+      "routing_strategy": "balanced",
+      "speed_priority": 0.7,
+      "cost_sensitivity": 0.5,
+      "quality_threshold": 6.0,
+      "enable_adaptive_routing": true
+    },
+    "performance": {
+      "max_response_time": 30.0,
+      "min_success_rate": 0.85,
+      "enable_performance_monitoring": true
+    },
+    "cost_optimization": {
+      "enable_cost_tracking": true,
+      "cost_models": {
+        "gemini/gemini-2.5-flash": {"input": 0.075, "output": 0.3},
+        "gemini/gemini-2.5-pro": {"input": 1.25, "output": 5.0}
+      }
+    },
+    "telemetry": {
+      "enabled": true,
+      "max_records": 10000,
+      "enable_detailed_logging": true
+    }
+  }
+}
+```
+
+---
+
+## 🔄 Agentic Collaboration Protocol (ACP)
+
+### **Structured Response Models**
+
+The system implements structured data exchange using Pydantic models:
+
+#### **AgenticCodePatch**
+For code generation and modification:
+
+```python
+class AgenticCodePatch(BaseModel):
+    filename: str
+    steps: List[CodePatchStep]
+    summary: str
+    motivation: str
+    approach: str
+    test_strategy: Optional[TestStrategy]
+    security: Optional[SecurityConsideration]
+    confidence: Confidence
+```
+
+#### **CodeAnalysisResult**
+For code analysis responses:
+
+```python
+class CodeAnalysisResult(BaseModel):
+    filename: str
+    analysis_type: str
+    issues: List[Dict[str, Any]]
+    recommendations: List[str]
+    metrics: Dict[str, Union[int, float, str]]
+    overall_score: Optional[float]
+```
+
+---
+
+## 🛠️ Development Tools & Helpers
+
+### **Execution Orchestrator**
+
+Intelligent request routing and execution:
+
+- **Smart Execution**: `execute_gemini_smart()` with fallback strategies
+- **Progress Tracking**: Real-time execution feedback
+- **Error Handling**: Comprehensive error recovery
+- **Performance Monitoring**: Response time and success tracking
+
+### **Security Features**
+
+Comprehensive security implementation:
+
+- **Input Sanitization**: `sanitize_for_prompt()`
+- **Path Validation**: `validate_path_security()`
+- **Content Filtering**: Malicious content detection
+- **API Key Management**: Secure credential handling
+
+### **Hybrid Progress System**
+
+Advanced progress reporting:
+
+- **Streaming Updates**: Real-time progress indicators
+- **Multi-stage Tracking**: Complex operation monitoring
+- **Error Recovery**: Graceful failure handling
+- **MCP Integration**: Progress events via MCP protocol
+
+---
+
+## 📊 Testing Infrastructure
+
+### **Comprehensive Test Suite**
+
+The project includes extensive testing across multiple categories:
+
+#### **Test Categories:**
+
+- **Unit Tests**: `tests/unit/` - Component-level testing
+- **Integration Tests**: `tests/integration/` - System integration
+- **End-to-End Tests**: `tests/e2e/` - Full workflow validation
+- **Security Tests**: Security-focused validation
+- **Performance Tests**: Response time and throughput
+- **Matrix Tests**: Configuration combination testing
+
+#### **Test Tools & Commands**
+
+```bash
+# Fast unit tests
+make test-fast
+
+# Integration tests
+make test-integration
+
+# All tests with coverage
+make test-all
+
+# Specific test patterns
+make test-specific TEST_PATTERN="tests/unit/test_config.py"
+
+# Debug mode
+make test-debug TEST_PATTERN="tests/integration/test_gemini_api_mocked.py"
+```
+
+#### **Quality Assurance Tools**
+
+- **pytest**: Test framework with async support
+- **pytest-cov**: Code coverage reporting
+- **black**: Code formatting
+- **flake8**: Linting and style checking
+- **mypy**: Type checking
+- **bandit**: Security vulnerability scanning
+- **pip-audit**: Dependency vulnerability scanning
+
+---
+
+## 📦 Installation & Setup
+
+### **Prerequisites**
+
+- Python 3.10 or higher
+- Google AI API key
+- Virtual environment (recommended)
+
+### **Installation Steps**
+
+1. **Clone and Setup**:
+```bash
+git clone <repository-url>
+cd claude-gemini-mcp-slim
+python -m venv .venv
+source .venv/bin/activate  # Linux/Mac
+# or .venv\Scripts\activate  # Windows
+```
+
+2. **Install Dependencies**:
+```bash
+pip install -e .
+# or for development
+pip install -e ".[dev]"
+```
+
+3. **Configuration**:
+```bash
+# Copy example configuration
+cp config.json.example config.json
+
+# Set environment variables
+export GEMINI_API_KEY="your-api-key-here"
+```
+
+4. **Verify Installation**:
+```bash
+python -m pytest tests/test_basic_operations.py -v
+```
+
+### **MCP Server Registration**
+
+Add to your Claude Code configuration:
+
+```json
+{
+  "mcpServers": {
+    "claude-gemini-mcp": {
+      "command": "python",
+      "args": ["/path/to/claude-gemini-mcp-slim/src/claude_gemini_mcp/gemini_mcp_server.py"],
+      "env": {
+        "GEMINI_API_KEY": "your-api-key",
+        "OPENROUTER_API_KEY": "your-openrouter-api-key"
+      }
+    }
+  }
+}
+```
+
+#### **🔑 Complete Environment Variable Reference**
+
+Based on the code analysis, here are all supported environment variables:
+
+```json
+{
+  "mcpServers": {
+    "claude-gemini-mcp": {
+      "command": "python",
+      "args": ["/path/to/claude-gemini-mcp-slim/src/claude_gemini_mcp/gemini_mcp_server.py"],
+      "env": {
+        "GEMINI_API_KEY": "your-gemini-api-key",
+        "OPENROUTER_API_KEY": "your-openrouter-api-key",
+        "GEMINI_FORCE_MODEL": "gemini-2.5-pro",
+        "MCP_DEBUG": "true",
+        "GEMINI_DEBUG": "true"
+      }
+    }
+  }
+}
+```
+
+**Environment Variable Descriptions:**
+- `GEMINI_API_KEY`: **Required** - Your Google AI API key
+- `OPENROUTER_API_KEY`: **Optional** - Your OpenRouter API key (needed for multi-provider routing)
+- `GEMINI_FORCE_MODEL`: **Optional** - Override model selection (e.g., "gemini-2.5-pro")
+- `MCP_DEBUG`: **Optional** - Enable MCP debug logging ("true"/"false")
+- `GEMINI_DEBUG`: **Optional** - Enable Gemini-specific debug logging ("true"/"false")
+
+#### **⚙️ Enable OpenRouter Multi-Provider Routing**
+
+To use OpenRouter alongside Gemini, update your `config.json`:
+
+```json
+{
+  "routing": {
+    "enabled": true,
+    "providers": {
+      "gemini": {
+        "enabled": true,
+        "api_key_env": "GEMINI_API_KEY",
+        "models": ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.5-flash-8b"]
+      },
+      "openrouter": {
+        "enabled": true,
+        "api_key_env": "OPENROUTER_API_KEY",
+        "models": ["google/gemini-2.5-pro-preview", "anthropic/claude-3.5-sonnet"],
+        "api_base_url": "https://openrouter.ai/api/v1/chat/completions"
+      }
+    },
+    "scenarios": {
+      "default": "gemini,gemini-2.5-flash",
+      "background": "gemini,gemini-2.5-flash-8b", 
+      "think": "gemini,gemini-2.5-pro",
+      "longContext": "openrouter,anthropic/claude-3.5-sonnet"
+    },
+    "fallback_strategy": "provider_cascade",
+    "retry_attempts": 2
+  }
+}
+```
+
+**Note**: When routing is enabled, the system will intelligently select between providers based on the configured scenarios and performance metrics.
+
+---
+
+## 🔧 Advanced Configuration
+
+### **Model Management**
+
+The system supports sophisticated model selection:
+
+```python
+# Get model for specific tool
+model = config.get_model("analyze_code")  # Returns "gemini-2.5-pro"
+
+# Force model override
+export GEMINI_FORCE_MODEL="gemini-2.5-flash"
+
+# Register new tool assignments
+config.register_tool_if_missing("custom_tool", "pro")
+```
+
+### **Routing Configuration**
+
+Enable advanced routing for multi-provider support:
+
+```json
+{
+  "routing": {
+    "enabled": true,
+    "scenarios": {
+      "background": "gemini,gemini-2.5-flash-8b",
+      "think": "gemini,gemini-2.5-pro",
+      "longContext": "gemini,gemini-2.5-pro"
+    },
+    "fallback_strategy": "provider_cascade",
+    "retry_attempts": 2
+  }
+}
+```
+
+### **Performance Tuning**
+
+Optimize for your use case:
+
+```json
+{
+  "limits": {
+    "max_file_size": 81920,
+    "max_lines": 800,
+    "max_prompt_size": 50000,
+    "timeout_api": 60,
+    "timeout_cli": 120
+  },
+  "execution": {
+    "enable_streaming": true,
+    "enable_progress": true,
+    "enable_fallback": true
+  }
+}
+```
+
+---
+
+## 🎯 Usage Examples
+
+### **Quick Development Query**
+
+```javascript
+// Claude Code usage
+await mcp.callTool("gemini_quick_query", {
+  query: "How do I implement JWT authentication in FastAPI?",
+  context: "Building a REST API with user authentication"
+});
+```
+
+### **Code Analysis**
+
+```javascript
+// Analyze security issues
+await mcp.callTool("gemini_analyze_code", {
+  code_content: readFileSync("auth.py", "utf8"),
+  analysis_type: "security"
+});
+```
+
+### **Codebase Analysis**
+
+```javascript
+// Full project analysis
+await mcp.callTool("gemini_codebase_analysis", {
+  directory_path: "./src",
+  analysis_scope: "all"
+});
+```
+
+---
+
+## 🚨 Error Handling & Debugging
+
+### **Built-in Error Recovery**
+
+- **Fallback Strategies**: Automatic CLI fallback when API fails
+- **Retry Logic**: Configurable retry attempts with exponential backoff
+- **Provider Cascade**: Fallback through available providers
+- **Graceful Degradation**: Partial functionality when components fail
+
+### **Debug Mode**
+
+Enable comprehensive debugging:
+
+```bash
+export MCP_DEBUG=true
+export GEMINI_DEBUG=true
+python src/claude_gemini_mcp/gemini_mcp_server.py
+```
+
+### **Health Monitoring**
+
+```python
+# Check router health
+health = await router.health_check()
+print(health)
+
+# Get performance metrics
+performance = router.get_performance_summary()
+analytics = router.get_routing_analytics(hours_back=24)
+```
+
+---
+
+## 📈 Performance Metrics
+
+### **Built-in Telemetry**
+
+The system provides comprehensive performance tracking:
+
+- **Request Tracking**: Success rates, response times, error patterns
+- **Provider Performance**: Model-specific metrics and health monitoring
+- **Cost Tracking**: Token usage and cost optimization
+- **Routing Analytics**: Decision patterns and strategy effectiveness
+
+### **Monitoring Dashboard Data**
+
+```python
+# Get routing statistics
+stats = router.get_stats()
+# {
+#   "total_requests": 1250,
+#   "successful_routes": 1198,
+#   "fallback_attempts": 12,
+#   "average_execution_time": 2.3
+# }
+
+# Export telemetry data
+data = router.export_telemetry_data("json")
+```
+
+---
+
+## 🤝 Contributing & Development
+
+### **Development Workflow**
+
+1. **Setup Development Environment**:
+```bash
+pip install -e ".[dev]"
+```
+
+2. **Run Quality Checks**:
+```bash
+make check          # Quick development check
+make validate       # Full validation
+make ci            # CI pipeline simulation
+```
+
+3. **Code Standards**:
+- Follow the Agentic Collaboration Protocol (ACP)
+- Use Pydantic models for structured responses
+- Maintain decoupled architecture
+- Include comprehensive tests
+- Follow security best practices
+
+### **Testing Standards**
+
+- **Unit Tests**: Test individual components
+- **Integration Tests**: Test component interactions
+- **Security Tests**: Validate security measures
+- **Performance Tests**: Verify response times
+- **End-to-End Tests**: Complete workflow validation
+
+---
+
+## 🔐 Security Features
+
+### **Comprehensive Security Implementation**
+
+- **Input Sanitization**: All user inputs are sanitized
+- **Path Validation**: Secure file system access
+- **API Key Protection**: Secure credential management
+- **Content Filtering**: Malicious content detection
+- **Dependency Scanning**: Regular vulnerability checks
+
+### **Security Tools**
+
+- **bandit**: Security vulnerability scanning
+- **pip-audit**: Dependency vulnerability checking
+- **safety**: Known security issue detection
+
+---
+
+## 📚 Documentation & Resources
+
+### **Architecture Documentation**
+
+- `PRD/AI_DEVELOPMENT_GUIDELINES.md`: Comprehensive development guidelines
+- `docs/DEVELOPMENT.md`: Development setup and practices
+- `docs/TESTING.md`: Testing methodology and practices
+- `docs/SECURITY.md`: Security implementation details
+
+### **API Reference**
+
+- **Configuration API**: `config/` module documentation
+- **Routing API**: `middleware/router.py` comprehensive interface
+- **Helper APIs**: `helpers/` module utilities
+- **Structured Models**: `helpers/agentric_models.py` Pydantic schemas
+
+---
+
+## 🎉 Getting Started Checklist
+
+- [ ] Install Python 3.10+
+- [ ] Clone repository and setup virtual environment
+- [ ] Install dependencies: `pip install -e ".[dev]"`
+- [ ] Set `GEMINI_API_KEY` environment variable
+- [ ] Copy `config.json.example` to `config.json`
+- [ ] Run smoke test: `make test-smoke`
+- [ ] Register MCP server in Claude Code
+- [ ] Test with a simple query
+- [ ] Explore advanced routing features
+- [ ] Set up monitoring and telemetry
+
+---
+
+## 💡 What Makes This MCP Special
+
+1. **Intelligent Orchestration**: Not just a bridge, but an intelligent agent
+2. **Advanced Routing**: Multi-provider support with intelligent selection
+3. **Structured Responses**: Pydantic-based data validation and serialization
+4. **Comprehensive Testing**: Multiple test categories with 85%+ coverage
+5. **Security First**: Built-in security measures and validation
+6. **Performance Monitoring**: Real-time telemetry and analytics
+7. **Extensible Architecture**: Easy to add new providers and capabilities
+8. **Production Ready**: Comprehensive error handling and fallback strategies
+
+---
+
+**Ready to enhance your AI development workflow with intelligent orchestration?**
+
+Start with `make test-smoke` and explore the capabilities of your new AI-powered development assistant!

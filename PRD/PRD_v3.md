@@ -46,13 +46,43 @@ The orchestrator implements sophisticated model selection based on:
 
 ## 3. Multi-provider Middleware Architecture
 
+### 3.3. Project Structure Overview
+
+The Claude AI Orchestrator adopts a modular and decoupled architecture to simplify development and enhance maintainability:
+
+- **Middleware Layer:** Implements intelligent routing strategies and provider abstraction.
+- **Configuration Management:** Centralized management through decoupled configuration files (e.g., `CoreConfig`, `RoutingConfig`).
+- **Helpers:** Specialized engines for processing, API interaction, and security within `src/claude_gemini_mcp/helpers`.
+- **Providers:** Easily extensible architecture supporting diverse AI models through `providers/`.
+
+```plaintext
+src/
+└── claude_gemini_mcp/
+    ├── __init__.py
+    ├── gemini_mcp_server.py (orchestrator_mcp_server.py - new name)  # Main server handling requests
+    ├── gemini_helper.py (specialist_helper.py - new name)      # AI provider interaction
+    ├── config/               # Centralized configuration
+    │   ├── __init__.py
+    │   ├── core_config.py
+    ├── middleware/           # Middleware architecture
+    │   ├── router.py
+    │   ├── providers/
+    │   ├── routing_strategies/
+    │   └── transformers/
+    └── helpers/              # Helper engines for processing
+        ├── tools/
+        └── security.py
+```
+
+This structure supports seamless integration and sophisticated orchestration of various AI services.
+
 ### 3.1. Decoupled Modular Design
 
 The architecture maintains strict separation of concerns through specialized modules:
 
 #### Core Modules
-*   **`orchestrator_mcp_server.py` (The Communicator):** Handles MCP protocol communication and workflow orchestration
-*   **`specialist_helper.py` (The AI Specialist):** Manages all AI provider interactions and response processing
+*   ** (`gemini_mcp_server.py` - old name) `orchestrator_mcp_server.py` - new name (The Communicator):** Handles MCP protocol communication and workflow orchestration
+*   ** (`gemini_helper.py` - old name) `specialist_helper.py` - new name (The AI Specialist):** Manages all AI provider interactions and response processing
 *   **`config.py` (The Rulebook):** Centralized configuration management with hierarchical precedence
 
 #### Middleware Layer (`src/claude_gemini_mcp/middleware/`)
